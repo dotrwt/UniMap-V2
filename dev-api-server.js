@@ -47,8 +47,8 @@ let db = null;
 async function getDb() {
   if (!db) {
     await client.connect();
-    db = client.db('unimap');
-    console.log('Connected to MongoDB unimap database');
+    db = client.db('UniMap');
+    console.log('Connected to MongoDB UniMap database');
   }
   return db;
 }
@@ -90,7 +90,7 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ data: buildings }));
     } else if (pathname === '/api/floors') {
-      const floors = await activeDb.collection('floors').find({}, { projection: { _id: 0 } }).toArray();
+      const floors = await activeDb.collection('maps').find({}, { projection: { _id: 0 } }).toArray();
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ data: floors }));
     } else {

@@ -2,43 +2,50 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useFloorMap } from '@/hooks/useFloorMap';
 import { useMapStore } from '@/store/mapStore';
-import { Info } from 'lucide-react';
-import { Badge } from '@/components/ui';
 
-/** Map component loads and renders the active floor map and overlays the pathfinding route. */
+const FALLBACK_MAP_URL =
+  'https://lh3.googleusercontent.com/aida-public/AB6AXuDkQe5Y6LmcybzLqnrbl_DIRWcQRX2p2x1o_B8abRkPBs9TbNQLwVnASXUSFRaYbS6p77T66KH-5dhchsa6tOwB4z9geis9A3E6kXJ7Vo-zIcgCGqy25E3ievQTrJ63iAlX1GH3k_mA3eKaaQizFLLVwztTV0ADwWS_kjhEprNKX7iS25jXu-KiojXH8Sw5guFwh2TnKUu4CF6WKbxcBMel0KZESOysIfubkCKn2eHjbZK9AP64Sw7oupDhi-7Ac3FdCV971OKajUCH';
+
+/** Map component loads and renders the active floor map, rendering an animated route overlay. */
 export default function Map() {
-  const { svgUrl, floorMap } = useFloorMap();
+  const { svgUrl } = useFloorMap();
   const { graph, activeMap, activeFloor, selectedFrom, selectedTo, currentRoute, setSelectedFrom, setSelectedTo } = useMapStore();
-  
+
   const [dimensions, setDimensions] = useState({ width: 1000, height: 1000 });
   const [imgLoaded, setImgLoaded] = useState(false);
 
-  // Dynamically resolve SVG dimensions to set the viewBox
-  useEffect(() => {
-    if (svgUrl) {
-      setImgLoaded(false);
-      const img = new Image();
-      img.src = svgUrl;
-      img.onload = () => {
-        setDimensions({
-          width: img.naturalWidth || 1000,
-          height: img.naturalHeight || 1000,
-        });
-        setImgLoaded(true);
-      };
-      img.onerror = () => {
-        setDimensions({ width: 1000, height: 1000 });
-        setImgLoaded(true);
-      };
-    }
-  }, [svgUrl]);
+  const activeMapUrl = svgUrl || FALLBACK_MAP_URL;
 
-  // Compute the current active map floor ID (e.g. "MainBuilding_gf")
+  // Resolve active map dimensions to keep layout scalable
+  useEffect(() => {
+    setImgLoaded(false);
+    const img = new Image();
+    img.src = activeMapUrl;
+    img.onload = () => {
+      setDimensions({
+        width: img.naturalWidth || 1000,
+        height: img.naturalHeight || 1000,
+      });
+      setImgLoaded(true);
+    };
+    img.onerror = () => {
+      setDimensions({ width: 1000, height: 1000 });
+      setImgLoaded(true);
+    };
+  }, [activeMapUrl]);
+
+  // Resolve target map ID (e.g. "MainBuilding_gf")
   const targetMapId = useMemo(() => {
     if (!graph || !activeMap || activeFloor === null) return null;
     const activeBuilding = graph.buildings.find(b => b.id === activeMap);
     return activeBuilding ? activeBuilding.floorIds[activeFloor] : null;
   }, [graph, activeMap, activeFloor]);
+
+  // Nodes belonging to the active map floor to render as interactive markers
+  const activeFloorNodes = useMemo(() => {
+    if (!graph || !targetMapId) return [];
+    return graph.nodes.filter(node => node.map === targetMapId);
+  }, [graph, targetMapId]);
 
   // Compute the route path string in the SVG coordinates
   const pathD = useMemo(() => {
@@ -60,44 +67,24 @@ export default function Map() {
     return points.join(' ');
   }, [currentRoute, graph]);
 
-  // Nodes belonging to the active map floor to render as interactive markers
-  const activeFloorNodes = useMemo(() => {
-    if (!graph || !targetMapId) return [];
-    return graph.nodes.filter(node => node.map === targetMapId);
-  }, [graph, targetMapId]);
-
-  if (!svgUrl) {
-    return (
-      <div className="w-full h-full flex items-center justify-center p-6 bg-[var(--bg-card)] text-[var(--text-muted)]">
-        <div className="text-center flex flex-col items-center gap-2">
-          <Info size={36} className="text-[var(--text-muted)]/40" />
-          <span className="text-sm">Select building and floor from the sidebar to view campus maps.</span>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="w-full h-full relative overflow-hidden bg-[var(--bg-card)] flex items-center justify-center p-4">
-      {!imgLoaded && (
-        <div className="absolute inset-0 bg-[var(--bg-card)]/80 z-10 flex items-center justify-center">
-          <div className="w-8 h-8 rounded-full border-4 border-[var(--accent)] border-t-transparent animate-spin" />
-        </div>
-      )}
+    <div className="map-bg overflow-hidden flex items-center justify-center relative w-full h-full">
+      {/* Background Map Image */}
+      <img
+        alt="University Map"
+        className={`w-full h-full object-cover transition-opacity duration-300 ${
+          svgUrl ? 'opacity-85' : 'opacity-60 grayscale-[20%]'
+        }`}
+        src={activeMapUrl}
+      />
 
-      <div className="relative max-w-full max-h-full aspect-video shadow-md rounded-xl border border-[var(--border)] overflow-hidden bg-white">
+      {/* SVG Route Overlay Canvas */}
+      {imgLoaded && (
         <svg
+          className="absolute inset-0 w-full h-full"
           viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
-          className="w-full h-full select-none"
         >
-          <image
-            href={svgUrl}
-            x="0"
-            y="0"
-            width={dimensions.width}
-            height={dimensions.height}
-          />
-
+          {/* Interactive clickable nodes */}
           {activeFloorNodes.map((node) => {
             const isStart = selectedFrom?.id === node.id;
             const isEnd = selectedTo?.id === node.id;
@@ -117,70 +104,65 @@ export default function Map() {
                   }
                 }}
                 className="cursor-pointer group"
-                aria-label={`Select node ${node.name}`}
               >
                 <circle
                   cx={node.x}
                   cy={node.y}
-                  r={isSelected ? 10 : 6}
+                  r={isSelected ? 10 : 7}
                   className={`transition-all duration-150 stroke-white stroke-2 ${
                     isStart
                       ? 'fill-[var(--route-from)]'
                       : isEnd
                       ? 'fill-[var(--route-to)]'
-                      : 'fill-[var(--accent)] hover:fill-[var(--accent-hover)] opacity-40 hover:opacity-100'
+                      : 'fill-primary hover:fill-primary-container opacity-45 hover:opacity-100'
                   }`}
                 />
                 <circle
                   cx={node.x}
                   cy={node.y}
-                  r={isSelected ? 18 : 12}
-                  className="fill-transparent stroke-transparent group-hover:stroke-[var(--accent)]/20 stroke-2"
+                  r={16}
+                  className="fill-transparent stroke-transparent group-hover:stroke-primary/20 stroke-2"
                 />
               </g>
             );
           })}
 
+          {/* Shortest Path Overlay Route line */}
           {pathD && (
             <path
               d={pathD}
-              className="route-path"
-              style={{
-                stroke: 'var(--accent)',
-                strokeWidth: '4px',
-                fill: 'none',
-              }}
+              className="route-line"
+              fill="none"
+              stroke="#1a73e8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="6"
             />
           )}
 
+          {/* Start Selection Pin Marker (Material Symbols style) */}
           {selectedFrom && selectedFrom.map === targetMapId && (
-            <g transform={`translate(${selectedFrom.x}, ${selectedFrom.y - 12})`}>
-              <path
-                d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
-                fill="var(--route-from)"
-                className="scale-75 -translate-x-3 -translate-y-4"
-              />
-            </g>
+            <circle
+              cx={selectedFrom.x}
+              cy={selectedFrom.y}
+              fill="#ffffff"
+              r="8"
+              stroke="#1a73e8"
+              strokeWidth="3"
+            />
           )}
 
+          {/* End Selection Pin Marker (Material Symbols style) */}
           {selectedTo && selectedTo.map === targetMapId && (
-            <g transform={`translate(${selectedTo.x}, ${selectedTo.y - 12})`}>
+            <g>
               <path
-                d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
-                fill="var(--route-to)"
-                className="scale-75 -translate-x-3 -translate-y-4"
+                d={`M ${selectedTo.x},${selectedTo.y - 30} L ${selectedTo.x + 15},${selectedTo.y} L ${selectedTo.x},${selectedTo.y + 30} L ${selectedTo.x - 15},${selectedTo.y} Z`}
+                fill="#ea4335"
               />
+              <circle cx={selectedTo.x} cy={selectedTo.y} fill="#ffffff" r="4" />
             </g>
           )}
         </svg>
-      </div>
-
-      {floorMap && (
-        <div className="absolute bottom-6 right-6 flex flex-col gap-2 z-10 pointer-events-none">
-          <Badge variant="default" className="shadow-md py-1.5 px-3 bg-[var(--bg-card)]/90 backdrop-blur-sm">
-            <span className="font-semibold text-xs tracking-wide">{floorMap.label}</span>
-          </Badge>
-        </div>
       )}
     </div>
   );
