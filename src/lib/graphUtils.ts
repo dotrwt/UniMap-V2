@@ -1,5 +1,5 @@
 // src/lib/graphUtils.ts
-import { CampusGraph, MapNode, MapEdge } from '@/types';
+import type { CampusGraph, MapNode, MapEdge } from '@/types';
 
 /** Returns the map node with the specified ID. */
 export function getNodeById(graph: CampusGraph, id: string): MapNode | undefined {
@@ -7,30 +7,36 @@ export function getNodeById(graph: CampusGraph, id: string): MapNode | undefined
 }
 
 /** Returns all map nodes located in the specified building. */
-export function getNodesByBuilding(graph: CampusGraph, building: string): MapNode[] {
-  return graph.nodes.filter(node => node.building === building);
+export function getNodesByBuilding(graph: CampusGraph, buildingId: string): MapNode[] {
+  const building = graph.buildings.find(b => b.id === buildingId);
+  if (!building) {
+    return [];
+  }
+  const floorIdsSet = new Set(building.floorIds);
+  return graph.nodes.filter(node => floorIdsSet.has(node.map));
 }
 
 /** Returns all map nodes located on the specified building floor. */
 export function getNodesByFloor(
   graph: CampusGraph,
-  building: string,
+  buildingId: string,
   floor: number
 ): MapNode[] {
-  return graph.nodes.filter(node => node.building === building && node.floor === floor);
+  const building = graph.buildings.find(b => b.id === buildingId);
+  if (!building || floor < 0 || floor >= building.floorIds.length) {
+    return [];
+  }
+  const targetMapId = building.floorIds[floor];
+  return graph.nodes.filter(node => node.map === targetMapId);
 }
 
-/** Performs a case-insensitive search on node labels and keywords. */
+/** Performs a case-insensitive search on node names. */
 export function searchNodes(graph: CampusGraph, query: string): MapNode[] {
   const trimmed = query.trim().toLowerCase();
   if (trimmed.length < 2) {
     return [];
   }
-  return graph.nodes.filter(node => {
-    const labelMatch = node.label.toLowerCase().includes(trimmed);
-    const keywordMatch = node.keywords?.some(kw => kw.toLowerCase().includes(trimmed)) ?? false;
-    return labelMatch || keywordMatch;
-  });
+  return graph.nodes.filter(node => node.name.toLowerCase().includes(trimmed));
 }
 
 /** Returns all staircase, lift, entrance, and exit transition nodes. */
@@ -47,8 +53,8 @@ export function getEdgesBetween(
 ): MapEdge[] {
   return graph.edges.filter(
     edge =>
-      (edge.from === nodeIdA && edge.to === nodeIdB) ||
-      (edge.from === nodeIdB && edge.to === nodeIdA)
+      (edge.from_node === nodeIdA && edge.to_node === nodeIdB) ||
+      (edge.from_node === nodeIdB && edge.to_node === nodeIdA)
   );
 }
 
@@ -67,14 +73,14 @@ export function validateGraph(graph: CampusGraph): string[] {
   const nodeIds = new Set(graph.nodes.map(node => node.id));
 
   for (const edge of graph.edges) {
-    if (!nodeIds.has(edge.from)) {
-      warnings.push(`Edge ${edge.id} references non-existent start node ${edge.from}.`);
+    if (!nodeIds.has(edge.from_node)) {
+      warnings.push(`Edge ${edge.id} references non-existent start node ${edge.from_node}.`);
     }
-    if (!nodeIds.has(edge.to)) {
-      warnings.push(`Edge ${edge.id} references non-existent end node ${edge.to}.`);
+    if (!nodeIds.has(edge.to_node)) {
+      warnings.push(`Edge ${edge.id} references non-existent end node ${edge.to_node}.`);
     }
-    if (edge.weight <= 0) {
-      warnings.push(`Edge ${edge.id} has an invalid weight of ${edge.weight}.`);
+    if (edge.distance <= 0) {
+      warnings.push(`Edge ${edge.id} has an invalid weight of ${edge.distance}.`);
     }
   }
 

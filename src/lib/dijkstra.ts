@@ -1,5 +1,6 @@
 // src/lib/dijkstra.ts
-import { CampusGraph, MapEdge, RouteOptions } from '@/types';
+import type { CampusGraph, MapEdge, RouteOptions } from '@/types';
+import { ACCESSIBLE_EDGE_TYPES } from '@/constants';
 
 /** Builds an adjacency list from the graph's edges respecting routing options. */
 export function buildAdjacencyList(
@@ -13,14 +14,15 @@ export function buildAdjacencyList(
   }
 
   for (const edge of graph.edges) {
-    if (options.accessibleOnly && !edge.accessible) {
+    if (options.accessibleOnly && !ACCESSIBLE_EDGE_TYPES.includes(edge.type)) {
       continue;
     }
     if (options.avoidStairs && edge.type === 'stairs') {
       continue;
     }
 
-    const { from, to } = edge;
+    const from = edge.from_node;
+    const to = edge.to_node;
 
     let fromList = adjList.get(from);
     if (!fromList) {
@@ -29,14 +31,12 @@ export function buildAdjacencyList(
     }
     fromList.push({ nodeId: to, edge });
 
-    if (edge.bidirectional) {
-      let toList = adjList.get(to);
-      if (!toList) {
-        toList = [];
-        adjList.set(to, toList);
-      }
-      toList.push({ nodeId: from, edge });
+    let toList = adjList.get(to);
+    if (!toList) {
+      toList = [];
+      adjList.set(to, toList);
     }
+    toList.push({ nodeId: from, edge });
   }
 
   return adjList;
@@ -94,7 +94,7 @@ export function dijkstra(
           continue;
         }
 
-        const alt = distU + neighbor.edge.weight;
+        const alt = distU + neighbor.edge.distance;
         const currentDistV = distances[v] !== undefined ? distances[v] : Infinity;
 
         if (alt < currentDistV) {

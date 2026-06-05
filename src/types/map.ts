@@ -1,6 +1,6 @@
 // src/types/map.ts
-import { MapNode } from './graph';
-import { Route } from './route';
+import type { MapNode } from './graph';
+import type { Route } from './route';
 
 /** Represents a specific floor plan map for a building. */
 export interface FloorMap {

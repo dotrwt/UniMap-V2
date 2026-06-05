@@ -1,33 +1,47 @@
 // src/lib/routeBuilder.ts
-import { CampusGraph, MapNode, MapEdge, Route, RouteStep, RouteOptions } from '@/types';
+import type { CampusGraph, MapNode, MapEdge, Route, RouteStep, RouteOptions } from '@/types';
 import { WALKING_SPEED_MPS } from '@/constants';
 import { getNodeById, getEdgesBetween } from './graphUtils';
 
+/** Helper to parse floor index from map ID string. */
+function getFloorFromMapId(mapId: string): number {
+  const parts = mapId.split('_');
+  const suffix = parts[parts.length - 1]?.toLowerCase();
+  if (suffix === 'gf') return 0;
+  if (suffix === 'ff') return 1;
+  if (suffix === 'sf') return 2;
+  if (suffix === 'tf') return 3;
+  const num = parseInt(suffix, 10);
+  if (!isNaN(num)) return num;
+  return 0;
+}
+
 /** Generates a human-readable navigation instruction for a step. */
 export function generateInstruction(
-  current: MapNode,
+  _current: MapNode,
   next: MapNode,
   edge: MapEdge | undefined
 ): string {
+  const nextFloor = getFloorFromMapId(next.map);
   if (edge?.type === 'stairs') {
-    return `Take the stairs to floor ${next.floor}`;
+    return `Take the stairs to floor ${nextFloor}`;
   }
   if (edge?.type === 'lift') {
-    return `Take the lift to floor ${next.floor}`;
+    return `Take the lift to floor ${nextFloor}`;
   }
   if (edge?.type === 'outdoor') {
-    return `Head outside towards ${next.label}`;
+    return `Head outside towards ${next.name}`;
   }
   if (next.type === 'entrance' || next.type === 'exit') {
-    return `Enter ${next.label}`;
+    return `Enter ${next.name}`;
   }
   if (next.type === 'landmark') {
-    return `Pass ${next.label}`;
+    return `Pass ${next.name}`;
   }
   if (next.type === 'room') {
-    return `Arrive at ${next.label}`;
+    return `Arrive at ${next.name}`;
   }
-  return `Continue to ${next.label}`;
+  return `Continue to ${next.name}`;
 }
 
 /** Formats a distance in metres to a readable string. */
@@ -58,7 +72,7 @@ export function formatTime(seconds: number): string {
 export function buildRoute(
   graph: CampusGraph,
   nodeIds: string[],
-  options: RouteOptions
+  _options: RouteOptions
 ): Route | null {
   try {
     if (nodeIds.length < 2) {
@@ -81,13 +95,13 @@ export function buildRoute(
       const edges = getEdgesBetween(graph, prev.id, curr.id);
       const edge = edges[0];
 
-      const distanceFromPrev = edge ? edge.weight : 0;
+      const distanceFromPrev = edge ? edge.distance : 0;
       const type = edge ? edge.type : 'corridor';
       const instruction = generateInstruction(prev, curr, edge);
 
       steps.push({
         nodeId: curr.id,
-        label: curr.label,
+        label: curr.name,
         instruction,
         distanceFromPrev,
         type,

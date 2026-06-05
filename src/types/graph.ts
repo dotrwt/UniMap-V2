@@ -10,7 +10,9 @@ export type NodeType =
   | 'entrance'
   | 'exit'
   | 'landmark'
-  | 'outdoor';
+  | 'outdoor'
+  | 'corridor_to_corridor'
+  | 'campus';
 
 /** Union type of string literals representing walkable paths. */
 export type EdgeType = 'corridor' | 'stairs' | 'lift' | 'outdoor' | 'ramp';
@@ -18,33 +20,31 @@ export type EdgeType = 'corridor' | 'stairs' | 'lift' | 'outdoor' | 'ramp';
 /** Represents a building and its existing floors. */
 export interface Building {
   id: string;
-  label: string;
-  floors: number[];
+  name: string;
+  floors: number;
+  floorIds: string[];
 }
 
 /** Represents a single point or location on the campus map. */
 export interface MapNode {
   id: string;
-  label: string;
+  name: string;
   type: NodeType;
-  building: string;
-  floor: number;
+  map: string;
   x: number;
   y: number;
   svgElementId?: string;
-  accessible: boolean;
-  keywords?: string[];
+  category: string;
 }
 
 /** Represents a physical path connecting two nodes. */
 export interface MapEdge {
   id: string;
-  from: string;
-  to: string;
-  weight: number;
+  from_node: string;
+  to_node: string;
+  distance: number;
   type: EdgeType;
-  bidirectional: boolean;
-  accessible: boolean;
+  category: string;
 }
 
 /** Represents the complete graph structure of the campus. */

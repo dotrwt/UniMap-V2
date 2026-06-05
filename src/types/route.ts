@@ -1,5 +1,5 @@
 // src/types/route.ts
-import { MapNode, EdgeType } from './graph';
+import type { MapNode, EdgeType } from './graph';
 
 /** Represents options to configure route calculation. */
 export interface RouteOptions {

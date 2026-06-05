@@ -1,5 +1,5 @@
 // src/constants/index.ts
-import { RouteOptions, EdgeType, NodeType } from '@/types';
+import type { RouteOptions, EdgeType, NodeType } from '@/types';
 
 export const WALKING_SPEED_MPS: number = 1.4;
 
@@ -12,7 +12,9 @@ export const NODE_TYPES: readonly NodeType[] = [
   'entrance',
   'exit',
   'landmark',
-  'outdoor'
+  'outdoor',
+  'corridor_to_corridor',
+  'campus'
 ] as const;
 
 export const EDGE_TYPES: readonly EdgeType[] = [
