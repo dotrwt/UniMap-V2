@@ -21,7 +21,7 @@ export function useFloorMap(): {
     const svgUrl = resolveSvgUrl(floors, activeMap, activeFloor);
     const floorMap =
       floors.find(
-        f => f.building.toLowerCase() === activeMap.toLowerCase() && f.floor === activeFloor
+        f => f.building?.toLowerCase() === activeMap.toLowerCase() && f.floor === activeFloor
       ) ?? null;
 
     return { svgUrl, floorMap };
