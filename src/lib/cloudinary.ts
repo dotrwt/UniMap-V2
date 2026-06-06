@@ -15,7 +15,7 @@ export function resolveSvgUrl(
   floor: number
 ): string | null {
   const found = floors.find(
-    f => f.building.toLowerCase() === map.toLowerCase() && f.floor === floor
+    f => f.building?.toLowerCase() === map.toLowerCase() && f.floor === floor
   );
   if (found) {
     return found.svgUrl;

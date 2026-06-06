@@ -15,7 +15,6 @@ export function usePathfinding(): {
   const selectedFrom = useMapStore(state => state.selectedFrom);
   const selectedTo = useMapStore(state => state.selectedTo);
   const currentRoute = useMapStore(state => state.currentRoute);
-  const clearRoute = useMapStore(state => state.clearRoute);
   const setCurrentRoute = useMapStore(state => state.setCurrentRoute);
   const setError = useMapStore(state => state.setError);
 
@@ -23,7 +22,7 @@ export function usePathfinding(): {
 
   useEffect(() => {
     if (!selectedFrom || !selectedTo) {
-      clearRoute();
+      setCurrentRoute(null);
       return;
     }
 
@@ -64,7 +63,7 @@ export function usePathfinding(): {
     };
 
     runPathfinding();
-  }, [graph, selectedFrom, selectedTo, clearRoute, setCurrentRoute, setError]);
+  }, [graph, selectedFrom, selectedTo, setCurrentRoute, setError]);
 
   return {
     route: currentRoute,

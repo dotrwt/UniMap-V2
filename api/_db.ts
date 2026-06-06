@@ -6,7 +6,7 @@ const mongoUrl = process.env.MONGO_URL;
 let client: MongoClient | null = null;
 
 /** Returns a connected MongoDB database instance, caching the client across invocations. */
-export async function getDb(dbName = 'unimap'): Promise<Db> {
+export async function getDb(dbName = 'UniMap'): Promise<Db> {
   if (!mongoUrl) {
     throw new Error('MONGO_URL is not set');
   }
