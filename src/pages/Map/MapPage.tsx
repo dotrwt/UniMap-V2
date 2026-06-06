@@ -41,14 +41,11 @@ export default function MapPage() {
   const fromContainerRef = useRef<HTMLDivElement>(null);
   const toContainerRef = useRef<HTMLDivElement>(null);
 
-  // Automatically select the first building and floor when the graph loads
+  // Automatically select Campus_Map and floor 1 when the graph loads
   useEffect(() => {
     if (graph && !activeMap) {
-      const defaultBuilding = graph.buildings[0];
-      if (defaultBuilding) {
-        setActiveMap(defaultBuilding.id);
-        setActiveFloor(0);
-      }
+      setActiveMap('Campus_Map');
+      setActiveFloor(1);
     }
   }, [graph, activeMap, setActiveMap, setActiveFloor]);
 
@@ -86,7 +83,7 @@ export default function MapPage() {
   }, [toQuery, graph, selectedTo]);
 
   const activeBuilding = useMemo(() => {
-    if (!graph || !activeMap) return null;
+    if (!graph || !activeMap || activeMap === 'Campus_Map') return null;
     return graph.buildings.find(b => b.id === activeMap) || null;
   }, [graph, activeMap]);
 
@@ -99,7 +96,7 @@ export default function MapPage() {
   const handleBuildingChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const bId = e.target.value;
     setActiveMap(bId);
-    setActiveFloor(0);
+    setActiveFloor(bId === 'Campus_Map' ? 1 : 0);
   };
 
   const handleStartNavigation = () => {
@@ -161,6 +158,7 @@ export default function MapPage() {
               onChange={handleBuildingChange}
               className="bg-transparent border-none text-xs font-semibold text-on-surface-variant focus:ring-0 focus:outline-none cursor-pointer py-1 pr-6"
             >
+              <option value="Campus_Map">Campus Map</option>
               {graph.buildings.map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.name}
@@ -405,11 +403,17 @@ export default function MapPage() {
       </main>
 
       {/* Floating Floor Switcher and controls (bottom right) */}
-      {activeBuilding && (
-        <div className="fixed bottom-6 right-6 flex items-end gap-3 z-30">
-          {/* Floor Switcher */}
-          <div className="bg-surface shadow-md rounded-2xl p-1 border border-outline-variant/30 flex gap-1 items-center">
-            {activeBuilding.floorIds.map((_, idx) => (
+      <div className="fixed bottom-6 right-6 flex items-end gap-3 z-30">
+        {/* Floor Switcher */}
+        <div className="bg-surface shadow-md rounded-2xl p-1 border border-outline-variant/30 flex gap-1 items-center">
+          {activeMap === 'Campus_Map' ? (
+            <button
+              className="px-3.5 py-1 text-xs font-bold rounded-xl bg-primary-container text-on-primary-container"
+            >
+              L1
+            </button>
+          ) : (
+            activeBuilding?.floorIds.map((_, idx) => (
               <button
                 key={idx}
                 onClick={() => setActiveFloor(idx)}
@@ -421,28 +425,28 @@ export default function MapPage() {
               >
                 {idx === 0 ? 'G' : `L${idx}`}
               </button>
-            ))}
-          </div>
+            ))
+          )}
+        </div>
 
-          {/* Map zoom controls */}
-          <div className="flex flex-col bg-surface shadow-md rounded-2xl overflow-hidden border border-outline-variant/30">
-            <button className="p-2.5 hover:bg-surface-variant transition-colors border-b border-outline-variant/30 flex items-center justify-center">
-              <span className="material-symbols-outlined text-on-surface-variant text-[20px]">add</span>
-            </button>
-            <button className="p-2.5 hover:bg-surface-variant transition-colors flex items-center justify-center">
-              <span className="material-symbols-outlined text-on-surface-variant text-[20px]">remove</span>
-            </button>
-          </div>
-
-          <button
-            onClick={clearRoute}
-            className="bg-surface shadow-md rounded-2xl p-3 border border-outline-variant/30 hover:bg-surface-variant transition-colors flex items-center justify-center"
-            aria-label="Recenter navigation"
-          >
-            <span className="material-symbols-outlined text-primary text-[20px]">my_location</span>
+        {/* Map zoom controls */}
+        <div className="flex flex-col bg-surface shadow-md rounded-2xl overflow-hidden border border-outline-variant/30">
+          <button className="p-2.5 hover:bg-surface-variant transition-colors border-b border-outline-variant/30 flex items-center justify-center">
+            <span className="material-symbols-outlined text-on-surface-variant text-[20px]">add</span>
+          </button>
+          <button className="p-2.5 hover:bg-surface-variant transition-colors flex items-center justify-center">
+            <span className="material-symbols-outlined text-on-surface-variant text-[20px]">remove</span>
           </button>
         </div>
-      )}
+
+        <button
+          onClick={clearRoute}
+          className="bg-surface shadow-md rounded-2xl p-3 border border-outline-variant/30 hover:bg-surface-variant transition-colors flex items-center justify-center"
+          aria-label="Recenter navigation"
+        >
+          <span className="material-symbols-outlined text-primary text-[20px]">my_location</span>
+        </button>
+      </div>
     </div>
   );
 }

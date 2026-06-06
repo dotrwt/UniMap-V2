@@ -48,7 +48,19 @@ export const useMapStore = create<MapStoreState>((set) => ({
   ...initialState,
 
   setGraph: (graph) => set({ graph }),
-  setFloors: (floors) => set({ floors }),
+  setFloors: (floors) => {
+    const mapped = floors.map(f => {
+      if (f.map === 'Campus_Map') {
+        return {
+          ...f,
+          building: 'Campus_Map',
+          floor: 1,
+        };
+      }
+      return f;
+    });
+    set({ floors: mapped });
+  },
   setActiveMap: (activeMap) => set({ activeMap }),
   setActiveFloor: (activeFloor) => set({ activeFloor }),
   setActiveFloorMap: (activeFloorMap) => set({ activeFloorMap }),

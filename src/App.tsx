@@ -1,37 +1,38 @@
 // src/App.tsx
+import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Navbar, Footer } from '@/components/ui';
-import LandingPage from '@/pages/Landing/LandingPage';
-import MapPage from '@/pages/Map/MapPage';
-import AboutPage from '@/pages/About/AboutPage';
+import './styles/globals.css';
 
-/** Root App component setting up layout, theme providers, and site routing. */
+// Lazy loaded page components
+const LandingPage = React.lazy(() => import('@/pages/Landing/LandingPage'));
+const MapPage = React.lazy(() => import('@/pages/MapPage'));
+
+// Inline NotFound component
+const NotFound = () => (
+  <div className="w-screen h-screen flex flex-col items-center justify-center bg-[var(--bg)] text-[var(--text-primary)]">
+    <h1 className="text-xl font-semibold mb-1">404</h1>
+    <p className="text-xs text-[var(--text-secondary)]">Page not found</p>
+  </div>
+);
+
+// Spinner loading fallback component matching MapCanvas design
+const LoadingFallback = () => (
+  <div className="w-screen h-screen flex items-center justify-center bg-[var(--bg)]">
+    <div className="animate-spin border-2 border-navy-500 rounded-full w-8 h-8 border-t-transparent" />
+  </div>
+);
+
+/** Root App component setting up global routing, theme, and code-split pages. */
 export default function App() {
   return (
     <Router>
-      <div className="min-h-screen flex flex-col bg-[var(--bg)] text-[var(--text-primary)] transition-colors duration-200">
+      <Suspense fallback={<LoadingFallback />}>
         <Routes>
-          <Route path="/" element={<Navbar />} />
-          <Route path="/about" element={<Navbar />} />
-          <Route path="*" element={null} />
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/map" element={<MapPage />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
-
-        {/* Main Content Area */}
-        <main className="flex-1 flex flex-col w-full">
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/map" element={<MapPage />} />
-            <Route path="/about" element={<AboutPage />} />
-          </Routes>
-        </main>
-
-        {/* Footer: renders only on home (/) and about (/about) routes */}
-        <Routes>
-          <Route path="/" element={<Footer />} />
-          <Route path="/about" element={<Footer />} />
-          <Route path="*" element={null} />
-        </Routes>
-      </div>
+      </Suspense>
     </Router>
   );
 }

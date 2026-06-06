@@ -1,14 +1,18 @@
 // src/pages/Map/Map.tsx
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useFloorMap } from '@/hooks/useFloorMap';
 import { useMapStore } from '@/store/mapStore';
+import { useSvgMap } from '@/hooks/useSvgMap';
+import '../../styles/map.css';
 
 const FALLBACK_MAP_URL =
   'https://lh3.googleusercontent.com/aida-public/AB6AXuDkQe5Y6LmcybzLqnrbl_DIRWcQRX2p2x1o_B8abRkPBs9TbNQLwVnASXUSFRaYbS6p77T66KH-5dhchsa6tOwB4z9geis9A3E6kXJ7Vo-zIcgCGqy25E3ievQTrJ63iAlX1GH3k_mA3eKaaQizFLLVwztTV0ADwWS_kjhEprNKX7iS25jXu-KiojXH8Sw5guFwh2TnKUu4CF6WKbxcBMel0KZESOysIfubkCKn2eHjbZK9AP64Sw7oupDhi-7Ac3FdCV971OKajUCH';
 
 /** Map component loads and renders the active floor map, rendering an animated route overlay. */
 export default function Map() {
+  const mapRef = useRef<HTMLDivElement>(null);
   const { svgUrl } = useFloorMap();
+  const { svgContent, isLoading, error } = useSvgMap(svgUrl);
   const { graph, activeMap, activeFloor, selectedFrom, selectedTo, currentRoute, setSelectedFrom, setSelectedTo } = useMapStore();
 
   const [dimensions, setDimensions] = useState({ width: 1000, height: 1000 });
@@ -18,25 +22,75 @@ export default function Map() {
 
   // Resolve active map dimensions to keep layout scalable
   useEffect(() => {
-    setImgLoaded(false);
-    const img = new Image();
-    img.src = activeMapUrl;
-    img.onload = () => {
-      setDimensions({
-        width: img.naturalWidth || 1000,
-        height: img.naturalHeight || 1000,
-      });
-      setImgLoaded(true);
-    };
-    img.onerror = () => {
-      setDimensions({ width: 1000, height: 1000 });
-      setImgLoaded(true);
-    };
-  }, [activeMapUrl]);
+    // If we have parsed SVG content, read dimensions directly from the SVG element
+    if (svgContent && mapRef.current) {
+      const svgElement = mapRef.current.querySelector('svg');
+      if (svgElement) {
+        // Ensure the injected SVG element fills the container
+        svgElement.setAttribute('width', '100%');
+        svgElement.setAttribute('height', '100%');
+
+        const viewBoxStr = svgElement.getAttribute('viewBox');
+        if (viewBoxStr) {
+          const parts = viewBoxStr.trim().split(/[\s,]+/);
+          if (parts.length === 4) {
+            const width = parseFloat(parts[2]);
+            const height = parseFloat(parts[3]);
+            if (!isNaN(width) && !isNaN(height)) {
+              setDimensions({ width, height });
+              setImgLoaded(true);
+              return;
+            }
+          }
+        }
+
+        const widthAttr = svgElement.getAttribute('width');
+        const heightAttr = svgElement.getAttribute('height');
+        if (widthAttr && heightAttr) {
+          const width = parseFloat(widthAttr);
+          const height = parseFloat(heightAttr);
+          if (!isNaN(width) && !isNaN(height)) {
+            setDimensions({ width, height });
+            setImgLoaded(true);
+            return;
+          }
+        }
+      }
+    }
+
+    // Fallback: If no SVG content is present (e.g. loading fallback map image), load via Image preloader
+    if (!svgContent) {
+      setImgLoaded(false);
+      const img = new Image();
+      img.src = activeMapUrl;
+      img.onload = () => {
+        setDimensions({
+          width: img.naturalWidth || 1000,
+          height: img.naturalHeight || 1000,
+        });
+        setImgLoaded(true);
+      };
+      img.onerror = () => {
+        setDimensions({ width: 1000, height: 1000 });
+        setImgLoaded(true);
+      };
+    }
+  }, [activeMapUrl, svgContent]);
+
+  // Post-injection attribute enforcement
+  useEffect(() => {
+    if (!mapRef.current || !svgContent) return;
+    const svgElement = mapRef.current.querySelector('svg');
+    if (svgElement) {
+      svgElement.setAttribute('width', '100%');
+      svgElement.setAttribute('height', '100%');
+    }
+  }, [svgContent]);
 
   // Resolve target map ID (e.g. "MainBuilding_gf")
   const targetMapId = useMemo(() => {
     if (!graph || !activeMap || activeFloor === null) return null;
+    if (activeMap === 'Campus_Map') return 'Campus_Map';
     const activeBuilding = graph.buildings.find(b => b.id === activeMap);
     return activeBuilding ? activeBuilding.floorIds[activeFloor] : null;
   }, [graph, activeMap, activeFloor]);
@@ -47,36 +101,57 @@ export default function Map() {
     return graph.nodes.filter(node => node.map === targetMapId);
   }, [graph, targetMapId]);
 
-  // Compute the route path string in the SVG coordinates
+  // Compute the route path string in the SVG coordinates, filtered to active floor segments
   const pathD = useMemo(() => {
-    if (!currentRoute || !graph) return '';
+    if (!currentRoute || !graph || !targetMapId) return '';
     const points: string[] = [];
 
-    const startNode = currentRoute.from;
-    if (startNode) {
-      points.push(`M ${startNode.x} ${startNode.y}`);
-    }
+    let prevNode = currentRoute.from;
 
     for (const step of currentRoute.steps) {
-      const node = graph.nodes.find(n => n.id === step.nodeId);
-      if (node) {
-        points.push(`L ${node.x} ${node.y}`);
+      const currNode = graph.nodes.find(n => n.id === step.nodeId);
+      if (prevNode && currNode) {
+        // Draw segment only if both nodes belong to the active floor
+        if (prevNode.map === targetMapId && currNode.map === targetMapId) {
+          points.push(`M ${prevNode.x} ${prevNode.y} L ${currNode.x} ${currNode.y}`);
+        }
       }
+      prevNode = currNode || prevNode;
     }
 
     return points.join(' ');
-  }, [currentRoute, graph]);
+  }, [currentRoute, graph, targetMapId]);
 
   return (
     <div className="map-bg overflow-hidden flex items-center justify-center relative w-full h-full">
-      {/* Background Map Image */}
-      <img
-        alt="University Map"
-        className={`w-full h-full object-cover transition-opacity duration-300 ${
-          svgUrl ? 'opacity-85' : 'opacity-60 grayscale-[20%]'
-        }`}
-        src={activeMapUrl}
-      />
+      {/* Map Content */}
+      {svgContent ? (
+        <div
+          ref={mapRef}
+          className="w-full h-full map-svg transition-opacity duration-300 opacity-85"
+          dangerouslySetInnerHTML={{ __html: svgContent }}
+        />
+      ) : (
+        <img
+          alt="University Map"
+          className="w-full h-full object-cover transition-opacity duration-300 opacity-60 grayscale-[20%]"
+          src={activeMapUrl}
+        />
+      )}
+
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-[var(--bg-card)]/85 z-20">
+          <div className="animate-spin border-2 border-navy-500 rounded-full w-8 h-8 border-t-transparent" />
+        </div>
+      )}
+
+      {error && !isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center z-20">
+          <div className="text-red-400 text-[13px] font-medium bg-[var(--bg-card)]/90 px-4 py-2 rounded-xl border border-outline-variant/30">
+            Failed to load map. Please try again.
+          </div>
+        </div>
+      )}
 
       {/* SVG Route Overlay Canvas */}
       {imgLoaded && (

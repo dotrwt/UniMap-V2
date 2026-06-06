@@ -13,7 +13,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
   try {
     const db = await getDb();
-    const floors = await db.collection('maps').find({}, { projection: { _id: 0 } }).toArray();
+    const floors = await db.collection('floors').find({}, { projection: { _id: 0 } }).toArray();
     res.status(200).json({ data: floors });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch floors' });
