@@ -11,6 +11,7 @@ export default function App() {
     <Router>
       <div className="min-h-screen flex flex-col bg-[var(--bg)] text-[var(--text-primary)] transition-colors duration-200">
         <Routes>
+          <Route path="/" element={<Navbar />} />
           <Route path="/about" element={<Navbar />} />
           <Route path="*" element={null} />
         </Routes>

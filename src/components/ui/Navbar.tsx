@@ -1,7 +1,7 @@
 // src/components/ui/Navbar.tsx
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Compass } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 
 /** A sticky top navigation bar component providing page links and theme settings. */
@@ -13,6 +13,36 @@ export default function Navbar() {
 
   const isActive = (path: string) => location.pathname === path;
 
+  // On the landing page, render the custom floating glass-capsule navbar
+  if (location.pathname === '/') {
+    return (
+      <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between w-[92%] max-w-2xl px-5 py-2.5 rounded-full glass-capsule shadow-xl shadow-black/10">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-[#ff602e] flex items-center justify-center text-white">
+            <Compass size={18} className="animate-spin-slow" />
+          </div>
+          <span className="text-sm font-bold text-white tracking-wide">UniMap</span>
+        </div>
+        
+        <div className="flex items-center gap-6 text-xs font-semibold text-neutral-400">
+          <Link to="/" className="hover:text-white transition-colors text-white">Home</Link>
+          <Link to="/map" className="hover:text-white transition-colors">Map</Link>
+          <Link to="/about" className="hover:text-white transition-colors">About</Link>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <ThemeToggle />
+          <Link to="/map">
+            <button className="bg-[#ff602e] hover:bg-[#ff7b52] text-white text-[11px] font-bold px-4 py-2 rounded-full transition-all duration-200 shadow-md">
+              Start Navigating
+            </button>
+          </Link>
+        </div>
+      </nav>
+    );
+  }
+
+  // Standard sticky navbar for other pages
   return (
     <nav className="sticky top-0 z-50 h-[56px] w-full bg-[var(--bg)]/80 backdrop-blur-sm border-b border-[var(--border)] px-4 md:px-6 flex flex-col justify-center">
       <div className="flex items-center justify-between w-full">
