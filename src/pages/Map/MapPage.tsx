@@ -25,6 +25,7 @@ export default function MapPage() {
     clearRoute,
     currentRoute,
     error: routeError,
+    floors,
   } = useMapStore();
 
   const { isComputing } = usePathfinding();
@@ -213,6 +214,12 @@ export default function MapPage() {
                           setSelectedFrom(node);
                           setFromQuery(node.name);
                           setShowFromSuggestions(false);
+
+                          const match = floors.find((f) => f.map === node.map);
+                          if (match) {
+                            if (activeMap !== match.building) setActiveMap(match.building);
+                            if (activeFloor !== match.floor) setActiveFloor(match.floor);
+                          }
                         }}
                         className="w-full text-left px-3 py-2 text-[11px] hover:bg-primary-container/20 text-on-surface transition-colors"
                       >
@@ -254,6 +261,12 @@ export default function MapPage() {
                           setSelectedTo(node);
                           setToQuery(node.name);
                           setShowToSuggestions(false);
+
+                          const match = floors.find((f) => f.map === node.map);
+                          if (match) {
+                            if (activeMap !== match.building) setActiveMap(match.building);
+                            if (activeFloor !== match.floor) setActiveFloor(match.floor);
+                          }
                         }}
                         className="w-full text-left px-3 py-2 text-[11px] hover:bg-primary-container/20 text-on-surface transition-colors"
                       >
@@ -431,17 +444,28 @@ export default function MapPage() {
 
         {/* Map zoom controls */}
         <div className="flex flex-col bg-surface shadow-md rounded-2xl overflow-hidden border border-outline-variant/30">
-          <button className="p-2.5 hover:bg-surface-variant transition-colors border-b border-outline-variant/30 flex items-center justify-center">
+          <button
+            onClick={() => useMapStore.getState().zoomIn()}
+            className="p-2.5 hover:bg-surface-variant transition-colors border-b border-outline-variant/30 flex items-center justify-center cursor-pointer"
+            aria-label="Zoom In"
+          >
             <span className="material-symbols-outlined text-on-surface-variant text-[20px]">add</span>
           </button>
-          <button className="p-2.5 hover:bg-surface-variant transition-colors flex items-center justify-center">
+          <button
+            onClick={() => useMapStore.getState().zoomOut()}
+            className="p-2.5 hover:bg-surface-variant transition-colors flex items-center justify-center cursor-pointer"
+            aria-label="Zoom Out"
+          >
             <span className="material-symbols-outlined text-on-surface-variant text-[20px]">remove</span>
           </button>
         </div>
 
         <button
-          onClick={clearRoute}
-          className="bg-surface shadow-md rounded-2xl p-3 border border-outline-variant/30 hover:bg-surface-variant transition-colors flex items-center justify-center"
+          onClick={() => {
+            clearRoute();
+            useMapStore.getState().resetTransform();
+          }}
+          className="bg-surface shadow-md rounded-2xl p-3 border border-outline-variant/30 hover:bg-surface-variant transition-colors flex items-center justify-center cursor-pointer"
           aria-label="Recenter navigation"
         >
           <span className="material-symbols-outlined text-primary text-[20px]">my_location</span>

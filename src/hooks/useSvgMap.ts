@@ -21,10 +21,11 @@ export function useSvgMap(svgUrl: string | null): {
       setError(null);
       return;
     }
+    const url: string = svgUrl;
 
     // Return cached content immediately if it exists
-    if (cache.current[svgUrl]) {
-      setSvgContent(cache.current[svgUrl]);
+    if (cache.current[url]) {
+      setSvgContent(cache.current[url]);
       setIsLoading(false);
       setError(null);
       return;
@@ -36,7 +37,7 @@ export function useSvgMap(svgUrl: string | null): {
 
     async function fetchSvg() {
       try {
-        const response = await fetch(svgUrl, {
+        const response = await fetch(url, {
           mode: 'cors',
           headers: {
             Accept: 'image/svg+xml',
@@ -50,11 +51,11 @@ export function useSvgMap(svgUrl: string | null): {
         const text = await response.text();
 
         if (!isCancelled) {
-          cache.current[svgUrl] = text;
+          cache.current[url] = text;
           setSvgContent(text);
         }
       } catch (err: unknown) {
-        console.error(`CORS or Network error fetching SVG from URL: ${svgUrl}`, err);
+        console.error(`CORS or Network error fetching SVG from URL: ${url}`, err);
         if (!isCancelled) {
           const message = err instanceof Error ? err.message : 'Unknown error';
           setError(message);

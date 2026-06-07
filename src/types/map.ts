@@ -4,6 +4,7 @@ import type { Route } from './route';
 
 /** Represents a specific floor plan map for a building. */
 export interface FloorMap {
+  map: string;
   building: string;
   floor: number;
   svgUrl: string;
