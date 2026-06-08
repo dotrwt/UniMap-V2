@@ -2,8 +2,9 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useFloorMap } from '@/hooks/useFloorMap';
 import { useMapStore } from '@/store/mapStore';
-import type { Transform } from '@/store/mapStore';
 import { useSvgMap } from '@/hooks/useSvgMap';
+import { useSpring, animated, to } from '@react-spring/web';
+import { useGesture } from '@use-gesture/react';
 import '../../styles/map.css';
 
 const FALLBACK_MAP_URL =
@@ -40,32 +41,130 @@ export default function Map() {
 
   const activeMapUrl = svgUrl || FALLBACK_MAP_URL;
 
-  // Zoom/pan state and refs to avoid stale closures
-  const transformRef = useRef<Transform>(transform);
-  useEffect(() => {
-    transformRef.current = transform;
-  }, [transform]);
-
-  const isPanningRef = useRef<boolean>(false);
-  const [isPanningCursor, setIsPanningCursor] = useState<boolean>(false);
-  const startXRef = useRef<number>(0);
-  const startYRef = useRef<number>(0);
-
+  // Click vs Drag state tracking
   const wasDraggingRef = useRef<boolean>(false);
-  const startPointerPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const isPanningCursor = useRef<boolean>(false);
+  const [, forceUpdate] = useState({});
 
-  // Touch zoom/pan ref
-  const touchStartRef = useRef<{
-    initialDistance: number;
-    initialScale: number;
-    initialTransform: Transform;
-    isPinching: boolean;
-  }>({
-    initialDistance: 0,
-    initialScale: 1,
-    initialTransform: { scale: 1, x: 0, y: 0 },
-    isPinching: false,
-  });
+  const setPanningCursor = (panning: boolean) => {
+    if (isPanningCursor.current !== panning) {
+      isPanningCursor.current = panning;
+      forceUpdate({});
+    }
+  };
+
+  // Setup animated spring variables
+  const [{ x, y, scale }, api] = useSpring(() => ({
+    x: transform.x,
+    y: transform.y,
+    scale: transform.scale,
+    config: { tension: 280, friction: 32 },
+  }));
+
+  // Sync spring whenever transform is updated in store from external components (e.g. recenter, building change)
+  useEffect(() => {
+    api.start({
+      x: transform.x,
+      y: transform.y,
+      scale: transform.scale,
+    });
+  }, [transform, api]);
+
+  // Set up useGesture hooks for drag, pinch, and wheel
+  useGesture(
+    {
+      onDrag: ({ active, movement: [mx, my], first, memo }) => {
+        if (first) {
+          wasDraggingRef.current = false;
+          setPanningCursor(true);
+          return [x.get(), y.get()];
+        }
+
+        if (Math.hypot(mx, my) > 5) {
+          wasDraggingRef.current = true;
+        }
+
+        const newX = memo[0] + mx;
+        const newY = memo[1] + my;
+
+        api.start({
+          x: newX,
+          y: newY,
+          immediate: true,
+        });
+
+        if (!active) {
+          setPanningCursor(false);
+          setTransform({ scale: scale.get(), x: newX, y: newY });
+        }
+        return memo;
+      },
+      onPinch: ({ origin: [copX, copY], offset: [s], active, first, memo }) => {
+        if (first) {
+          return {
+            x: x.get(),
+            y: y.get(),
+            scale: scale.get(),
+          };
+        }
+
+        const rect = containerRef.current?.getBoundingClientRect();
+        if (!rect) return memo;
+
+        const px = copX - rect.left;
+        const py = copY - rect.top;
+
+        const s_prev = memo.scale;
+        const s_new = clamp(s, MIN_SCALE, MAX_SCALE);
+
+        const newX = px - (px - memo.x) * (s_new / s_prev);
+        const newY = py - (py - memo.y) * (s_new / s_prev);
+
+        api.start({
+          scale: s_new,
+          x: newX,
+          y: newY,
+          immediate: true,
+        });
+
+        if (!active) {
+          setTransform({ scale: s_new, x: newX, y: newY });
+        }
+        return memo;
+      },
+      onWheel: ({ event }) => {
+        event.preventDefault();
+        const rect = containerRef.current?.getBoundingClientRect();
+        if (!rect) return;
+
+        const px = event.clientX - rect.left;
+        const py = event.clientY - rect.top;
+
+        const zoomFactor = event.deltaY < 0 ? 1.08 : 0.92;
+        const s_prev = scale.get();
+        const s_new = clamp(s_prev * zoomFactor, MIN_SCALE, MAX_SCALE);
+
+        const newX = px - (px - x.get()) * (s_new / s_prev);
+        const newY = py - (py - y.get()) * (s_new / s_prev);
+
+        api.start({
+          scale: s_new,
+          x: newX,
+          y: newY,
+          immediate: true,
+        });
+
+        setTransform({ scale: s_new, x: newX, y: newY });
+      },
+    },
+    {
+      target: containerRef,
+      eventOptions: { passive: false },
+      pinch: {
+        from: () => [scale.get(), 0],
+      },
+    }
+  );
 
   // Resolve active map dimensions to keep layout scalable
   useEffect(() => {
@@ -126,153 +225,7 @@ export default function Map() {
     }
   }, [activeMapUrl, svgContent]);
 
-  // Handle wheel zoom (zoom to mouse cursor)
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
 
-    const handleWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      const rect = container.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-      const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
-
-      const prev = transformRef.current;
-      const newScale = clamp(prev.scale * zoomFactor, MIN_SCALE, MAX_SCALE);
-      const newX = mouseX - (mouseX - prev.x) * (newScale / prev.scale);
-      const newY = mouseY - (mouseY - prev.y) * (newScale / prev.scale);
-      setTransform({ scale: newScale, x: newX, y: newY });
-    };
-
-    container.addEventListener('wheel', handleWheel, { passive: false });
-    return () => {
-      container.removeEventListener('wheel', handleWheel);
-    };
-  }, [setTransform]);
-
-  // Pointer dragging handlers
-  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (e.button !== 0) return;
-    e.currentTarget.setPointerCapture(e.pointerId);
-    isPanningRef.current = true;
-    setIsPanningCursor(true);
-    startXRef.current = e.clientX - transformRef.current.x;
-    startYRef.current = e.clientY - transformRef.current.y;
-
-    wasDraggingRef.current = false;
-    startPointerPosRef.current = { x: e.clientX, y: e.clientY };
-  };
-
-  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isPanningRef.current) return;
-    const moveDist = Math.hypot(
-      e.clientX - startPointerPosRef.current.x,
-      e.clientY - startPointerPosRef.current.y
-    );
-    if (moveDist > 5) {
-      wasDraggingRef.current = true;
-    }
-    const newX = e.clientX - startXRef.current;
-    const newY = e.clientY - startYRef.current;
-    setTransform({
-      scale: transformRef.current.scale,
-      x: newX,
-      y: newY,
-    });
-  };
-
-  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (isPanningRef.current) {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-      isPanningRef.current = false;
-      setIsPanningCursor(false);
-    }
-  };
-
-  // Touch zoom/pan handlers
-  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-    const t = e.touches;
-
-    wasDraggingRef.current = false;
-    if (t.length === 1) {
-      isPanningRef.current = true;
-      setIsPanningCursor(true);
-      startXRef.current = t[0].clientX - transformRef.current.x;
-      startYRef.current = t[0].clientY - transformRef.current.y;
-      startPointerPosRef.current = { x: t[0].clientX, y: t[0].clientY };
-      touchStartRef.current.isPinching = false;
-    } else if (t.length === 2) {
-      isPanningRef.current = false;
-      setIsPanningCursor(false);
-
-      const dist = Math.hypot(
-        t[1].clientX - t[0].clientX,
-        t[1].clientY - t[0].clientY
-      );
-
-      touchStartRef.current = {
-        initialDistance: dist,
-        initialScale: transformRef.current.scale,
-        initialTransform: { ...transformRef.current },
-        isPinching: true,
-      };
-    }
-  };
-
-  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
-    const t = e.touches;
-
-    if (t.length === 1 && isPanningRef.current) {
-      const moveDist = Math.hypot(
-        t[0].clientX - startPointerPosRef.current.x,
-        t[0].clientY - startPointerPosRef.current.y
-      );
-      if (moveDist > 5) {
-        wasDraggingRef.current = true;
-      }
-      const newX = t[0].clientX - startXRef.current;
-      const newY = t[0].clientY - startYRef.current;
-      setTransform({
-        scale: transformRef.current.scale,
-        x: newX,
-        y: newY,
-      });
-    } else if (t.length === 2 && touchStartRef.current.isPinching && containerRef.current) {
-      const dist = Math.hypot(
-        t[1].clientX - t[0].clientX,
-        t[1].clientY - t[0].clientY
-      );
-
-      const { initialDistance, initialScale, initialTransform } = touchStartRef.current;
-      if (initialDistance === 0) return;
-
-      const factor = dist / initialDistance;
-      const newScale = clamp(initialScale * factor, MIN_SCALE, MAX_SCALE);
-
-      const clientMidX = (t[0].clientX + t[1].clientX) / 2;
-      const clientMidY = (t[0].clientY + t[1].clientY) / 2;
-
-      const rect = containerRef.current.getBoundingClientRect();
-      const midX = clientMidX - rect.left;
-      const midY = clientMidY - rect.top;
-
-      const newX = midX - (midX - initialTransform.x) * (newScale / initialTransform.scale);
-      const newY = midY - (midY - initialTransform.y) * (newScale / initialTransform.scale);
-
-      setTransform({
-        scale: newScale,
-        x: newX,
-        y: newY,
-      });
-    }
-  };
-
-  const handleTouchEnd = () => {
-    isPanningRef.current = false;
-    setIsPanningCursor(false);
-    touchStartRef.current.isPinching = false;
-  };
 
   // Resolve target map ID
   const targetMapId = useMemo(() => {
@@ -360,6 +313,22 @@ export default function Map() {
     if (pathBbox) {
       targetBbox = pathBbox;
       pad = Math.max(30, Math.min(w, h) * 0.08); // extra padding for paths
+    } else if (selectedTo && selectedTo.map === targetMapId) {
+      targetBbox = {
+        minX: selectedTo.x - 50,
+        minY: selectedTo.y - 50,
+        maxX: selectedTo.x + 50,
+        maxY: selectedTo.y + 50,
+      };
+      pad = 40;
+    } else if (selectedFrom && selectedFrom.map === targetMapId) {
+      targetBbox = {
+        minX: selectedFrom.x - 50,
+        minY: selectedFrom.y - 50,
+        maxX: selectedFrom.x + 50,
+        maxY: selectedFrom.y + 50,
+      };
+      pad = 40;
     }
 
     const bboxW = targetBbox.maxX - targetBbox.minX;
@@ -378,7 +347,7 @@ export default function Map() {
     const y = h / 2 - bboxCenterY * scale;
 
     setTransform({ scale, x, y });
-  }, [viewBox, pathBbox, activeMap, activeFloor, imgLoaded, setTransform]);
+  }, [viewBox, pathBbox, activeMap, activeFloor, imgLoaded, selectedFrom, selectedTo, targetMapId, setTransform]);
 
   // Inject Markers, Path, Pins INSIDE the background SVG element
   useEffect(() => {
@@ -510,6 +479,33 @@ export default function Map() {
 
     // 4. Render pins if present
     if (selectedFrom && selectedFrom.map === targetMapId) {
+      const pinGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      pinGroup.setAttribute('class', 'custom-map-element pointer-events-none');
+
+      // Pulsing circle
+      const pulseCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      pulseCircle.setAttribute('cx', String(selectedFrom.x));
+      pulseCircle.setAttribute('cy', String(selectedFrom.y));
+      pulseCircle.setAttribute('r', '8');
+      pulseCircle.setAttribute('fill', '#1a73e8');
+      pulseCircle.setAttribute('opacity', '0.3');
+
+      const animateR = document.createElementNS('http://www.w3.org/2000/svg', 'animate');
+      animateR.setAttribute('attributeName', 'r');
+      animateR.setAttribute('values', '8;18;8');
+      animateR.setAttribute('dur', '2s');
+      animateR.setAttribute('repeatCount', 'indefinite');
+      pulseCircle.appendChild(animateR);
+
+      const animateOpacity = document.createElementNS('http://www.w3.org/2000/svg', 'animate');
+      animateOpacity.setAttribute('attributeName', 'opacity');
+      animateOpacity.setAttribute('values', '0.4;0;0.4');
+      animateOpacity.setAttribute('dur', '2s');
+      animateOpacity.setAttribute('repeatCount', 'indefinite');
+      pulseCircle.appendChild(animateOpacity);
+
+      pinGroup.appendChild(pulseCircle);
+
       const pin = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
       pin.setAttribute('cx', String(selectedFrom.x));
       pin.setAttribute('cy', String(selectedFrom.y));
@@ -517,13 +513,52 @@ export default function Map() {
       pin.setAttribute('r', '5');
       pin.setAttribute('stroke', '#1a73e8');
       pin.setAttribute('stroke-width', '3');
-      pin.setAttribute('class', 'custom-map-element pointer-events-none');
-      svgElement.appendChild(pin);
+      pinGroup.appendChild(pin);
+
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('x', String(selectedFrom.x));
+      text.setAttribute('y', String(selectedFrom.y - 20));
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('font-size', '12');
+      text.setAttribute('fill', '#1a73e8');
+      text.setAttribute('font-weight', 'bold');
+      text.style.paintOrder = 'stroke';
+      text.style.stroke = '#ffffff';
+      text.style.strokeWidth = '3px';
+      text.style.strokeLinejoin = 'round';
+      text.textContent = 'You are here';
+      pinGroup.appendChild(text);
+
+      svgElement.appendChild(pinGroup);
     }
 
     if (selectedTo && selectedTo.map === targetMapId) {
       const pinGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       pinGroup.setAttribute('class', 'custom-map-element pointer-events-none');
+
+      // Pulsing circle
+      const pulseCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      pulseCircle.setAttribute('cx', String(selectedTo.x));
+      pulseCircle.setAttribute('cy', String(selectedTo.y));
+      pulseCircle.setAttribute('r', '8');
+      pulseCircle.setAttribute('fill', '#ea4335');
+      pulseCircle.setAttribute('opacity', '0.3');
+
+      const animateR = document.createElementNS('http://www.w3.org/2000/svg', 'animate');
+      animateR.setAttribute('attributeName', 'r');
+      animateR.setAttribute('values', '8;18;8');
+      animateR.setAttribute('dur', '2s');
+      animateR.setAttribute('repeatCount', 'indefinite');
+      pulseCircle.appendChild(animateR);
+
+      const animateOpacity = document.createElementNS('http://www.w3.org/2000/svg', 'animate');
+      animateOpacity.setAttribute('attributeName', 'opacity');
+      animateOpacity.setAttribute('values', '0.4;0;0.4');
+      animateOpacity.setAttribute('dur', '2s');
+      animateOpacity.setAttribute('repeatCount', 'indefinite');
+      pulseCircle.appendChild(animateOpacity);
+
+      pinGroup.appendChild(pulseCircle);
 
       const pinPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       pinPath.setAttribute(
@@ -539,6 +574,20 @@ export default function Map() {
       pinInner.setAttribute('fill', '#ffffff');
       pinInner.setAttribute('r', '4');
       pinGroup.appendChild(pinInner);
+
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('x', String(selectedTo.x));
+      text.setAttribute('y', String(selectedTo.y - 35));
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('font-size', '12');
+      text.setAttribute('fill', '#ea4335');
+      text.setAttribute('font-weight', 'bold');
+      text.style.paintOrder = 'stroke';
+      text.style.stroke = '#ffffff';
+      text.style.strokeWidth = '3px';
+      text.style.strokeLinejoin = 'round';
+      text.textContent = selectedTo.name;
+      pinGroup.appendChild(text);
 
       svgElement.appendChild(pinGroup);
     }
@@ -557,21 +606,13 @@ export default function Map() {
     <div
       ref={containerRef}
       className="map-bg overflow-hidden flex items-center justify-center relative w-full h-full touch-none select-none"
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerLeave={handlePointerUp}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
     >
-      <div
+      <animated.div
         style={{
-          transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
+          transform: to([x, y, scale], (tx, ty, ts) => `translate3d(${tx}px, ${ty}px, 0) scale(${ts})`),
           transformOrigin: '0 0',
-          transition: isPanningCursor ? 'none' : 'transform 0.1s ease',
         }}
-        className={`w-full h-full relative ${isPanningCursor ? 'cursor-grabbing' : 'cursor-grab'}`}
+        className={`w-full h-full relative ${isPanningCursor.current ? 'cursor-grabbing' : 'cursor-grab'}`}
       >
         {/* Map Content */}
         {svgContent ? (
@@ -583,7 +624,7 @@ export default function Map() {
         ) : (
           <img
             alt="University Map"
-            className="w-full h-full object-cover transition-opacity duration-300 opacity-60 grayscale-[20%] pointer-events-none"
+            className="w-full h-full object-contain transition-opacity duration-300 opacity-60 grayscale-[20%] pointer-events-none"
             src={activeMapUrl}
           />
         )}
@@ -593,6 +634,7 @@ export default function Map() {
           <svg
             className="absolute inset-0 w-full h-full pointer-events-none"
             viewBox={`${viewBox.minX} ${viewBox.minY} ${viewBox.width} ${viewBox.height}`}
+            preserveAspectRatio="xMidYMid meet"
           >
             {/* Shortest Path Overlay Route line */}
             {pathD && (
@@ -630,6 +672,31 @@ export default function Map() {
                   }}
                   className="cursor-pointer group pointer-events-auto"
                 >
+                  {/* Outer Pulsing Circle */}
+                  {isSelected && (
+                    <circle
+                      cx={node.x}
+                      cy={node.y}
+                      r="8"
+                      fill={isStart ? '#1a73e8' : '#ea4335'}
+                      opacity="0.3"
+                    >
+                      <animate
+                        attributeName="r"
+                        values="8;18;8"
+                        dur="2s"
+                        repeatCount="indefinite"
+                      />
+                      <animate
+                        attributeName="opacity"
+                        values="0.4;0;0.4"
+                        dur="2s"
+                        repeatCount="indefinite"
+                      />
+                    </circle>
+                  )}
+
+                  {/* Inner Node Circle */}
                   <circle
                     cx={node.x}
                     cy={node.y}
@@ -654,29 +721,93 @@ export default function Map() {
 
             {/* Start Selection Pin Marker */}
             {selectedFrom && selectedFrom.map === targetMapId && (
-              <circle
-                cx={selectedFrom.x}
-                cy={selectedFrom.y}
-                fill="#ffffff"
-                r="5"
-                stroke="#1a73e8"
-                strokeWidth="3"
-              />
+              <g className="pointer-events-none">
+                <circle
+                  cx={selectedFrom.x}
+                  cy={selectedFrom.y}
+                  r="8"
+                  fill="#1a73e8"
+                  opacity="0.3"
+                >
+                  <animate
+                    attributeName="r"
+                    values="8;18;8"
+                    dur="2s"
+                    repeatCount="indefinite"
+                  />
+                  <animate
+                    attributeName="opacity"
+                    values="0.4;0;0.4"
+                    dur="2s"
+                    repeatCount="indefinite"
+                  />
+                </circle>
+                <circle
+                  cx={selectedFrom.x}
+                  cy={selectedFrom.y}
+                  fill="#ffffff"
+                  r="5"
+                  stroke="#1a73e8"
+                  strokeWidth="3"
+                />
+                <text
+                  x={selectedFrom.x}
+                  y={selectedFrom.y - 20}
+                  textAnchor="middle"
+                  fontSize="12"
+                  fill="#1a73e8"
+                  fontWeight="bold"
+                  style={{ paintOrder: 'stroke', stroke: '#ffffff', strokeWidth: '3px', strokeLinejoin: 'round' }}
+                >
+                  You are here
+                </text>
+              </g>
             )}
 
             {/* End Selection Pin Marker */}
             {selectedTo && selectedTo.map === targetMapId && (
-              <g>
+              <g className="pointer-events-none">
+                <circle
+                  cx={selectedTo.x}
+                  cy={selectedTo.y}
+                  r="8"
+                  fill="#ea4335"
+                  opacity="0.3"
+                >
+                  <animate
+                    attributeName="r"
+                    values="8;18;8"
+                    dur="2s"
+                    repeatCount="indefinite"
+                  />
+                  <animate
+                    attributeName="opacity"
+                    values="0.4;0;0.4"
+                    dur="2s"
+                    repeatCount="indefinite"
+                  />
+                </circle>
                 <path
                   d={`M ${selectedTo.x},${selectedTo.y - 30} L ${selectedTo.x + 15},${selectedTo.y} L ${selectedTo.x},${selectedTo.y + 30} L ${selectedTo.x - 15},${selectedTo.y} Z`}
                   fill="#ea4335"
                 />
                 <circle cx={selectedTo.x} cy={selectedTo.y} fill="#ffffff" r="4" />
+                <text
+                  x={selectedTo.x}
+                  y={selectedTo.y - 35}
+                  textAnchor="middle"
+                  fontSize="12"
+                  fill="#ea4335"
+                  fontWeight="bold"
+                  style={{ paintOrder: 'stroke', stroke: '#ffffff', strokeWidth: '3px', strokeLinejoin: 'round' }}
+                >
+                  {selectedTo.name}
+                </text>
               </g>
             )}
           </svg>
         )}
-      </div>
+      </animated.div>
 
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-[var(--bg-card)]/85 z-20">

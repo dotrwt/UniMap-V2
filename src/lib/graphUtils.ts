@@ -36,7 +36,28 @@ export function searchNodes(graph: CampusGraph, query: string): MapNode[] {
   if (trimmed.length < 2) {
     return [];
   }
-  return graph.nodes.filter(node => node.name.toLowerCase().includes(trimmed));
+  return graph.nodes.filter(node => {
+    const type = node.type.toLowerCase();
+    // Only search rooms, gates, and building entries
+    if (type !== 'room' && type !== 'gate' && type !== 'entry') {
+      return false;
+    }
+
+    const name = node.name.toLowerCase();
+    const id = node.id.toLowerCase();
+
+    // Remove intersection, zyx, node, and corridor keywords from search
+    if (
+      name.includes('zyx') || id.includes('zyx') ||
+      name.includes('node') || id.includes('node') ||
+      name.includes('intersection') || id.includes('intersection') ||
+      name.includes('corridor') || id.includes('corridor')
+    ) {
+      return false;
+    }
+
+    return name.includes(trimmed);
+  });
 }
 
 /** Returns all staircase, lift, entrance, and exit transition nodes. */
