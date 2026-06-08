@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Compass } from 'lucide-react';
-import ThemeToggle from './ThemeToggle';
 
 /** A sticky top navigation bar component providing page links and theme settings. */
 export default function Navbar() {
@@ -22,7 +21,7 @@ export default function Navbar() {
             <Compass size={18} className="animate-spin-slow" />
           </div>
         </div>
-        
+
         <div className="flex items-center gap-6 text-xs font-semibold">
           <Link to="/map" className="text-neutral-400 hover:text-white transition-colors">Map</Link>
           <Link to="/support" className="text-white">Support</Link>
@@ -43,14 +42,13 @@ export default function Navbar() {
           </div>
           <span className="text-sm font-bold text-white tracking-wide">UniMap</span>
         </div>
-        
+
         <div className="flex items-center gap-6 text-xs font-semibold text-neutral-400">
           <Link to="/" className={`hover:text-white transition-colors ${location.pathname === '/' ? 'text-white' : ''}`}>Home</Link>
           <Link to="/support" className="hover:text-white transition-colors">Support</Link>
         </div>
 
         <div className="flex items-center gap-2.5">
-          <ThemeToggle />
           <Link to="/map">
             <button className="bg-[#ff602e] hover:bg-[#ff7b52] text-white text-[11px] font-bold px-4 py-2 rounded-full transition-all duration-200 shadow-md">
               Start Navigating
@@ -75,31 +73,28 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-6">
           <Link
             to="/"
-            className={`text-sm transition-colors ${
-              isActive('/')
-                ? 'text-[var(--accent)] font-medium'
-                : 'text-[var(--text-secondary)] hover:text-[var(--accent)]'
-            }`}
+            className={`text-sm transition-colors ${isActive('/')
+              ? 'text-[var(--accent)] font-medium'
+              : 'text-[var(--text-secondary)] hover:text-[var(--accent)]'
+              }`}
           >
             Home
           </Link>
           <Link
             to="/map"
-            className={`text-sm transition-colors ${
-              isActive('/map')
-                ? 'text-[var(--accent)] font-medium'
-                : 'text-[var(--text-secondary)] hover:text-[var(--accent)]'
-            }`}
+            className={`text-sm transition-colors ${isActive('/map')
+              ? 'text-[var(--accent)] font-medium'
+              : 'text-[var(--text-secondary)] hover:text-[var(--accent)]'
+              }`}
           >
             Map
           </Link>
           <Link
             to="/support"
-            className={`text-sm transition-colors ${
-              isActive('/support')
-                ? 'text-[var(--accent)] font-medium'
-                : 'text-[var(--text-secondary)] hover:text-[var(--accent)]'
-            }`}
+            className={`text-sm transition-colors ${isActive('/support')
+              ? 'text-[var(--accent)] font-medium'
+              : 'text-[var(--text-secondary)] hover:text-[var(--accent)]'
+              }`}
           >
             Support
           </Link>
@@ -107,7 +102,6 @@ export default function Navbar() {
 
         {/* Right: Actions */}
         <div className="flex items-center gap-3">
-          <ThemeToggle />
           <Link
             to="/map"
             className="hidden sm:inline-flex items-center justify-center px-4 py-2 rounded-lg bg-[var(--accent)] text-white text-sm font-medium hover:bg-[var(--accent-hover)] transition-colors"
@@ -131,27 +125,24 @@ export default function Navbar() {
           <Link
             to="/"
             onClick={toggleMenu}
-            className={`text-sm py-1 transition-colors ${
-              isActive('/') ? 'text-[var(--accent)] font-medium' : 'text-[var(--text-secondary)]'
-            }`}
+            className={`text-sm py-1 transition-colors ${isActive('/') ? 'text-[var(--accent)] font-medium' : 'text-[var(--text-secondary)]'
+              }`}
           >
             Home
           </Link>
           <Link
             to="/map"
             onClick={toggleMenu}
-            className={`text-sm py-1 transition-colors ${
-              isActive('/map') ? 'text-[var(--accent)] font-medium' : 'text-[var(--text-secondary)]'
-            }`}
+            className={`text-sm py-1 transition-colors ${isActive('/map') ? 'text-[var(--accent)] font-medium' : 'text-[var(--text-secondary)]'
+              }`}
           >
             Map
           </Link>
           <Link
             to="/support"
             onClick={toggleMenu}
-            className={`text-sm py-1 transition-colors ${
-              isActive('/support') ? 'text-[var(--accent)] font-medium' : 'text-[var(--text-secondary)]'
-            }`}
+            className={`text-sm py-1 transition-colors ${isActive('/support') ? 'text-[var(--accent)] font-medium' : 'text-[var(--text-secondary)]'
+              }`}
           >
             Support
           </Link>

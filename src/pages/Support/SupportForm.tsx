@@ -17,7 +17,7 @@ export default function SupportForm() {
       alert('Please fill in all fields.');
       return;
     }
-    
+
     // Simulate submission success
     setIsSubmitted(true);
     setTimeout(() => {
@@ -30,7 +30,7 @@ export default function SupportForm() {
   };
 
   return (
-    <form 
+    <form
       onSubmit={handleSubmit}
       className="w-full max-w-[640px] bg-[#121212]/90 backdrop-blur-xl border border-white/[0.06] rounded-[28px] p-6 md:p-8 flex flex-col gap-6 shadow-[0_24px_50px_-12px_rgba(0,0,0,0.5)]"
     >

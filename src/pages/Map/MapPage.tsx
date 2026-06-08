@@ -7,7 +7,6 @@ import { usePathfinding } from '@/hooks/usePathfinding';
 import { searchNodes } from '@/lib/graphUtils';
 import { formatDistance, formatTime } from '@/lib/routeBuilder';
 import Map from './Map';
-import { ThemeToggle } from '@/components/ui';
 
 export default function MapPage() {
   const navigate = useNavigate();
@@ -170,7 +169,6 @@ export default function MapPage() {
         )}
 
         <div className="flex items-center gap-2">
-          <ThemeToggle />
           <button
             onClick={() => navigate('/support')}
             className="p-2 hover:bg-surface-variant transition-colors rounded-full"

@@ -19,9 +19,8 @@ export default function NotFoundPage() {
         <h1 className="text-[28px] sm:text-[36px] md:text-[40px] font-bold tracking-tight text-neutral-900 dark:text-neutral-100 mb-6 leading-tight">
           404 - Page not found
         </h1>
-        
         <Link to="/" className="hover:scale-[1.02] active:scale-[0.98] transition-transform duration-200">
-          <button className="bg-neutral-900 dark:bg-neutral-100 hover:bg-neutral-800 dark:hover:bg-neutral-200 text-white dark:text-neutral-900 font-semibold text-xs px-6 py-3 rounded-full shadow-lg transition-all duration-200 cursor-pointer">
+          <button className="bg-[#ff602e] hover:bg-[#ff7b52] text-white font-semibold text-xs px-6 py-3 rounded-full shadow-lg shadow-[#ff602e]/20 transition-all duration-200 cursor-pointer">
             Back to homepage
           </button>
         </Link>
