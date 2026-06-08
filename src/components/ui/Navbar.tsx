@@ -31,8 +31,10 @@ export default function Navbar() {
     );
   }
 
-  // On the landing page, render the custom floating glass-capsule navbar
-  if (location.pathname === '/') {
+  // On the landing page, support page, or 404 page, render the custom floating glass-capsule navbar
+  const is404 = !['/', '/map', '/support'].includes(location.pathname);
+
+  if (location.pathname === '/' || is404) {
     return (
       <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between w-[92%] max-w-2xl px-5 py-2.5 rounded-full glass-capsule shadow-xl shadow-black/10">
         <div className="flex items-center gap-2">
@@ -43,7 +45,7 @@ export default function Navbar() {
         </div>
         
         <div className="flex items-center gap-6 text-xs font-semibold text-neutral-400">
-          <Link to="/" className="hover:text-white transition-colors text-white">Home</Link>
+          <Link to="/" className={`hover:text-white transition-colors ${location.pathname === '/' ? 'text-white' : ''}`}>Home</Link>
           <Link to="/support" className="hover:text-white transition-colors">Support</Link>
         </div>
 

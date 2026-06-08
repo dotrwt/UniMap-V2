@@ -11,11 +11,11 @@ import './Landing/landing.css';
 export default function NotFoundPage() {
   return (
     <div className="w-full flex flex-col min-h-screen blueprint-grid text-[var(--text-primary)]">
-      {/* Floating global navbar */}
+      {/* Global navbar */}
       <Navbar />
 
-      {/* Center 404 messaging */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4 py-32 text-center select-none">
+      {/* Center 404 messaging (occupies full viewport height to fill the fold) */}
+      <main className="w-full flex-grow min-h-screen flex flex-col items-center justify-center px-4 text-center select-none">
         <h1 className="text-[28px] sm:text-[36px] md:text-[40px] font-bold tracking-tight text-neutral-900 dark:text-neutral-100 mb-6 leading-tight">
           404 - Page not found
         </h1>
@@ -27,7 +27,7 @@ export default function NotFoundPage() {
         </Link>
       </main>
 
-      {/* Starry footer */}
+      {/* Starry footer (visible only when scrolling down) */}
       <Footer />
     </div>
   );
