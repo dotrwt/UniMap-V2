@@ -5,7 +5,9 @@ import './styles/globals.css';
 
 // Lazy loaded page components
 const LandingPage = React.lazy(() => import('@/pages/Landing/LandingPage'));
-const MapPage = React.lazy(() => import('@/pages/MapPage'));
+const MapPage = React.lazy(() => import('@/pages/Map/MapPage'));
+const SupportPage = React.lazy(() => import('@/pages/Support/SupportPage'));
+
 
 // Inline NotFound component
 const NotFound = () => (
@@ -30,6 +32,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/map" element={<MapPage />} />
+          <Route path="/support" element={<SupportPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

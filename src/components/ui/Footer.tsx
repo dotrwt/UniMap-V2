@@ -1,6 +1,6 @@
 // src/components/ui/Footer.tsx
 import { Link } from 'react-router-dom';
-import { Twitter, Linkedin, Instagram } from 'lucide-react';
+import { BriefcaseBusiness, Camera, MessageCircle } from 'lucide-react';
 import './footer.css';
 
 /** A dark themed, starry-sky styled card footer component matching the design spec. */
@@ -83,7 +83,7 @@ export default function Footer() {
             <div className="flex flex-col gap-3 text-sm font-normal text-neutral-300">
               <Link to="/" className="hover:text-white transition-colors w-fit">Home</Link>
               <Link to="/map" className="hover:text-white transition-colors w-fit">Map</Link>
-              <Link to="/about" className="hover:text-white transition-colors w-fit">About</Link>
+              <Link to="/support" className="hover:text-white transition-colors w-fit">Support</Link>
               <Link to="/404" className="hover:text-white transition-colors w-fit">404</Link>
             </div>
 
@@ -98,7 +98,7 @@ export default function Footer() {
                     rel="noopener noreferrer" 
                     className="text-neutral-400 hover:text-white transition-colors"
                   >
-                    <Twitter size={16} />
+                    <MessageCircle size={16} />
                   </a>
                   <a 
                     href="https://linkedin.com" 
@@ -106,7 +106,7 @@ export default function Footer() {
                     rel="noopener noreferrer" 
                     className="text-neutral-400 hover:text-white transition-colors"
                   >
-                    <Linkedin size={16} />
+                    <BriefcaseBusiness size={16} />
                   </a>
                   <a 
                     href="https://instagram.com" 
@@ -114,7 +114,7 @@ export default function Footer() {
                     rel="noopener noreferrer" 
                     className="text-neutral-400 hover:text-white transition-colors"
                   >
-                    <Instagram size={16} />
+                    <Camera size={16} />
                   </a>
                 </div>
               </div>

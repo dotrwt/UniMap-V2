@@ -1,5 +1,5 @@
 // src/pages/Landing/About.tsx
-import { Info, Github, Cpu, Database, LayoutTemplate, Sparkles } from 'lucide-react';
+import { Info, GitFork, Cpu, Database, LayoutTemplate, Sparkles } from 'lucide-react';
 
 export default function About() {
   return (
@@ -71,7 +71,7 @@ export default function About() {
         {/* GitHub CTA Button */}
         <a href="https://github.com/dotrwt" target="_blank" rel="noopener noreferrer" className="inline-block">
           <button className="flex items-center gap-2 bg-[#ff602e] hover:bg-[#ff7b52] text-white font-bold text-xs px-6 py-3.5 rounded-full transition-all duration-200 active:scale-95 shadow-md hover:shadow-[#ff602e]/20">
-            <Github size={16} />
+            <GitFork size={16} />
             GitHub Repository
           </button>
         </a>

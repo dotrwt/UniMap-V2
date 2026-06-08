@@ -172,9 +172,9 @@ export default function MapPage() {
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <button
-            onClick={() => navigate('/about')}
+            onClick={() => navigate('/support')}
             className="p-2 hover:bg-surface-variant transition-colors rounded-full"
-            aria-label="About page"
+            aria-label="Support page"
           >
             <span className="material-symbols-outlined text-on-surface-variant">info</span>
           </button>
