@@ -7,15 +7,7 @@ import './styles/globals.css';
 const LandingPage = React.lazy(() => import('@/pages/Landing/LandingPage'));
 const MapPage = React.lazy(() => import('@/pages/Map/MapPage'));
 const SupportPage = React.lazy(() => import('@/pages/Support/SupportPage'));
-
-
-// Inline NotFound component
-const NotFound = () => (
-  <div className="w-screen h-screen flex flex-col items-center justify-center bg-[var(--bg)] text-[var(--text-primary)]">
-    <h1 className="text-xl font-semibold mb-1">404</h1>
-    <p className="text-xs text-[var(--text-secondary)]">Page not found</p>
-  </div>
-);
+const NotFoundPage = React.lazy(() => import('@/pages/404'));
 
 // Spinner loading fallback component matching MapCanvas design
 const LoadingFallback = () => (
@@ -33,7 +25,7 @@ export default function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/map" element={<MapPage />} />
           <Route path="/support" element={<SupportPage />} />
-          <Route path="*" element={<NotFound />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>
     </Router>
