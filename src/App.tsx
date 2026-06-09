@@ -1,11 +1,11 @@
 // src/App.tsx
 import React, { Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import './styles/globals.css';
 
 // Lazy loaded page components
 const LandingPage = React.lazy(() => import('@/pages/Landing/LandingPage'));
-const MapPage = React.lazy(() => import('@/pages/Map/MapPage'));
+const CampusMapPage = React.lazy(() => import('@/pages/Map/CampusMapPage'));
 const SupportPage = React.lazy(() => import('@/pages/Support/SupportPage'));
 const NotFoundPage = React.lazy(() => import('@/pages/404'));
 
@@ -16,6 +16,11 @@ const LoadingFallback = () => (
   </div>
 );
 
+function CampusMapWrapper() {
+  const navigate = useNavigate();
+  return <CampusMapPage onOpenDeveloperPage={() => navigate('/support')} />;
+}
+
 /** Root App component setting up global routing, theme, and code-split pages. */
 export default function App() {
   return (
@@ -23,7 +28,7 @@ export default function App() {
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/map" element={<MapPage />} />
+          <Route path="/map" element={<CampusMapWrapper />} />
           <Route path="/support" element={<SupportPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
@@ -31,3 +36,4 @@ export default function App() {
     </Router>
   );
 }
+

@@ -1,130 +1,193 @@
 // src/lib/dijkstra.ts
-import type { CampusGraph, MapEdge, RouteOptions } from '@/types';
-import { ACCESSIBLE_EDGE_TYPES } from '@/constants';
 
-/** Builds an adjacency list from the graph's edges respecting routing options. */
-export function buildAdjacencyList(
-  graph: CampusGraph,
-  options: RouteOptions
-): Map<string, Array<{ nodeId: string; edge: MapEdge }>> {
-  const adjList = new Map<string, Array<{ nodeId: string; edge: MapEdge }>>();
-
-  for (const node of graph.nodes) {
-    adjList.set(node.id, []);
-  }
-
-  for (const edge of graph.edges) {
-    if (options.accessibleOnly && !ACCESSIBLE_EDGE_TYPES.includes(edge.type)) {
-      continue;
-    }
-    if (options.avoidStairs && edge.type === 'stairs') {
-      continue;
-    }
-
-    const from = edge.from_node;
-    const to = edge.to_node;
-
-    let fromList = adjList.get(from);
-    if (!fromList) {
-      fromList = [];
-      adjList.set(from, fromList);
-    }
-    fromList.push({ nodeId: to, edge });
-
-    let toList = adjList.get(to);
-    if (!toList) {
-      toList = [];
-      adjList.set(to, toList);
-    }
-    toList.push({ nodeId: from, edge });
-  }
-
-  return adjList;
+export interface DijkstraGraphNode {
+  node: string;
+  weight: number;
 }
 
-/** Runs Dijkstra's algorithm to find the shortest path between two nodes. */
-export function dijkstra(
-  graph: CampusGraph,
-  fromId: string,
-  toId: string,
-  options: RouteOptions
-): string[] | null {
-  try {
-    const nodeIdsInGraph = new Set(graph.nodes.map(n => n.id));
-    if (!nodeIdsInGraph.has(fromId) || !nodeIdsInGraph.has(toId)) {
-      return null;
-    }
+export interface DijkstraGraph {
+  [nodeId: string]: DijkstraGraphNode[];
+}
 
-    const adjList = buildAdjacencyList(graph, options);
+class MinHeap {
+  private heap: Array<[number, string]> = [];
 
-    const distances: Record<string, number> = {};
-    const previous: Record<string, string | null> = {};
-    const visited = new Set<string>();
-
-    for (const node of graph.nodes) {
-      distances[node.id] = Infinity;
-      previous[node.id] = null;
-    }
-
-    distances[fromId] = 0;
-
-    const pq: Array<[string, number]> = [[fromId, 0]];
-
-    while (pq.length > 0) {
-      pq.sort((a, b) => b[1] - a[1]);
-      const popped = pq.pop();
-      if (!popped) {
-        break;
-      }
-      const [u, distU] = popped;
-
-      if (visited.has(u)) {
-        continue;
-      }
-      visited.add(u);
-
-      if (u === toId) {
-        break;
-      }
-
-      const neighbors = adjList.get(u) || [];
-      for (const neighbor of neighbors) {
-        const v = neighbor.nodeId;
-        if (visited.has(v)) {
-          continue;
-        }
-
-        const alt = distU + neighbor.edge.distance;
-        const currentDistV = distances[v] !== undefined ? distances[v] : Infinity;
-
-        if (alt < currentDistV) {
-          distances[v] = alt;
-          previous[v] = u;
-          pq.push([v, alt]);
-        }
-      }
-    }
-
-    if (distances[toId] === Infinity) {
-      return null;
-    }
-
-    const path: string[] = [];
-    let curr: string | null = toId;
-    while (curr !== null) {
-      path.push(curr);
-      if (curr === fromId) {
-        break;
-      }
-      curr = previous[curr] ?? null;
-    }
-
-    if (path[path.length - 1] !== fromId) {
-      return null;
-    }
-
-    return path.reverse();
-  } catch (error) {
-    return null;
+  push(item: [number, string]): void {
+    this.heap.push(item);
+    this.bubbleUp(this.heap.length - 1);
   }
+
+  pop(): [number, string] | null {
+    if (this.heap.length === 0) return null;
+    const min = this.heap[0];
+    const last = this.heap.pop();
+    if (this.heap.length > 0 && last !== undefined) {
+      this.heap[0] = last;
+      this.bubbleDown(0);
+    }
+    return min;
+  }
+
+  get size(): number {
+    return this.heap.length;
+  }
+
+  private bubbleUp(i: number): void {
+    while (i > 0) {
+      const p = (i - 1) >> 1;
+      if (this.heap[p][0] <= this.heap[i][0]) return;
+      const temp = this.heap[p];
+      this.heap[p] = this.heap[i];
+      this.heap[i] = temp;
+      i = p;
+    }
+  }
+
+  private bubbleDown(i: number): void {
+    const n = this.heap.length;
+    while (true) {
+      const l = i * 2 + 1;
+      const r = l + 1;
+      let smallest = i;
+      if (l < n && this.heap[l][0] < this.heap[smallest][0]) smallest = l;
+      if (r < n && this.heap[r][0] < this.heap[smallest][0]) smallest = r;
+      if (smallest === i) return;
+      const temp = this.heap[i];
+      this.heap[i] = this.heap[smallest];
+      this.heap[smallest] = temp;
+      i = smallest;
+    }
+  }
+}
+
+async function yieldToMainThread(): Promise<void> {
+  if (typeof requestAnimationFrame === 'function') {
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    return;
+  }
+  await new Promise<void>((resolve) => setTimeout(resolve, 0));
+}
+
+export function dijkstra(graph: DijkstraGraph, start: string, end: string): string[] | null {
+  const distances: Record<string, number> = {};
+  const prev: Record<string, string | null> = {};
+
+  for (const node of Object.keys(graph ?? {})) {
+    distances[node] = Infinity;
+  }
+
+  if (start == null || end == null) return null;
+  if (!(start in distances)) distances[start] = Infinity;
+  if (!(end in distances)) distances[end] = Infinity;
+
+  distances[start] = 0;
+  const heap = new MinHeap();
+  heap.push([0, start]);
+
+  while (heap.size > 0) {
+    const popped = heap.pop();
+    if (!popped) break;
+    const [d, u] = popped;
+    if (d !== distances[u]) continue;
+    if (u === end) break;
+
+    const neighbours = graph?.[u] ?? [];
+    for (const neighbour of neighbours) {
+      if (!neighbour || typeof neighbour.node !== 'string') continue;
+      const v = neighbour.node;
+      const w = neighbour.weight;
+      if (!(v in distances)) distances[v] = Infinity;
+
+      const newDist = distances[u] + w;
+      if (newDist < distances[v]) {
+        distances[v] = newDist;
+        prev[v] = u;
+        heap.push([newDist, v]);
+      }
+    }
+  }
+
+  if (distances[end] === Infinity) return null;
+
+  const path: string[] = [];
+  let current: string | null = end;
+  while (current != null) {
+    path.push(current);
+    if (current === start) break;
+    current = prev[current] ?? null;
+  }
+
+  if (path[path.length - 1] !== start) return null;
+  path.reverse();
+  return path;
+}
+
+export async function dijkstraAsync(
+  graph: DijkstraGraph,
+  start: string,
+  end: string,
+  options: { signal?: AbortSignal | null; yieldEvery?: number } = {}
+): Promise<string[] | null> {
+  const { signal = null } = options;
+
+  const distances: Record<string, number> = {};
+  const prev: Record<string, string | null> = {};
+
+  for (const node of Object.keys(graph ?? {})) {
+    distances[node] = Infinity;
+  }
+
+  if (start == null || end == null) return null;
+  if (!(start in distances)) distances[start] = Infinity;
+  if (!(end in distances)) distances[end] = Infinity;
+
+  distances[start] = 0;
+  const heap = new MinHeap();
+  heap.push([0, start]);
+
+  let lastYieldTime = performance.now();
+  while (heap.size > 0) {
+    if (signal?.aborted) return null;
+
+    const popped = heap.pop();
+    if (!popped) break;
+    const [d, u] = popped;
+    if (d !== distances[u]) continue;
+    if (u === end) break;
+
+    const neighbours = graph?.[u] ?? [];
+    for (const neighbour of neighbours) {
+      if (signal?.aborted) return null;
+      if (!neighbour || typeof neighbour.node !== 'string') continue;
+      const v = neighbour.node;
+      const w = neighbour.weight;
+      if (!(v in distances)) distances[v] = Infinity;
+
+      const newDist = distances[u] + w;
+      if (newDist < distances[v]) {
+        distances[v] = newDist;
+        prev[v] = u;
+        heap.push([newDist, v]);
+      }
+    }
+
+    if (performance.now() - lastYieldTime > 10) {
+      await yieldToMainThread();
+      lastYieldTime = performance.now();
+    }
+  }
+
+  if (distances[end] === Infinity) return null;
+
+  const path: string[] = [];
+  let current: string | null = end;
+  while (current != null) {
+    path.push(current);
+    if (current === start) break;
+    current = prev[current] ?? null;
+  }
+
+  if (path[path.length - 1] !== start) return null;
+  path.reverse();
+  return path;
 }
