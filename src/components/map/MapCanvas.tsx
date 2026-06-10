@@ -1,6 +1,6 @@
 // src/components/map/MapCanvas.tsx
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Maximize2 } from 'lucide-react';
+import { Maximize2, ZoomIn, ZoomOut } from 'lucide-react';
 import { useMapStore } from '@/store/mapStore';
 import { useFloorMap } from '@/hooks/useFloorMap';
 import { useSvgMap } from '@/hooks/useSvgMap';
@@ -25,6 +25,7 @@ const clamp = (v: number, min: number, max: number) =>
 
 export default function MapCanvas({ className = '' }: MapCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
   const svgWrapperRef = useRef<HTMLDivElement | null>(null);
 
   const graph = useMapStore((state) => state.graph);
@@ -72,17 +73,18 @@ export default function MapCanvas({ className = '' }: MapCanvasProps) {
   const { svgUrl } = useFloorMap();
   const { svgContent, isLoading, error } = useSvgMap(svgUrl);
 
-  // Transform state and references to avoid stale closure issues
-  const [transform, setTransform] = useState<Transform>({ scale: 1, x: 0, y: 0 });
-  const transformRef = useRef<Transform>(transform);
-  useEffect(() => {
-    transformRef.current = transform;
-  }, [transform]);
+  // Transform states and refs
+  const [displayScale, setDisplayScale] = useState(1);
+  const [dummyState, setDummyState] = useState(0);
+  const transformRef = useRef<Transform>({ scale: 1, x: 0, y: 0 });
 
   const isPanningRef = useRef<boolean>(false);
   const [isPanningCursor, setIsPanningCursor] = useState<boolean>(false);
   const startXRef = useRef<number>(0);
   const startYRef = useRef<number>(0);
+
+  const rafIdRef = useRef<number>(0);
+  const wheelTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Touch zoom/pan ref
   const touchStartRef = useRef<{
@@ -97,8 +99,28 @@ export default function MapCanvas({ className = '' }: MapCanvasProps) {
     isPinching: false
   });
 
-  // Callback ref for map injection
+  const applyTransform = () => {
+    if (!wrapperRef.current) return;
+    const { scale, x, y } = transformRef.current;
+    wrapperRef.current.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+  };
+
+  const scheduleTransform = () => {
+    if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+    rafIdRef.current = requestAnimationFrame(applyTransform);
+  };
+
+  const setShapeRendering = (value: 'optimizeSpeed' | 'geometricPrecision') => {
+    if (!wrapperRef.current) return;
+    const svgEl = wrapperRef.current.querySelector('svg');
+    if (svgEl) {
+      svgEl.setAttribute('shape-rendering', value);
+    }
+  };
+
+  // Callback ref for map injection (untouched logic as requested)
   const mapRef = useCallback((node: HTMLDivElement | null) => {
+    wrapperRef.current = node;
     svgWrapperRef.current = node;
     if (node) {
       const svgElement = node.querySelector('svg');
@@ -128,140 +150,215 @@ export default function MapCanvas({ className = '' }: MapCanvasProps) {
     }
   }, [svgContent, graph, activeMap]);
 
-  // Handle wheel zoom
+  // Imperative event listeners with passive: false
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    const handleWheel = (e: WheelEvent) => {
+    const onWheel = (e: WheelEvent) => {
       e.preventDefault();
       const rect = container.getBoundingClientRect();
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
       const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
 
-      setTransform(prev => {
-        const newScale = clamp(prev.scale * zoomFactor, MIN_SCALE, MAX_SCALE);
-        const newX = mouseX - (mouseX - prev.x) * (newScale / prev.scale);
-        const newY = mouseY - (mouseY - prev.y) * (newScale / prev.scale);
-        return { scale: newScale, x: newX, y: newY };
-      });
+      const { scale, x, y } = transformRef.current;
+      const newScale = clamp(scale * zoomFactor, MIN_SCALE, MAX_SCALE);
+      const newX = mouseX - (mouseX - x) * (newScale / scale);
+      const newY = mouseY - (mouseY - y) * (newScale / scale);
+
+      transformRef.current = { scale: newScale, x: newX, y: newY };
+      setShapeRendering('optimizeSpeed');
+      scheduleTransform();
+
+      if (wheelTimeoutRef.current) clearTimeout(wheelTimeoutRef.current);
+      wheelTimeoutRef.current = setTimeout(() => {
+        setShapeRendering('geometricPrecision');
+        setDisplayScale(transformRef.current.scale);
+        setDummyState(prev => prev + 1);
+      }, 150);
     };
 
-    container.addEventListener('wheel', handleWheel, { passive: false });
-    return () => {
-      container.removeEventListener('wheel', handleWheel);
-    };
-  }, []);
-
-  // Pointer dragging handlers
-  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (e.button !== 0) return;
-    e.currentTarget.setPointerCapture(e.pointerId);
-    isPanningRef.current = true;
-    setIsPanningCursor(true);
-    startXRef.current = e.clientX - transformRef.current.x;
-    startYRef.current = e.clientY - transformRef.current.y;
-  };
-
-  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isPanningRef.current) return;
-    const newX = e.clientX - startXRef.current;
-    const newY = e.clientY - startYRef.current;
-    setTransform(prev => ({
-      ...prev,
-      x: newX,
-      y: newY
-    }));
-  };
-
-  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (isPanningRef.current) {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-      isPanningRef.current = false;
-      setIsPanningCursor(false);
-    }
-  };
-
-  // Touch zoom/pan handlers
-  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    const t = e.touches;
-
-    if (t.length === 1) {
+    const onPointerDown = (e: PointerEvent) => {
+      if (e.button !== 0) return;
+      try {
+        container.setPointerCapture(e.pointerId);
+      } catch (err) {}
       isPanningRef.current = true;
       setIsPanningCursor(true);
-      startXRef.current = t[0].clientX - transformRef.current.x;
-      startYRef.current = t[0].clientY - transformRef.current.y;
-      touchStartRef.current.isPinching = false;
-    } else if (t.length === 2) {
-      isPanningRef.current = false;
-      setIsPanningCursor(false);
+      setShapeRendering('optimizeSpeed');
+      startXRef.current = e.clientX - transformRef.current.x;
+      startYRef.current = e.clientY - transformRef.current.y;
+    };
 
-      const dist = Math.hypot(
-        t[1].clientX - t[0].clientX,
-        t[1].clientY - t[0].clientY
-      );
-
-      touchStartRef.current = {
-        initialDistance: dist,
-        initialScale: transformRef.current.scale,
-        initialTransform: { ...transformRef.current },
-        isPinching: true
+    const onPointerMove = (e: PointerEvent) => {
+      if (!isPanningRef.current) return;
+      const newX = e.clientX - startXRef.current;
+      const newY = e.clientY - startYRef.current;
+      transformRef.current = {
+        ...transformRef.current,
+        x: newX,
+        y: newY
       };
-    }
+      scheduleTransform();
+    };
+
+    const onPointerUp = (e: PointerEvent) => {
+      if (isPanningRef.current) {
+        try {
+          container.releasePointerCapture(e.pointerId);
+        } catch (err) {}
+        isPanningRef.current = false;
+        setIsPanningCursor(false);
+        setShapeRendering('geometricPrecision');
+        setDisplayScale(transformRef.current.scale);
+        setDummyState(prev => prev + 1);
+      }
+    };
+
+    const onTouchStart = (e: TouchEvent) => {
+      e.preventDefault();
+      const t = e.touches;
+      setShapeRendering('optimizeSpeed');
+
+      if (t.length === 1) {
+        isPanningRef.current = true;
+        setIsPanningCursor(true);
+        startXRef.current = t[0].clientX - transformRef.current.x;
+        startYRef.current = t[0].clientY - transformRef.current.y;
+        touchStartRef.current.isPinching = false;
+      } else if (t.length === 2) {
+        isPanningRef.current = false;
+        setIsPanningCursor(false);
+        const dist = Math.hypot(
+          t[1].clientX - t[0].clientX,
+          t[1].clientY - t[0].clientY
+        );
+        touchStartRef.current = {
+          initialDistance: dist,
+          initialScale: transformRef.current.scale,
+          initialTransform: { ...transformRef.current },
+          isPinching: true
+        };
+      }
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+      const t = e.touches;
+
+      if (t.length === 1 && isPanningRef.current) {
+        const newX = t[0].clientX - startXRef.current;
+        const newY = t[0].clientY - startYRef.current;
+        transformRef.current = {
+          ...transformRef.current,
+          x: newX,
+          y: newY
+        };
+        scheduleTransform();
+      } else if (t.length === 2 && touchStartRef.current.isPinching) {
+        const dist = Math.hypot(
+          t[1].clientX - t[0].clientX,
+          t[1].clientY - t[0].clientY
+        );
+        const { initialDistance, initialScale, initialTransform } = touchStartRef.current;
+        if (initialDistance === 0) return;
+
+        const factor = dist / initialDistance;
+        const newScale = clamp(initialScale * factor, MIN_SCALE, MAX_SCALE);
+
+        const clientMidX = (t[0].clientX + t[1].clientX) / 2;
+        const clientMidY = (t[0].clientY + t[1].clientY) / 2;
+
+        const rect = container.getBoundingClientRect();
+        const midX = clientMidX - rect.left;
+        const midY = clientMidY - rect.top;
+
+        const newX = midX - (midX - initialTransform.x) * (newScale / initialTransform.scale);
+        const newY = midY - (midY - initialTransform.y) * (newScale / initialTransform.scale);
+
+        transformRef.current = {
+          scale: newScale,
+          x: newX,
+          y: newY
+        };
+        scheduleTransform();
+      }
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length === 0) {
+        isPanningRef.current = false;
+        setIsPanningCursor(false);
+        touchStartRef.current.isPinching = false;
+        setShapeRendering('geometricPrecision');
+        setDisplayScale(transformRef.current.scale);
+        setDummyState(prev => prev + 1);
+      } else if (e.touches.length === 1) {
+        isPanningRef.current = true;
+        setIsPanningCursor(true);
+        touchStartRef.current.isPinching = false;
+        const t = e.touches;
+        startXRef.current = t[0].clientX - transformRef.current.x;
+        startYRef.current = t[0].clientY - transformRef.current.y;
+      }
+    };
+
+    container.addEventListener('wheel', onWheel, { passive: false });
+    container.addEventListener('pointerdown', onPointerDown, { passive: false });
+    container.addEventListener('pointermove', onPointerMove, { passive: false });
+    container.addEventListener('pointerup', onPointerUp, { passive: false });
+    container.addEventListener('pointerleave', onPointerUp, { passive: false });
+    container.addEventListener('touchstart', onTouchStart, { passive: false });
+    container.addEventListener('touchmove', onTouchMove, { passive: false });
+    container.addEventListener('touchend', onTouchEnd, { passive: false });
+    container.addEventListener('touchcancel', onTouchEnd, { passive: false });
+
+    return () => {
+      container.removeEventListener('wheel', onWheel);
+      container.removeEventListener('pointerdown', onPointerDown);
+      container.removeEventListener('pointermove', onPointerMove);
+      container.removeEventListener('pointerup', onPointerUp);
+      container.removeEventListener('pointerleave', onPointerUp);
+      container.removeEventListener('touchstart', onTouchStart);
+      container.removeEventListener('touchmove', onTouchMove);
+      container.removeEventListener('touchend', onTouchEnd);
+      container.removeEventListener('touchcancel', onTouchEnd);
+      if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+      if (wheelTimeoutRef.current) clearTimeout(wheelTimeoutRef.current);
+    };
+  }, [svgContent]);
+
+  const zoomToCenter = (direction: 'in' | 'out') => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const zoomFactor = direction === 'in' ? 1.25 : 0.8;
+    const { scale, x, y } = transformRef.current;
+    const newScale = clamp(scale * zoomFactor, MIN_SCALE, MAX_SCALE);
+    const newX = centerX - (centerX - x) * (newScale / scale);
+    const newY = centerY - (centerY - y) * (newScale / scale);
+    transformRef.current = { scale: newScale, x: newX, y: newY };
+    applyTransform();
+    setDisplayScale(newScale);
   };
 
-  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    const t = e.touches;
-
-    if (t.length === 1 && isPanningRef.current) {
-      const newX = t[0].clientX - startXRef.current;
-      const newY = t[0].clientY - startYRef.current;
-      setTransform(prev => ({
-        ...prev,
-        x: newX,
-        y: newY
-      }));
-    } else if (t.length === 2 && touchStartRef.current.isPinching && containerRef.current) {
-      const dist = Math.hypot(
-        t[1].clientX - t[0].clientX,
-        t[1].clientY - t[0].clientY
-      );
-
-      const { initialDistance, initialScale, initialTransform } = touchStartRef.current;
-      if (initialDistance === 0) return;
-
-      const factor = dist / initialDistance;
-      const newScale = clamp(initialScale * factor, MIN_SCALE, MAX_SCALE);
-
-      const clientMidX = (t[0].clientX + t[1].clientX) / 2;
-      const clientMidY = (t[0].clientY + t[1].clientY) / 2;
-
-      const rect = containerRef.current.getBoundingClientRect();
-      const midX = clientMidX - rect.left;
-      const midY = clientMidY - rect.top;
-
-      const newX = midX - (midX - initialTransform.x) * (newScale / initialTransform.scale);
-      const newY = midY - (midY - initialTransform.y) * (newScale / initialTransform.scale);
-
-      setTransform({
-        scale: newScale,
-        x: newX,
-        y: newY
-      });
-    }
+  const resetTransform = () => {
+    if (!wrapperRef.current) return;
+    wrapperRef.current.style.transition = 'transform 0.3s ease';
+    wrapperRef.current.style.transform = 'translate(0px, 0px) scale(1)';
+    transformRef.current = { scale: 1, x: 0, y: 0 };
+    setTimeout(() => {
+      if (wrapperRef.current) {
+        wrapperRef.current.style.transition = 'none';
+      }
+    }, 300);
+    setDisplayScale(1);
+    setDummyState(prev => prev + 1);
   };
 
-  const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    isPanningRef.current = false;
-    setIsPanningCursor(false);
-    touchStartRef.current.isPinching = false;
-  };
-
-  const showReset = transform.scale !== 1 || transform.x !== 0 || transform.y !== 0;
+  const showReset = (displayScale !== 1 || transformRef.current.x !== 0 || transformRef.current.y !== 0) && dummyState !== -99999;
 
   return (
     <div
@@ -291,30 +388,40 @@ export default function MapCanvas({ className = '' }: MapCanvasProps) {
       <div
         ref={mapRef}
         style={{
-          transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
           transformOrigin: '0 0',
-          transition: isPanningCursor ? 'none' : 'transform 0.1s ease',
         }}
-        className={isPanningCursor ? 'cursor-grabbing w-full h-full' : 'cursor-grab w-full h-full'}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerLeave={handlePointerUp}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
+        className={`${isPanningCursor ? 'cursor-grabbing' : 'cursor-grab'} w-full h-full`}
         dangerouslySetInnerHTML={{ __html: svgContent ?? '' }}
       />
 
-      {showReset && (
-        <button
-          onClick={() => setTransform({ scale: 1, x: 0, y: 0 })}
-          className="absolute bottom-3 right-3 z-10 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--bg-hover)] transition-all shadow-sm cursor-pointer"
-        >
-          <Maximize2 size={13} />
-          <span>Reset</span>
-        </button>
-      )}
+      <div className="absolute bottom-3 right-3 z-10 flex flex-col gap-2">
+        <div className="flex flex-col bg-[var(--bg-card)] border border-[var(--border)] rounded-lg shadow-sm overflow-hidden">
+          <button
+            onClick={() => zoomToCenter('in')}
+            className="p-2 text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--bg-hover)] transition-colors cursor-pointer border-b border-[var(--border)]"
+            title="Zoom In"
+          >
+            <ZoomIn size={14} />
+          </button>
+          <button
+            onClick={() => zoomToCenter('out')}
+            className="p-2 text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--bg-hover)] transition-colors cursor-pointer"
+            title="Zoom Out"
+          >
+            <ZoomOut size={14} />
+          </button>
+        </div>
+
+        {showReset && (
+          <button
+            onClick={resetTransform}
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--accent)] hover:bg-[var(--bg-hover)] transition-all shadow-sm cursor-pointer"
+          >
+            <Maximize2 size={13} />
+            <span>Reset</span>
+          </button>
+        )}
+      </div>
     </div>
   );
 }
