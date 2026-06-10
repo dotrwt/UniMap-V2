@@ -36,7 +36,7 @@ export default function Features() {
           <div className="bg-[#0a0a0a] border border-white/[0.07] rounded-[40px] p-3">
             {/* 2x2 Feature Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-              
+
               {/* Card 1: Indoor Navigation with iPhone notification list mockup */}
               <div className="feature-grid-card feature-glass-card rounded-[32px] p-8 flex flex-col justify-between h-[480px] relative overflow-hidden group">
                 {/* Top Area: iPhone Mockup with Notifications */}
@@ -44,7 +44,7 @@ export default function Features() {
                   <div className="w-[200px] h-[340px] bg-gradient-to-tr from-[#a2e3c4] via-[#fbc4ab] to-[#bde0fe] rounded-[36px] border-[5px] border-neutral-900 shadow-2xl rotate-[-12deg] translate-y-16 relative overflow-hidden flex flex-col justify-between p-3 select-none">
                     {/* Dynamic Island Notch */}
                     <div className="w-16 h-3.5 bg-black rounded-full mx-auto shrink-0 mb-3" />
-                    
+
                     {/* Status Bar */}
                     <div className="absolute top-1 inset-x-0 px-5 flex justify-between text-[7px] text-neutral-800 font-bold select-none">
                       <span>9:41</span>
@@ -103,7 +103,7 @@ export default function Features() {
                   <Bell className="w-5 h-5 text-neutral-400 mb-3" />
                   <h3 className="text-[17px] font-bold text-white mb-1.5">Indoor Navigation</h3>
                   <p className="text-neutral-400 text-xs leading-relaxed max-w-sm">
-                    Turn-by-turn directions inside every building. Never get lost in a lecture hall maze again
+                    Turn-by-turn directions inside academic blocks, departments, and campus buildings.
                   </p>
                 </div>
               </div>
@@ -116,7 +116,7 @@ export default function Features() {
                   <div className="absolute w-44 h-44 rounded-full bg-yellow-500/10 blur-3xl pointer-events-none" />
                   {/* Blurry gold background bar */}
                   <div className="absolute w-48 h-16 bg-[#D4AF37]/25 blur-xl rounded-full translate-y-2 pointer-events-none" />
-                  
+
                   {/* Gold Coin container */}
                   <div className="coin-3d w-28 h-28 relative z-10 flex items-center justify-center">
                     <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-[0_8px_16px_rgba(212,175,55,0.4)]">
@@ -149,13 +149,13 @@ export default function Features() {
                   <MousePointerClick className="w-5 h-5 text-neutral-400 mb-3" />
                   <h3 className="text-[17px] font-bold text-white mb-1.5">Room Finder</h3>
                   <p className="text-neutral-400 text-xs leading-relaxed max-w-sm">
-                    Search any room or facility and get instant directions
+                    Search classrooms, labs, offices, and facilities instantly and get directions in seconds.
                   </p>
                 </div>
               </div>
 
               {/* Card 3: Astronaut Quote Card with generated background image */}
-              <div 
+              <div
                 className="feature-grid-card border border-white/10 rounded-[32px] p-8 flex flex-col justify-end h-[480px] relative overflow-hidden bg-cover bg-center group"
                 style={{ backgroundImage: 'url(/astronaut_field_feature.png)' }}
               >
@@ -164,9 +164,9 @@ export default function Features() {
 
                 <div className="relative z-10 text-left">
                   <p className="text-white text-[15px] font-medium leading-relaxed max-w-sm mb-4">
-                    "A university campus should be a place where every student feels empowered to find their way — to knowledge, to community, to belonging."
+                    "A university campus should empower students to focus on learning—not on figuring out where to go."
                   </p>
-                  <span className="text-neutral-400 text-xs font-semibold">-- The UniMap Team</span>
+                  <span className="text-neutral-400 text-xs font-semibold"> — Team UniMap </span>
                 </div>
               </div>
 
@@ -179,7 +179,7 @@ export default function Features() {
                       <span className="text-[10px] font-bold font-mono text-neutral-900">Portfolio</span>
                       <span className="text-[8px] text-neutral-400 font-semibold">14 Oct, 13:12</span>
                     </div>
-                    
+
                     {/* SVG line chart */}
                     <div className="relative h-20 w-full flex items-end">
                       <svg className="w-full h-full overflow-visible" viewBox="0 0 100 40">
@@ -187,14 +187,14 @@ export default function Features() {
                         <line x1="0" y1="10" x2="100" y2="10" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3" />
                         <line x1="0" y1="20" x2="100" y2="20" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3" />
                         <line x1="0" y1="30" x2="100" y2="30" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3" />
-                        
+
                         {/* Filled area under curve */}
                         <path
                           d="M 0 40 L 0 24 Q 25 8 45 32 T 85 16 L 100 28 L 100 40 Z"
                           fill="url(#feature-chart-grad-red)"
                           opacity="0.12"
                         />
-                        
+
                         {/* Curve */}
                         <path
                           d="M 0 24 Q 25 8 45 32 T 85 16 L 100 28"
@@ -203,10 +203,10 @@ export default function Features() {
                           strokeWidth="1.8"
                           strokeLinecap="round"
                         />
-                        
+
                         {/* Bubble Point */}
                         <circle cx="62" cy="22" r="3.5" fill="#FF4D00" stroke="#ffffff" strokeWidth="1" />
-                        
+
                         <defs>
                           <linearGradient id="feature-chart-grad-red" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stopColor="#FF4D00" />
@@ -214,7 +214,7 @@ export default function Features() {
                           </linearGradient>
                         </defs>
                       </svg>
-                      
+
                       {/* Floating Black Value Tag */}
                       <div className="absolute left-[54%] top-[18%] bg-black text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-md z-20">
                         $1.50
@@ -226,9 +226,9 @@ export default function Features() {
                 {/* Bottom Text Area */}
                 <div className="relative z-10">
                   <TrendingUp className="w-5 h-5 text-neutral-400 mb-3" />
-                  <h3 className="text-[17px] font-bold text-white mb-1.5">Real-Time Portfolio Insights</h3>
+                  <h3 className="text-[17px] font-bold text-white mb-1.5">Campus Directory</h3>
                   <p className="text-neutral-400 text-xs leading-relaxed max-w-sm">
-                    Track your Bitcoin balance and transaction history with live updates.
+                    Quickly locate departments, faculty offices, libraries, hostels, and student services.
                   </p>
                 </div>
               </div>
@@ -239,14 +239,13 @@ export default function Features() {
           {/* Second Sub-section Header */}
           <div className="text-center mt-28 mb-16">
             <h3 className="text-3xl md:text-[36px] font-medium tracking-tight text-white leading-tight">
-              Explore, discover, and connect <br />
-              seamlessly across campus
+              Explore Every Corner of Campus
             </h3>
           </div>
 
           {/* 3-Column Small Cards Grid */}
           <div className="flex flex-col md:flex-row justify-center items-stretch gap-6 md:gap-0 max-w-5xl mx-auto">
-            
+
             {/* Card A */}
             <div className="feature-grid-card card-overlap-a feature-glass-card w-full md:w-1/3 rounded-[24px] p-6 flex flex-col justify-between min-h-[180px]">
               <div className="flex gap-2.5">
@@ -277,7 +276,7 @@ export default function Features() {
                 </svg>
               </div>
               <p className="text-[14px] font-semibold text-neutral-200 leading-snug max-w-[200px]">
-                Mint and Secure SRC-20 Tokens
+                Locate classrooms, lecture theatres, and labs.
               </p>
             </div>
 
@@ -323,7 +322,7 @@ export default function Features() {
                 </svg>
               </div>
               <p className="text-[14px] font-semibold text-neutral-200 leading-snug max-w-[200px]">
-                Trade, Collect, and Inscribe Ordinals
+                Find administration offices, help desks, and support centers.
               </p>
             </div>
 
@@ -341,7 +340,7 @@ export default function Features() {
                 </svg>
               </div>
               <p className="text-[14px] font-semibold text-neutral-200 leading-snug max-w-[200px]">
-                Purchase STX tokens to power L2 apps on Stacks.
+                Discover cafeterias, libraries, auditoriums, and common areas.
               </p>
             </div>
 

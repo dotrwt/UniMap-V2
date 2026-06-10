@@ -1,6 +1,9 @@
 // src/pages/Landing/Hero.tsx
 import { Link } from 'react-router-dom';
 import { Compass, School, BookOpen, Coffee, Flame, Heart, ArrowUpDown } from 'lucide-react';
+import chrome from '@/assets/chrome.webp';
+import firefox from '@/assets/firefox.webp';
+import apple from '@/assets/safari.webp';
 
 export default function Hero() {
     return (
@@ -223,9 +226,9 @@ export default function Hero() {
             {/* Browser Availability Badges */}
             <div className="flex flex-col items-center gap-3">
                 <div className="flex items-center justify-center gap-4">
-                    <img src="https://www.google.com/chrome/static/images/chrome-logo-m100.svg" alt="Chrome" className="w-6 h-6 grayscale hover:grayscale-0 transition-all duration-200" />
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/a/a0/Firefox_logo%2C_2019.svg" alt="Firefox" className="w-5 h-5 grayscale hover:grayscale-0 transition-all duration-200" />
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/5/52/Safari_browser_logo.svg" alt="Safari" className="w-5 h-5 grayscale hover:grayscale-0 transition-all duration-200" />
+                    <img src={chrome} alt="Chrome" className="w-6 h-6 grayscale hover:grayscale-0 transition-all duration-200" />
+                    <img src={firefox} alt="Firefox" className="w-5 h-5 grayscale hover:grayscale-0 transition-all duration-200" />
+                    <img src={apple} alt="Safari" className="w-5 h-5 grayscale hover:grayscale-0 transition-all duration-200" />
                 </div>
                 <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider select-none">Also available in browsers</span>
             </div>

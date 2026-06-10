@@ -1,9 +1,7 @@
 // src/components/ui/MapBox.tsx
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { ZoomIn, ZoomOut, RotateCcw, Building2, ChevronLeft, ChevronRight } from 'lucide-react';
-import Button from './Button';
-import Badge from './Badge';
+import { ZoomIn, ZoomOut, RotateCcw, Building2 } from 'lucide-react';
 import type { FloorMap, Building } from '@/types';
 import MainCover from '@/assets/Main_Cover.webp';
 import AICover from '@/assets/AI_Cover.webp';
@@ -70,12 +68,9 @@ interface MapBoxProps {
   isNavigating: boolean;
   pathPoints: string;
   autoFitNonce?: number | null;
-  stepCount?: number;
-  activeStepIndex?: number;
-  onPrevStep?: () => void;
-  onNextStep?: () => void;
   floors: FloorMap[];
   buildings: Building[];
+  onMapChange?: (mapId: string) => void;
 }
 
 export default function MapBox({
@@ -85,12 +80,9 @@ export default function MapBox({
   isNavigating,
   pathPoints,
   autoFitNonce,
-  stepCount = 0,
-  activeStepIndex = 0,
-  onPrevStep,
-  onNextStep,
   floors,
   buildings,
+  onMapChange,
 }: MapBoxProps) {
   const prefersReducedMotion = useReducedMotion();
 
@@ -269,8 +261,7 @@ export default function MapBox({
   const containerRef = useRef<HTMLDivElement>(null);
   const lastAutoFitRef = useRef<number | null | undefined>(null);
 
-  const activeFloor = destination?.floor || currentLocation?.floor || null;
-  const showFloorPlan = !!mapId && (destination !== null || currentLocation !== null);
+  const showFloorPlan = !!mapId;
   const shouldShowDestination = !!destination && destination.map === mapId;
   const shouldShowCurrentLocation = !!currentLocation && currentLocation.map === mapId;
 
@@ -335,319 +326,315 @@ export default function MapBox({
     setPanY(nextPanY);
   }, [autoFitNonce, isNavigating, pathBbox, svgHeight, svgWidth]);
 
+  // Resolve current building floors
+  const activeFloorMeta = useMemo(() => floors.find((f) => f.map === mapId), [floors, mapId]);
+  const activeBuildingId = activeFloorMeta?.building || null;
+  const buildingFloors = useMemo(() => {
+    if (!activeBuildingId || activeBuildingId === 'campus') return [];
+    return floors
+      .filter((f) => f.building === activeBuildingId)
+      .sort((a, b) => a.floor - b.floor);
+  }, [floors, activeBuildingId]);
+
   return (
     <motion.div
-      initial={{ x: 20, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      transition={{ delay: 0.3 }}
-      className="lg:col-span-2"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="w-full h-full relative"
     >
-      <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 p-3 sm:p-5 border border-gray-100 min-h-[360px] h-[66svh] sm:h-[600px] lg:h-full lg:min-h-[700px] flex flex-col">
-        {/* Map Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
-          <h2 className="text-lg text-gray-900">Campus Map</h2>
-          <div className="flex flex-wrap items-center gap-2">
-            {shouldShowDestination && (
-              <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">
-                {destination.building}
-              </Badge>
-            )}
+      <div
+        ref={containerRef}
+        className="relative w-full h-full bg-[#fcfaf6] overflow-hidden"
+      >
+        {showFloorPlan && mapSrc ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing touch-none z-0"
+            onWheel={handleWheel}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUpOrCancel}
+            onPointerCancel={handlePointerUpOrCancel}
+            style={{
+              transform: `scale(${zoom}) translate3d(${panX / zoom}px, ${panY / zoom}px, 0)`,
+              transformOrigin: 'center center',
+              willChange: 'transform',
+            }}
+          >
+            <div className="relative w-full h-full">
+              <img
+                src={mapSrc}
+                alt={mapId || 'Map'}
+                className="w-full h-full object-contain pointer-events-none select-none"
+                decoding="async"
+              />
 
-            {isNavigating && stepCount > 1 ? (
-              <div className="flex flex-wrap items-center gap-1">
-                <Badge variant="accent" className="text-xs">
-                  Step {activeStepIndex + 1}/{stepCount}
-                </Badge>
-                <Button
-                  onClick={onPrevStep}
-                  variant="secondary"
-                  size="sm"
-                  className="h-8 w-8 p-0 rounded-lg"
-                  disabled={!onPrevStep || activeStepIndex <= 0}
-                  aria-label="Previous step"
-                  title="Previous step"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <Button
-                  onClick={onNextStep}
-                  variant="secondary"
-                  size="sm"
-                  className="h-8 w-8 p-0 rounded-lg"
-                  disabled={!onNextStep || activeStepIndex >= stepCount - 1}
-                  aria-label="Next step"
-                  title="Next step"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            ) : null}
-
-            {isNavigating && ((showFloorPlan && activeFloor !== null) || destination || currentLocation) ? (
-              <div className="flex flex-wrap items-center gap-1 sm:ml-2">
-                <Button
-                  onClick={handleZoomOut}
-                  variant="secondary"
-                  size="sm"
-                  className="h-8 w-8 p-0 rounded-lg"
-                  disabled={zoom <= 0.5}
-                  aria-label="Zoom out"
-                >
-                  <ZoomOut className="w-4 h-4" />
-                </Button>
-                <Button
-                  onClick={handleResetZoom}
-                  variant="secondary"
-                  size="sm"
-                  className="h-8 w-8 p-0 rounded-lg"
-                  title="Reset zoom and pan"
-                  aria-label="Reset zoom"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                </Button>
-                <span className="text-xs text-gray-500 min-w-[3rem] text-center">
-                  {Math.round(zoom * 100)}%
-                </span>
-                <Button
-                  onClick={handleZoomIn}
-                  variant="secondary"
-                  size="sm"
-                  className="h-8 w-8 p-0 rounded-lg"
-                  disabled={zoom >= 5}
-                  aria-label="Zoom in"
-                >
-                  <ZoomIn className="w-4 h-4" />
-                </Button>
-              </div>
-            ) : null}
-          </div>
-        </div>
-
-        {/* Map Container */}
-        <div
-          ref={containerRef}
-          className="relative w-full flex-1 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl overflow-hidden border border-gray-200"
-        >
-          {showFloorPlan && mapSrc ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing touch-none"
-              onWheel={handleWheel}
-              onPointerDown={handlePointerDown}
-              onPointerMove={handlePointerMove}
-              onPointerUp={handlePointerUpOrCancel}
-              onPointerCancel={handlePointerUpOrCancel}
-              style={{
-                transform: `scale(${zoom}) translate3d(${panX / zoom}px, ${panY / zoom}px, 0)`,
-                transformOrigin: 'center center',
-                willChange: 'transform',
-              }}
-            >
-              <div className="relative w-full h-full">
-                <img
-                  src={mapSrc}
-                  alt={mapId || 'Map'}
-                  className="w-full h-full object-contain pointer-events-none select-none"
-                  decoding="async"
-                />
-
-                <svg
-                  className="absolute inset-0 w-full h-full pointer-events-none z-10"
-                  viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-                  preserveAspectRatio="xMidYMid meet"
-                  style={{ mixBlendMode: 'normal' }}
-                >
-                  {isNavigating && pathPoints && (
-                    <motion.g
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                    >
+              <svg
+                className="absolute inset-0 w-full h-full pointer-events-none z-10"
+                viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+                preserveAspectRatio="xMidYMid meet"
+                style={{ mixBlendMode: 'normal' }}
+              >
+                {isNavigating && pathPoints && (
+                  <motion.g
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    <polyline
+                      points={pathPoints}
+                      stroke="#ff602e"
+                      strokeWidth="4"
+                      fill="none"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      opacity={0.2}
+                    />
+                    {prefersReducedMotion ? (
                       <polyline
                         points={pathPoints}
-                        stroke="#93c5fd"
+                        stroke="#ff602e"
                         strokeWidth="4"
                         fill="none"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        opacity={0.4}
                       />
-                      {prefersReducedMotion ? (
-                        <polyline
-                          points={pathPoints}
-                          stroke="#3b82f6"
-                          strokeWidth="4"
-                          fill="none"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      ) : (
-                        <motion.polyline
-                          points={pathPoints}
-                          stroke="#3b82f6"
-                          strokeWidth="4"
-                          fill="none"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          initial={{ pathLength: 0 }}
-                          animate={{ pathLength: 1 }}
-                          transition={{ duration: 2, ease: [0.22, 1, 0.36, 1] }}
-                        />
-                      )}
-                    </motion.g>
-                  )}
+                    ) : (
+                      <motion.polyline
+                        points={pathPoints}
+                        stroke="#ff602e"
+                        strokeWidth="4"
+                        fill="none"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        initial={{ pathLength: 0 }}
+                        animate={{ pathLength: 1 }}
+                        transition={{ duration: 2, ease: [0.22, 1, 0.36, 1] }}
+                      />
+                    )}
+                  </motion.g>
+                )}
 
-                  {shouldShowDestination && destination.x !== undefined && destination.y !== undefined && (
-                    <motion.g
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      style={{
-                        transform: `scale(${1 / zoom})`,
-                        transformOrigin: `${destination.x}px ${destination.y - 10}px`
-                      }}
-                    >
-                      <circle
+                {shouldShowDestination && destination.x !== undefined && destination.y !== undefined && (
+                  <motion.g
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    style={{
+                      transform: `scale(${1 / zoom})`,
+                      transformOrigin: `${destination.x}px ${destination.y - 10}px`
+                    }}
+                  >
+                    <circle
+                      cx={destination.x}
+                      cy={destination.y}
+                      r="8"
+                      fill="#ff602e"
+                      opacity="0.3"
+                    />
+                    {!prefersReducedMotion ? (
+                      <motion.circle
                         cx={destination.x}
                         cy={destination.y}
                         r="8"
-                        fill="#3b82f6"
+                        fill="#ff602e"
                         opacity="0.3"
+                        animate={{
+                          r: [8, 16, 8],
+                          opacity: [0.3, 0, 0.3]
+                        }}
+                        transition={{
+                          repeat: Infinity,
+                          duration: 2
+                        }}
                       />
-                      {!prefersReducedMotion ? (
-                        <motion.circle
-                          cx={destination.x}
-                          cy={destination.y}
-                          r="8"
-                          fill="#3b82f6"
-                          opacity="0.3"
-                          animate={{
-                            r: [8, 16, 8],
-                            opacity: [0.3, 0, 0.3]
-                          }}
-                          transition={{
-                            repeat: Infinity,
-                            duration: 2
-                          }}
-                        />
-                      ) : null}
-                      <circle
-                        cx={destination.x}
-                        cy={destination.y}
-                        r="3"
-                        fill="#3b82f6"
-                      />
-                      <text
-                        x={destination.x}
-                        y={destination.y - 25}
-                        textAnchor="middle"
-                        fontSize="10"
-                        fill="#1e40af"
-                        fontWeight="bold"
-                        className="pointer-events-auto"
-                      >
-                        {destination.name}
-                      </text>
-                    </motion.g>
-                  )}
-
-                  {shouldShowCurrentLocation && currentLocation.x !== undefined && currentLocation.y !== undefined && (
-                    <motion.g
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      style={{
-                        transform: `scale(${1 / zoom})`,
-                        transformOrigin: `${currentLocation.x}px ${currentLocation.y - 10}px`
-                      }}
+                    ) : null}
+                    <circle
+                      cx={destination.x}
+                      cy={destination.y}
+                      r="3"
+                      fill="#ff602e"
+                    />
+                    <text
+                      x={destination.x}
+                      y={destination.y - 25}
+                      textAnchor="middle"
+                      fontSize="10"
+                      fill="#7c2d12"
+                      fontWeight="bold"
+                      className="pointer-events-auto select-none"
                     >
-                      <circle
+                      {destination.name}
+                    </text>
+                  </motion.g>
+                )}
+
+                {shouldShowCurrentLocation && currentLocation.x !== undefined && currentLocation.y !== undefined && (
+                  <motion.g
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    style={{
+                      transform: `scale(${1 / zoom})`,
+                      transformOrigin: `${currentLocation.x}px ${currentLocation.y - 10}px`
+                    }}
+                  >
+                    <circle
+                      cx={currentLocation.x}
+                      cy={currentLocation.y}
+                      r="8"
+                      fill="#10b981"
+                      opacity="0.3"
+                    />
+                    {!prefersReducedMotion ? (
+                      <motion.circle
                         cx={currentLocation.x}
                         cy={currentLocation.y}
                         r="8"
                         fill="#10b981"
                         opacity="0.3"
+                        animate={{
+                          r: [8, 16, 8],
+                          opacity: [0.3, 0, 0.3]
+                        }}
+                        transition={{
+                          repeat: Infinity,
+                          duration: 1.5
+                        }}
                       />
-                      {!prefersReducedMotion ? (
-                        <motion.circle
-                          cx={currentLocation.x}
-                          cy={currentLocation.y}
-                          r="8"
-                          fill="#10b981"
-                          opacity="0.3"
-                          animate={{
-                            r: [8, 16, 8],
-                            opacity: [0.3, 0, 0.3]
-                          }}
-                          transition={{
-                            repeat: Infinity,
-                            duration: 1.5
-                          }}
-                        />
-                      ) : null}
-                      <circle
-                        cx={currentLocation.x}
-                        cy={currentLocation.y}
-                        r="3"
-                        fill="#10b981"
+                    ) : null}
+                    <circle
+                      cx={currentLocation.x}
+                      cy={currentLocation.y}
+                      r="3"
+                      fill="#10b981"
+                    />
+                    <text
+                      x={currentLocation.x}
+                      y={currentLocation.y - 25}
+                      textAnchor="middle"
+                      fontSize="10"
+                      fill="#059669"
+                      fontWeight="bold"
+                      className="pointer-events-auto select-none"
+                    >
+                      You are here
+                    </text>
+                  </motion.g>
+                )}
+              </svg>
+            </div>
+          </motion.div>
+        ) : (
+          <div className="absolute inset-0 p-4 sm:p-6 lg:p-8">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 h-full">
+              {buildings.map((building, idx) => {
+                const buildingImage = building.id === 'main' ? MainCover : building.id === 'ai' ? AICover : '';
+                return (
+                  <motion.div
+                    key={building.id}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.1 * idx }}
+                    className="relative rounded-lg border-2 border-gray-300 hover:border-gray-400 transition-all overflow-hidden"
+                  >
+                    {buildingImage ? (
+                      <img
+                        src={buildingImage}
+                        alt={`${building.name}`}
+                        className="absolute inset-0 w-full h-full object-cover"
+                        loading="lazy"
                       />
-                      <text
-                        x={currentLocation.x}
-                        y={currentLocation.y - 25}
-                        textAnchor="middle"
-                        fontSize="10"
-                        fill="#059669"
-                        fontWeight="bold"
-                        className="pointer-events-auto"
-                      >
-                        You are here
-                      </text>
-                    </motion.g>
-                  )}
-                </svg>
-              </div>
-            </motion.div>
-          ) : (
-            <div className="absolute inset-0 p-4 sm:p-6 lg:p-8">
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 h-full">
-                {buildings.map((building, idx) => {
-                  const buildingImage = building.id === 'main' ? MainCover : building.id === 'ai' ? AICover : '';
+                    ) : (
+                      <div className="absolute inset-0 bg-gray-100" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/30 to-transparent" />
+                    <div className="absolute top-2 left-2">
+                      <Building2 className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="absolute bottom-2 left-2 right-2 text-white">
+                      <p className="text-xs truncate">{building.name}</p>
+                      <p className="text-xs opacity-90">{building.floors} floors</p>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
+        {/* Floating Map Controls overlay (Bottom Right) */}
+        {mapId && (
+          <div className="absolute bottom-6 right-6 z-20 flex flex-col items-end gap-3 pointer-events-none select-none">
+            {/* Floor Switcher */}
+            {buildingFloors.length > 0 && (
+              <div className="flex flex-col bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-black/[0.04] p-1.5 gap-1.5 pointer-events-auto">
+                {buildingFloors.slice().reverse().map((f) => {
+                  const isActive = f.map === mapId;
+                  const label = f.floor === 0 ? 'G' : `L${f.floor}`;
                   return (
-                    <motion.div
-                      key={building.id}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.1 * idx }}
-                      className="relative rounded-lg border-2 border-gray-300 hover:border-gray-400 transition-all overflow-hidden"
+                    <button
+                      key={f.map}
+                      onClick={() => onMapChange?.(f.map)}
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold transition-all duration-200 ${
+                        isActive
+                          ? 'bg-[#ff602e] text-white shadow-md shadow-orange-500/20'
+                          : 'text-gray-700 hover:bg-orange-50 hover:text-[#ff602e]'
+                      }`}
+                      title={f.label}
                     >
-                      {buildingImage ? (
-                        <img
-                          src={buildingImage}
-                          alt={`${building.name}`}
-                          className="absolute inset-0 w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 bg-gray-100" />
-                      )}
-
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/30 to-transparent" />
-
-                      <div className="absolute top-2 left-2">
-                        <Building2 className="w-5 h-5 text-white" />
-                      </div>
-
-                      <div className="absolute bottom-2 left-2 right-2 text-white">
-                        <p className="text-xs truncate">{building.name}</p>
-                        <p className="text-xs opacity-90">{building.floors} floors</p>
-                      </div>
-                    </motion.div>
+                      {label}
+                    </button>
                   );
                 })}
               </div>
+            )}
+
+            {/* Zoom & Recenter Control Stack */}
+            <div className="flex flex-col bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-black/[0.04] p-1.5 gap-1.5 pointer-events-auto">
+              <button
+                onClick={handleZoomIn}
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-700 hover:bg-orange-50 hover:text-[#ff602e] transition-all duration-200"
+                disabled={zoom >= 5}
+                title="Zoom In"
+              >
+                <ZoomIn className="w-5 h-5" />
+              </button>
+
+              <button
+                onClick={handleZoomOut}
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-700 hover:bg-orange-50 hover:text-[#ff602e] transition-all duration-200"
+                disabled={zoom <= 0.5}
+                title="Zoom Out"
+              >
+                <ZoomOut className="w-5 h-5" />
+              </button>
+
+              <div className="h-[1px] bg-gray-100 mx-1" />
+
+              <button
+                onClick={handleResetZoom}
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-700 hover:bg-orange-50 hover:text-[#ff602e] transition-all duration-200"
+                title="Reset Zoom & Center"
+              >
+                <RotateCcw className="w-4.5 h-4.5" />
+              </button>
+
+              {/* Quick toggle to Campus Map */}
+              {mapId !== 'Campus_Map' && (
+                <>
+                  <div className="h-[1px] bg-gray-100 mx-1" />
+                  <button
+                    onClick={() => onMapChange?.('Campus_Map')}
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-700 hover:bg-orange-50 hover:text-[#ff602e] transition-all duration-200"
+                    title="Back to Campus Map"
+                  >
+                    <Building2 className="w-4.5 h-4.5" />
+                  </button>
+                </>
+              )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </motion.div>
   );

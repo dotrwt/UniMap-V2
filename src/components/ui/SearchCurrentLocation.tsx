@@ -25,9 +25,9 @@ interface SearchCurrentLocationProps {
   campusLocations: LocationItem[];
 }
 
-export default function SearchCurrentLocation({ 
-  currentLocation: _currentLocation, 
-  onCurrentLocationSelect, 
+export default function SearchCurrentLocation({
+  currentLocation: _currentLocation,
+  onCurrentLocationSelect,
   onCurrentLocationClear,
   campusLocations
 }: SearchCurrentLocationProps) {
@@ -39,8 +39,8 @@ export default function SearchCurrentLocation({
   const filteredCurrentLocations = useMemo(() =>
     normalizedQuery
       ? campusLocations.filter((loc) =>
-          (loc.searchName ?? loc.name.toLowerCase()).includes(normalizedQuery)
-        )
+        (loc.searchName ?? loc.name.toLowerCase()).includes(normalizedQuery)
+      )
       : [], [normalizedQuery, campusLocations]
   );
 
@@ -57,12 +57,12 @@ export default function SearchCurrentLocation({
 
   return (
     <div className="relative">
-      <label className="block text-sm text-gray-600 mb-2">
+      <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">
         Where are you currently?
       </label>
       <div className="relative">
         <Locate className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
-        
+
         <Input
           type="text"
           placeholder="Search current location..."
@@ -74,7 +74,7 @@ export default function SearchCurrentLocation({
           onFocus={() => setShowCurrentSuggestions(true)}
           className="pl-10 pr-10 h-11 rounded-xl border-gray-200 focus:border-green-400 focus:ring-green-400/20"
         />
-        
+
         {currentSearchQuery && (
           <button
             onClick={handleClear}
