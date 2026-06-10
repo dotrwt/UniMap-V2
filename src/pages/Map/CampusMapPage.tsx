@@ -2,7 +2,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Navigation, ArrowRight, Menu, ArrowUpDown } from 'lucide-react';
+import { Search, Navigation, ArrowRight, Menu, ArrowUpDown, School, Flame, BookOpen, Compass, Coffee } from 'lucide-react';
 import { Button } from '@/components/ui';
 import SearchDestination from '@/components/ui/SearchDestination';
 import SearchCurrentLocation from '@/components/ui/SearchCurrentLocation';
@@ -351,9 +351,9 @@ export default function CampusMapPage({ userName: _userName, onLogout: _onLogout
       </div>
 
       {/* Floating Search & Route Drawer (Left Side) */}
-      <div className="absolute top-6 left-6 z-10 w-[385px] h-[calc(100vh-48px)] flex flex-col bg-white/95 backdrop-blur-md rounded-[24px] shadow-2xl border border-black/[0.04] overflow-hidden pointer-events-auto">
+      <div className="absolute top-6 left-6 z-10 w-[385px] h-[calc(100vh-48px)] flex flex-col bg-gradient-to-b from-white/95 via-white/95 to-[#faf8f5]/98 backdrop-blur-md rounded-[24px] shadow-2xl border border-black/[0.04] overflow-hidden pointer-events-auto">
         {/* Drawer Mini Header */}
-        <div className="p-4 border-b border-gray-100 flex items-center gap-2 bg-gray-50/50">
+        <div className="p-5 border-b border-gray-100 flex items-center gap-2 bg-gradient-to-r from-[#ff602e]/5 to-[#ff7b52]/5">
           <span className="text-base font-black text-gray-900 tracking-wider uppercase">UniMap Navigation</span>
         </div>
 
@@ -426,6 +426,59 @@ export default function CampusMapPage({ userName: _userName, onLogout: _onLogout
                 onResetNavigation={handleResetNavigation}
               />
             </div>
+          )}
+
+          {/* Welcome Guide & Popular spots (only visible when not navigating) */}
+          {!isNavigating && (
+            <>
+              {/* Campus Guide Card */}
+              <div className="bg-gradient-to-br from-[#ff602e]/10 to-[#ff7b52]/5 border border-[#ff602e]/15 rounded-2xl p-4 flex items-start gap-3.5 select-none animate-in fade-in slide-in-from-bottom-3 duration-300">
+                <div className="w-9 h-9 rounded-xl bg-[#ff602e]/10 text-[#ff602e] flex items-center justify-center shrink-0">
+                  <Compass className="w-5 h-5 animate-pulse" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider">Campus Explorer</h4>
+                  <p className="text-[10px] text-gray-500 leading-normal mt-1">
+                    Search rooms, pan the map freely, or select popular highlights below to quickly preview indoor routing and navigation.
+                  </p>
+                </div>
+              </div>
+
+              {/* Popular Spots Grid */}
+              <div className="space-y-3 pt-2">
+                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Popular Destinations</h3>
+                <div className="grid grid-cols-1 gap-2.5">
+                  {[
+                    { id: 'room_J101', name: 'Colloquium', map: 'Main_FF', x: 341.3025, y: 489.9517, building: 'Main', floor: 1, category: 'Academic', desc: 'Conference Hall', color: 'bg-yellow-500/10 text-yellow-600', icon: BookOpen },
+                    { id: 'room_J001', name: 'Conclave', map: 'Main_GF', x: 406.8033, y: 487.5583, building: 'Main', floor: 0, category: 'Academic', desc: 'Seminar Room', color: 'bg-orange-500/10 text-orange-600', icon: School },
+                    { id: 'room_J102', name: 'SH-7', map: 'Main_FF', x: 156.9493, y: 469.9952, building: 'Main', floor: 1, category: 'Academic', desc: 'Lecture Hall 7', color: 'bg-cyan-500/10 text-cyan-600', icon: Flame },
+                    { id: 'Jubilee_Gate', name: 'Jubilee Gate', map: 'Campus_Map', x: 749.9669, y: 127.5277, building: 'Campus', floor: 0, category: 'Gate', desc: 'Main Campus Entrance', color: 'bg-blue-500/10 text-blue-600', icon: Compass }
+                  ].map((loc) => {
+                    const Icon = loc.icon;
+                    return (
+                      <button
+                        key={loc.id}
+                        onClick={() => handleDestinationSelect(loc)}
+                        className="bg-white/60 hover:bg-orange-50/25 border border-black/5 hover:border-orange-200/60 rounded-2xl p-4 shadow-sm flex items-center gap-4 transition-all duration-200 text-left active:scale-[0.98] group pointer-events-auto"
+                      >
+                        <div className={`w-10 h-10 rounded-full ${loc.color} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform`}>
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-xs font-bold text-gray-900 group-hover:text-[#ff602e] transition-colors truncate">{loc.name}</h4>
+                          <p className="text-[10px] text-gray-400 mt-0.5 truncate">{loc.desc}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 bg-gray-100/60 px-2 py-1 rounded-md">
+                            {loc.building} • F{loc.floor}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
           )}
         </div>
       </div>

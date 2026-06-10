@@ -2,6 +2,8 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { ZoomIn, ZoomOut, RotateCcw, Building2, ChevronUp } from 'lucide-react';
+import { useSpring, animated, to } from '@react-spring/web';
+import { useGesture } from '@use-gesture/react';
 import type { FloorMap, Building } from '@/types';
 import MainCover from '@/assets/Main_Cover.webp';
 import AICover from '@/assets/AI_Cover.webp';
@@ -86,180 +88,81 @@ export default function MapBox({
 }: MapBoxProps) {
   const prefersReducedMotion = useReducedMotion();
 
-  const [zoom, setZoom] = useState(1);
-  const [panX, setPanX] = useState(0);
-  const [panY, setPanY] = useState(0);
+  const [zoomState, setZoomState] = useState(1);
   const [isBuildingDropdownOpen, setIsBuildingDropdownOpen] = useState(false);
-  const zoomRef = useRef(zoom);
-  const panRef = useRef({ x: panX, y: panY });
-  const gestureRef = useRef<{
-    pointers: Map<number, { x: number; y: number }>;
-    dragStart: { pointerId: number; x: number; y: number; panX: number; panY: number } | null;
-    pinchStart: { dist: number; zoom: number; panX: number; panY: number; midX: number; midY: number } | null;
-    rafId: number;
-    pending: { zoom?: number; panX?: number; panY?: number } | null;
-  }>({
-    pointers: new Map(),
-    dragStart: null,
-    pinchStart: null,
-    rafId: 0,
-    pending: null,
-  });
-  const unmountedRef = useRef(false);
+  const [svgContent, setSvgContent] = useState<string>('');
 
-  useEffect(() => {
-    return () => {
-      unmountedRef.current = true;
-      if (gestureRef.current.rafId) {
-        cancelAnimationFrame(gestureRef.current.rafId);
+  const [{ x, y, zoom }, springApi] = useSpring(() => ({
+    x: 0,
+    y: 0,
+    zoom: 1,
+    onChange: (result: any) => {
+      const val = typeof result === 'object' && result !== null && 'value' in result ? result.value.zoom : undefined;
+      if (typeof val === 'number') {
+        setZoomState(val);
       }
-      gestureRef.current.rafId = 0;
-      gestureRef.current.pending = null;
-      gestureRef.current.pointers.clear();
-      gestureRef.current.dragStart = null;
-      gestureRef.current.pinchStart = null;
-    };
-  }, []);
-
-  useEffect(() => {
-    zoomRef.current = zoom;
-  }, [zoom]);
-
-  useEffect(() => {
-    panRef.current = { x: panX, y: panY };
-  }, [panX, panY]);
+    },
+    config: { tension: 220, friction: 28 }
+  }));
 
   useEffect(() => {
     if (!isNavigating) {
-      setZoom(1);
-      setPanX(0);
-      setPanY(0);
+      springApi.start({ x: 0, y: 0, zoom: 1 });
     }
-  }, [mapId, isNavigating]);
+  }, [mapId, isNavigating, springApi]);
 
-  const handleZoomIn = useCallback(() => setZoom(prev => Math.min(prev * 1.2, 5)), []);
-  const handleZoomOut = useCallback(() => setZoom(prev => Math.max(prev / 1.2, 0.5)), []);
-  const handleResetZoom = useCallback(() => { setZoom(1); setPanX(0); setPanY(0); }, []);
+  const handleZoomIn = useCallback(() => {
+    const currentZ = zoom.get();
+    const nextZ = Math.min(currentZ * 1.2, 5);
+    console.log('Zooming In. Current:', currentZ, 'Next:', nextZ);
+    springApi.start({ zoom: nextZ });
+  }, [zoom, springApi]);
 
-  const handleWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
-    if (!(e.ctrlKey || e.metaKey)) return;
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    setZoom(prev => Math.max(0.5, Math.min(5, prev * delta)));
-  }, []);
+  const handleZoomOut = useCallback(() => {
+    const currentZ = zoom.get();
+    const nextZ = Math.max(currentZ / 1.2, 0.5);
+    console.log('Zooming Out. Current:', currentZ, 'Next:', nextZ);
+    springApi.start({ zoom: nextZ });
+  }, [zoom, springApi]);
 
-  const commitGestureUpdate = useCallback((next: { zoom?: number; panX?: number; panY?: number }) => {
-    gestureRef.current.pending = next;
-    if (gestureRef.current.rafId) return;
-    gestureRef.current.rafId = requestAnimationFrame(() => {
-      if (unmountedRef.current) return;
-      const pending = gestureRef.current.pending;
-      gestureRef.current.pending = null;
-      gestureRef.current.rafId = 0;
-      if (!pending) return;
-
-      if (pending.zoom != null) setZoom(pending.zoom);
-      if (pending.panX != null) setPanX(pending.panX);
-      if (pending.panY != null) setPanY(pending.panY);
-    });
-  }, []);
-
-  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    const el = e.currentTarget;
-    if (el?.setPointerCapture) el.setPointerCapture(e.pointerId);
-
-    const pointers = gestureRef.current.pointers;
-    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
-    if (pointers.size === 1) {
-      gestureRef.current.dragStart = {
-        pointerId: e.pointerId,
-        x: e.clientX,
-        y: e.clientY,
-        panX: panRef.current.x,
-        panY: panRef.current.y,
-      };
-      gestureRef.current.pinchStart = null;
-      return;
-    }
-
-    if (pointers.size === 2) {
-      const [a, b] = Array.from(pointers.values());
-      const dx = b.x - a.x;
-      const dy = b.y - a.y;
-      const dist = Math.hypot(dx, dy) || 1;
-      const midX = (a.x + b.x) / 2;
-      const midY = (a.y + b.y) / 2;
-      gestureRef.current.pinchStart = {
-        dist,
-        zoom: zoomRef.current,
-        panX: panRef.current.x,
-        panY: panRef.current.y,
-        midX,
-        midY,
-      };
-      gestureRef.current.dragStart = null;
-    }
-  }, []);
-
-  const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    const pointers = gestureRef.current.pointers;
-    if (!pointers.has(e.pointerId)) return;
-    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
-    if (pointers.size >= 2 && gestureRef.current.pinchStart) {
-      const [a, b] = Array.from(pointers.values());
-      const dx = b.x - a.x;
-      const dy = b.y - a.y;
-      const dist = Math.hypot(dx, dy) || 1;
-      const midX = (a.x + b.x) / 2;
-      const midY = (a.y + b.y) / 2;
-
-      const start = gestureRef.current.pinchStart;
-      const ratio = dist / start.dist;
-      const nextZoom = Math.max(0.5, Math.min(5, start.zoom * ratio));
-      const scaleRatio = nextZoom / start.zoom;
-
-      const nextPanX = start.panX * scaleRatio + midX * (1 - scaleRatio);
-      const nextPanY = start.panY * scaleRatio + midY * (1 - scaleRatio);
-
-      commitGestureUpdate({ zoom: nextZoom, panX: nextPanX, panY: nextPanY });
-      return;
-    }
-
-    if (pointers.size === 1 && gestureRef.current.dragStart) {
-      const start = gestureRef.current.dragStart;
-      if (start.pointerId !== e.pointerId) return;
-      const dx = e.clientX - start.x;
-      const dy = e.clientY - start.y;
-      commitGestureUpdate({ panX: start.panX + dx, panY: start.panY + dy });
-    }
-  }, [commitGestureUpdate]);
-
-  const handlePointerUpOrCancel = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    const pointers = gestureRef.current.pointers;
-    if (pointers.has(e.pointerId)) pointers.delete(e.pointerId);
-
-    if (pointers.size === 1) {
-      const remainingId = Array.from(pointers.keys())[0];
-      const remaining = pointers.get(remainingId);
-      if (remaining) {
-        gestureRef.current.dragStart = {
-          pointerId: remainingId,
-          x: remaining.x,
-          y: remaining.y,
-          panX: panRef.current.x,
-          panY: panRef.current.y,
-        };
-      }
-      gestureRef.current.pinchStart = null;
-    } else if (pointers.size === 0) {
-      gestureRef.current.dragStart = null;
-      gestureRef.current.pinchStart = null;
-    }
-  }, []);
+  const handleResetZoom = useCallback(() => {
+    console.log('Resetting Zoom.');
+    springApi.start({ x: 0, y: 0, zoom: 1 });
+  }, [springApi]);
 
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const bind = useGesture(
+    {
+      onDrag: ({ offset: [dx, dy] }) => {
+        springApi.start({ x: dx, y: dy, immediate: true });
+      },
+      onPinch: ({ offset: [dScale] }) => {
+        springApi.start({ zoom: Math.max(0.5, Math.min(5, dScale)), immediate: true });
+      },
+      onWheel: ({ event, delta: [, dy] }) => {
+        if (event.ctrlKey || event.metaKey) {
+          event.preventDefault();
+          const factor = dy > 0 ? 0.92 : 1.08;
+          const currentZoom = zoom.get();
+          const nextZoom = Math.max(0.5, Math.min(5, currentZoom * factor));
+          springApi.start({ zoom: nextZoom });
+        }
+      }
+    },
+    {
+      target: containerRef,
+      eventOptions: { passive: false },
+      drag: {
+        from: () => [x.get(), y.get()],
+      },
+      pinch: {
+        from: () => [zoom.get(), 0],
+        scaleBounds: { min: 0.5, max: 5 },
+      }
+    }
+  );
+
   const lastAutoFitRef = useRef<number | null | undefined>(null);
 
   const showFloorPlan = !!mapId;
@@ -272,6 +175,19 @@ export default function MapBox({
     const floorMeta = floors.find((f) => f.map === mapId);
     return floorMeta?.svgUrl || '';
   }, [mapId, floors]);
+
+  useEffect(() => {
+    if (!mapSrc) {
+      setSvgContent('');
+      return;
+    }
+    fetch(mapSrc)
+      .then((res) => res.text())
+      .then((text) => {
+        setSvgContent(text);
+      })
+      .catch((err) => console.error('Failed to fetch SVG map:', err));
+  }, [mapSrc]);
 
   const viewBoxConfig = (mapId ? mapViewBoxes[mapId] : null) ?? mapViewBoxes.Main_GF;
   const svgWidth = viewBoxConfig.width;
@@ -322,10 +238,8 @@ export default function MapBox({
     const nextPanY = -nextZoom * (bboxCenterY - centerY);
 
     lastAutoFitRef.current = autoFitNonce;
-    setZoom(nextZoom);
-    setPanX(nextPanX);
-    setPanY(nextPanY);
-  }, [autoFitNonce, isNavigating, pathBbox, svgHeight, svgWidth]);
+    springApi.start({ x: nextPanX, y: nextPanY, zoom: nextZoom });
+  }, [autoFitNonce, isNavigating, pathBbox, svgHeight, svgWidth, springApi]);
 
   // Resolve current building floors
   const activeFloorMeta = useMemo(() => floors.find((f) => f.map === mapId), [floors, mapId]);
@@ -370,29 +284,25 @@ export default function MapBox({
         className="relative w-full h-full bg-[#fcfaf6] overflow-hidden"
       >
         {showFloorPlan && mapSrc ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+          <animated.div
             className="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing touch-none z-0"
-            onWheel={handleWheel}
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUpOrCancel}
-            onPointerCancel={handlePointerUpOrCancel}
             style={{
-              transform: `scale(${zoom}) translate3d(${panX / zoom}px, ${panY / zoom}px, 0)`,
+              transform: to([x, y, zoom], (px, py, z) => `translate3d(${px}px, ${py}px, 0) scale(${z})`),
               transformOrigin: 'center center',
               willChange: 'transform',
             }}
           >
             <div className="relative w-full h-full">
-              <img
-                src={mapSrc}
-                alt={mapId || 'Map'}
-                className="w-full h-full object-contain pointer-events-none select-none"
-                decoding="async"
-              />
+              {svgContent ? (
+                <div
+                  className="w-full h-full pointer-events-none select-none [&>svg]:w-full [&>svg]:h-full [&>svg]:object-contain"
+                  dangerouslySetInnerHTML={{ __html: svgContent }}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+                  Loading Map...
+                </div>
+              )}
 
               <svg
                 className="absolute inset-0 w-full h-full pointer-events-none z-10"
@@ -444,7 +354,7 @@ export default function MapBox({
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     style={{
-                      transform: `scale(${1 / zoom})`,
+                      transform: `scale(${1 / zoomState})`,
                       transformOrigin: `${destination.x}px ${destination.y - 10}px`
                     }}
                   >
@@ -497,7 +407,7 @@ export default function MapBox({
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     style={{
-                      transform: `scale(${1 / zoom})`,
+                      transform: `scale(${1 / zoomState})`,
                       transformOrigin: `${currentLocation.x}px ${currentLocation.y - 10}px`
                     }}
                   >
@@ -546,7 +456,7 @@ export default function MapBox({
                 )}
               </svg>
             </div>
-          </motion.div>
+          </animated.div>
         ) : (
           <div className="absolute inset-0 p-4 sm:p-6 lg:p-8">
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 h-full">
@@ -663,7 +573,7 @@ export default function MapBox({
               <button
                 onClick={handleZoomIn}
                 className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-700 hover:bg-orange-50 hover:text-[#ff602e] transition-all duration-200"
-                disabled={zoom >= 5}
+                disabled={zoomState >= 5}
                 title="Zoom In"
               >
                 <ZoomIn className="w-5 h-5" />
@@ -672,7 +582,7 @@ export default function MapBox({
               <button
                 onClick={handleZoomOut}
                 className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-700 hover:bg-orange-50 hover:text-[#ff602e] transition-all duration-200"
-                disabled={zoom <= 0.5}
+                disabled={zoomState <= 0.5}
                 title="Zoom Out"
               >
                 <ZoomOut className="w-5 h-5" />
