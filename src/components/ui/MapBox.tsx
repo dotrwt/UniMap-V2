@@ -131,8 +131,9 @@ export default function MapBox({
   }, [springApi]);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const svgContainerRef = useRef<HTMLDivElement>(null);
 
-  const bind = useGesture(
+  useGesture(
     {
       onDrag: ({ offset: [dx, dy] }) => {
         springApi.start({ x: dx, y: dy, immediate: true });
@@ -188,6 +189,27 @@ export default function MapBox({
       })
       .catch((err) => console.error('Failed to fetch SVG map:', err));
   }, [mapSrc]);
+
+  useEffect(() => {
+    if (!svgContent || !svgContainerRef.current) return;
+    const svgEl = svgContainerRef.current.querySelector('svg');
+    if (svgEl) {
+      svgEl.removeAttribute('width');
+      svgEl.removeAttribute('height');
+      svgEl.setAttribute('width', '100%');
+      svgEl.setAttribute('height', '100%');
+      svgEl.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+      svgEl.setAttribute('shape-rendering', 'geometricPrecision');
+
+      const elements = svgEl.querySelectorAll('path, line, polyline, rect');
+      elements.forEach((el) => {
+        const val = el.getAttribute('shape-rendering');
+        if (val === 'crispEdges' || val === 'optimizeSpeed') {
+          el.removeAttribute('shape-rendering');
+        }
+      });
+    }
+  }, [svgContent]);
 
   const viewBoxConfig = (mapId ? mapViewBoxes[mapId] : null) ?? mapViewBoxes.Main_GF;
   const svgWidth = viewBoxConfig.width;
@@ -287,14 +309,14 @@ export default function MapBox({
           <animated.div
             className="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing touch-none z-0"
             style={{
-              transform: to([x, y, zoom], (px, py, z) => `translate3d(${px}px, ${py}px, 0) scale(${z})`),
-              transformOrigin: 'center center',
-              willChange: 'transform',
+              transform: to([x, y, zoom], (px, py, z) => `translate(${px}px, ${py}px) scale(${z})`),
+              transformOrigin: '0 0',
             }}
           >
             <div className="relative w-full h-full">
               {svgContent ? (
                 <div
+                  ref={svgContainerRef}
                   className="w-full h-full pointer-events-none select-none [&>svg]:w-full [&>svg]:h-full [&>svg]:object-contain"
                   dangerouslySetInnerHTML={{ __html: svgContent }}
                 />

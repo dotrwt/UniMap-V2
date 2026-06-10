@@ -2,7 +2,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Navigation, ArrowRight, Menu, ArrowUpDown, School, Flame, BookOpen, Compass, Coffee } from 'lucide-react';
+import { Search, Navigation, ArrowRight, Menu, ArrowUpDown, School, Flame, BookOpen, Compass } from 'lucide-react';
 import { Button } from '@/components/ui';
 import SearchDestination from '@/components/ui/SearchDestination';
 import SearchCurrentLocation from '@/components/ui/SearchCurrentLocation';
@@ -287,7 +287,7 @@ export default function CampusMapPage({ userName: _userName, onLogout: _onLogout
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-[#fcfaf6] select-none flex flex-col">
       {/* Full Screen Interactive Map Canvas */}
-      <div className="absolute inset-0 w-full h-full z-0">
+      <div className="flex-1 relative w-full h-full z-0">
         <MapBox
           mapId={activeMapId}
           destination={destination}

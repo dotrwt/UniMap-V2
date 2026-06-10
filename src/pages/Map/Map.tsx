@@ -349,6 +349,28 @@ export default function Map() {
     setTransform({ scale, x, y });
   }, [viewBox, pathBbox, activeMap, activeFloor, imgLoaded, selectedFrom, selectedTo, targetMapId, setTransform]);
 
+  // Update/inject attributes to prevent pixelation on the SVG loaded in Map
+  useEffect(() => {
+    if (!svgContent || !mapRef.current) return;
+    const svgEl = mapRef.current.querySelector('svg');
+    if (svgEl) {
+      svgEl.removeAttribute('width');
+      svgEl.removeAttribute('height');
+      svgEl.setAttribute('width', '100%');
+      svgEl.setAttribute('height', '100%');
+      svgEl.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+      svgEl.setAttribute('shape-rendering', 'geometricPrecision');
+
+      const elements = svgEl.querySelectorAll('path, line, polyline, rect');
+      elements.forEach((el) => {
+        const val = el.getAttribute('shape-rendering');
+        if (val === 'crispEdges' || val === 'optimizeSpeed') {
+          el.removeAttribute('shape-rendering');
+        }
+      });
+    }
+  }, [svgContent]);
+
   // Inject Markers, Path, Pins INSIDE the background SVG element
   useEffect(() => {
     const logDebug = (msg: string, data?: any) => {
@@ -609,7 +631,7 @@ export default function Map() {
     >
       <animated.div
         style={{
-          transform: to([x, y, scale], (tx, ty, ts) => `translate3d(${tx}px, ${ty}px, 0) scale(${ts})`),
+          transform: to([x, y, scale], (tx, ty, ts) => `translate(${tx}px, ${ty}px) scale(${ts})`),
           transformOrigin: '0 0',
         }}
         className={`w-full h-full relative ${isPanningCursor.current ? 'cursor-grabbing' : 'cursor-grab'}`}
@@ -622,11 +644,9 @@ export default function Map() {
             dangerouslySetInnerHTML={{ __html: svgContent }}
           />
         ) : (
-          <img
-            alt="University Map"
-            className="w-full h-full object-contain transition-opacity duration-300 opacity-60 grayscale-[20%] pointer-events-none"
-            src={activeMapUrl}
-          />
+          <div className="w-full h-full flex items-center justify-center text-[var(--text-secondary)] opacity-60 text-xs">
+            Loading Map...
+          </div>
         )}
 
         {/* Fallback image case overlay SVG */}
