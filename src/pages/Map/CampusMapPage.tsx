@@ -1,12 +1,12 @@
 // src/pages/Map/CampusMapPage.tsx
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Navigation, ArrowRight, User } from 'lucide-react';
+import { Search, Navigation, ArrowRight, Menu, ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui';
 import SearchDestination from '@/components/ui/SearchDestination';
 import SearchCurrentLocation from '@/components/ui/SearchCurrentLocation';
 import NavigationPanel from '@/components/ui/NavigationPanel';
-import QuickAccess from './QuickAccess';
 import MapBox from '@/components/ui/MapBox';
 import logoWebp from '@/assets/UNIMAP.webp';
 import clgLogo from '@/assets/clg_logo.webp';
@@ -20,7 +20,6 @@ import type { MapNode, MapEdge, Building, FloorMap } from '@/types';
 interface CampusMapPageProps {
   userName?: string;
   onLogout?: () => void;
-  onOpenDeveloperPage: () => void;
 }
 
 // Room Name Parser helper
@@ -39,7 +38,10 @@ const parseRoomName = (nodeId: string) => ({
   category: CATEGORIES.find(([re]) => re.test(nodeId))?.[1] ?? 'Room'
 });
 
-export default function CampusMapPage({ userName: _userName, onLogout: _onLogout, onOpenDeveloperPage }: CampusMapPageProps) {
+export default function CampusMapPage({ userName: _userName, onLogout: _onLogout }: CampusMapPageProps) {
+  const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   // Database datasets
   const [nodes, setNodes] = useState<MapNode[]>([]);
   const [edges, setEdges] = useState<MapEdge[]>([]);
@@ -181,6 +183,19 @@ export default function CampusMapPage({ userName: _userName, onLogout: _onLogout
     }
   }, [isNavigating, isComputingRoute, handleResetNavigation]);
 
+  const handleSwapLocations = useCallback(() => {
+    const temp = currentLocation;
+    setCurrentLocation(destination);
+    setDestination(temp);
+    setSelectedMapId(null);
+    if (isNavigating || isComputingRoute) {
+      setPathPoints('');
+      setNavigationDirections([]);
+      setNavigationSteps([]);
+      setIsNavigating(false);
+    }
+  }, [currentLocation, destination, isNavigating, isComputingRoute]);
+
   const activateStep = useCallback(
     (step: NavigationStep) => {
       const { pathPoints, navigationDirections } = buildNavigationStepViewModel(
@@ -293,23 +308,53 @@ export default function CampusMapPage({ userName: _userName, onLogout: _onLogout
           <span className="text-gray-300 text-sm">×</span>
           <img src={logoWebp} alt="UniMap Logo" className="h-8 w-auto" decoding="async" />
         </div>
-        <div className="h-4 w-[1px] bg-gray-205" />
-        <Button
-          variant="ghost"
-          onClick={onOpenDeveloperPage}
-          className="flex items-center gap-1.5 hover:bg-orange-50 hover:text-[#ff602e] rounded-full px-3 py-1.5 h-auto text-xs font-semibold text-gray-700 transition-all duration-200"
-        >
-          <User className="w-3.5 h-3.5" />
-          <span>Developer Page</span>
-        </Button>
+        <div className="h-4 w-[1px] bg-gray-200" />
+        <div className="relative">
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-orange-50 hover:text-[#ff602e] text-gray-700 transition-all duration-200 pointer-events-auto"
+            aria-label="Menu"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+
+          <AnimatePresence>
+            {isMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="absolute right-0 mt-3.5 w-32 bg-white/95 backdrop-blur-md rounded-xl shadow-xl border border-black/[0.04] p-1.5 flex flex-col gap-0.5 z-20 pointer-events-auto"
+              >
+                <button
+                  onClick={() => {
+                    navigate('/');
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full text-left px-3 py-2 text-xs font-bold text-gray-700 hover:bg-orange-50 hover:text-[#ff602e] rounded-lg transition-colors"
+                >
+                  Home
+                </button>
+                <button
+                  onClick={() => {
+                    navigate('/support');
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full text-left px-3 py-2 text-xs font-bold text-gray-700 hover:bg-orange-50 hover:text-[#ff602e] rounded-lg transition-colors"
+                >
+                  Support
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
       {/* Floating Search & Route Drawer (Left Side) */}
-      <div className="absolute top-6 left-6 z-10 w-[385px] max-h-[calc(100vh-48px)] flex flex-col bg-white/95 backdrop-blur-md rounded-[24px] shadow-2xl border border-black/[0.04] overflow-hidden pointer-events-auto">
+      <div className="absolute top-6 left-6 z-10 w-[385px] h-[calc(100vh-48px)] flex flex-col bg-white/95 backdrop-blur-md rounded-[24px] shadow-2xl border border-black/[0.04] overflow-hidden pointer-events-auto">
         {/* Drawer Mini Header */}
-        <div className="p-4 border-b border-gray-100 flex items-center gap-2.5 bg-gray-50/50">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#ff602e]" />
-          <span className="text-sm font-bold text-gray-900 tracking-wide">UniMap Navigation</span>
+        <div className="p-4 border-b border-gray-100 flex items-center gap-2 bg-gray-50/50">
+          <span className="text-base font-black text-gray-900 tracking-wider uppercase">UniMap Navigation</span>
         </div>
 
         {/* Scrollable Contents */}
@@ -322,65 +367,53 @@ export default function CampusMapPage({ userName: _userName, onLogout: _onLogout
             </h2>
 
             <div className="space-y-4">
-              <SearchCurrentLocation
-                currentLocation={currentLocation}
-                onCurrentLocationSelect={handleCurrentLocationSelect}
-                onCurrentLocationClear={handleCurrentLocationClear}
-                campusLocations={campusLocations}
-              />
+            <div className="relative flex items-center">
+              <div className="flex-1 space-y-4 pr-10">
+                <SearchCurrentLocation
+                  currentLocation={currentLocation}
+                  onCurrentLocationSelect={handleCurrentLocationSelect}
+                  onCurrentLocationClear={handleCurrentLocationClear}
+                  campusLocations={campusLocations}
+                />
 
-              <AnimatePresence initial={false} mode="popLayout">
-                {currentLocation ? (
-                  <motion.div
-                    key="destination-search"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 8 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <SearchDestination
-                      destination={destination}
-                      onDestinationSelect={handleDestinationSelect}
-                      onDestinationClear={handleDestinationClear}
-                      currentLocation={currentLocation}
-                      campusLocations={campusLocations}
-                      graph={graph}
-                    />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="destination-hint"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 8 }}
-                    transition={{ duration: 0.2 }}
-                    className="rounded-xl border border-dashed border-gray-250 bg-gray-50/60 px-4 py-3"
-                  >
-                    <p className="text-xs text-gray-600 leading-relaxed font-medium">
-                      Set your starting location to view and select destinations.
-                    </p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                <SearchDestination
+                  destination={destination}
+                  onDestinationSelect={handleDestinationSelect}
+                  onDestinationClear={handleDestinationClear}
+                  currentLocation={currentLocation}
+                  campusLocations={campusLocations}
+                  graph={graph}
+                />
+              </div>
 
-              <AnimatePresence>
-                {destination && currentLocation && !isNavigating && !isComputingRoute && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
+              <button
+                type="button"
+                onClick={handleSwapLocations}
+                className="absolute right-0 top-[54%] -translate-y-1/2 w-8 h-8 rounded-full bg-white border border-gray-200 shadow-md flex items-center justify-center text-gray-500 hover:text-[#ff602e] hover:border-orange-300 transition-all duration-200 z-10 pointer-events-auto"
+                title="Swap locations"
+              >
+                <ArrowUpDown className="w-4 h-4" />
+              </button>
+            </div>
+
+            <AnimatePresence>
+              {destination && currentLocation && !isNavigating && !isComputingRoute && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                >
+                  <Button
+                    onClick={handleStartNavigation}
+                    className="w-full h-11 rounded-xl bg-[#ff602e] hover:bg-[#ff7b52] text-white shadow-lg shadow-orange-500/20 transition-all duration-300 hover:shadow-xl hover:shadow-orange-500/30 group font-bold text-xs flex items-center justify-center gap-1.5"
                   >
-                    <Button
-                      onClick={handleStartNavigation}
-                      className="w-full h-11 rounded-xl bg-[#ff602e] hover:bg-[#ff7b52] text-white shadow-lg shadow-orange-500/20 transition-all duration-300 hover:shadow-xl hover:shadow-orange-500/30 group font-bold text-xs flex items-center justify-center gap-1.5"
-                    >
-                      <Navigation className="w-3.5 h-3.5 mr-1" />
-                      Start Navigation
-                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                    </Button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                    <Navigation className="w-3.5 h-3.5 mr-1" />
+                    Start Navigation
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </motion.div>
+              )}
+            </AnimatePresence>
             </div>
           </div>
 
@@ -391,16 +424,6 @@ export default function CampusMapPage({ userName: _userName, onLogout: _onLogout
                 isNavigating={isNavigating}
                 navigationDirections={navigationDirections}
                 onResetNavigation={handleResetNavigation}
-              />
-            </div>
-          )}
-
-          {/* Quick Access List */}
-          {!isNavigating && (
-            <div className="border-t border-gray-100 pt-4">
-              <QuickAccess
-                isNavigating={isNavigating}
-                onDestinationSelect={handleDestinationSelect}
               />
             </div>
           )}

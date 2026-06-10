@@ -1,5 +1,5 @@
 // src/components/ui/SearchCurrentLocation.tsx
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Locate, Building2, X } from 'lucide-react';
 import { Input } from './input';
@@ -33,6 +33,11 @@ export default function SearchCurrentLocation({
 }: SearchCurrentLocationProps) {
   const [currentSearchQuery, setCurrentSearchQuery] = useState('');
   const [showCurrentSuggestions, setShowCurrentSuggestions] = useState(false);
+
+  useEffect(() => {
+    setCurrentSearchQuery(_currentLocation?.name || '');
+  }, [_currentLocation]);
+
   const debouncedQuery = useDebouncedValue(currentSearchQuery, 120);
   const normalizedQuery = useMemo(() => debouncedQuery.trim().toLowerCase(), [debouncedQuery]);
 

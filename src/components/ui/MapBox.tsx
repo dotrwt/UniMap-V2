@@ -1,7 +1,7 @@
 // src/components/ui/MapBox.tsx
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { ZoomIn, ZoomOut, RotateCcw, Building2 } from 'lucide-react';
+import { ZoomIn, ZoomOut, RotateCcw, Building2, ChevronUp } from 'lucide-react';
 import type { FloorMap, Building } from '@/types';
 import MainCover from '@/assets/Main_Cover.webp';
 import AICover from '@/assets/AI_Cover.webp';
@@ -89,6 +89,7 @@ export default function MapBox({
   const [zoom, setZoom] = useState(1);
   const [panX, setPanX] = useState(0);
   const [panY, setPanY] = useState(0);
+  const [isBuildingDropdownOpen, setIsBuildingDropdownOpen] = useState(false);
   const zoomRef = useRef(zoom);
   const panRef = useRef({ x: panX, y: panY });
   const gestureRef = useRef<{
@@ -329,12 +330,34 @@ export default function MapBox({
   // Resolve current building floors
   const activeFloorMeta = useMemo(() => floors.find((f) => f.map === mapId), [floors, mapId]);
   const activeBuildingId = activeFloorMeta?.building || null;
+  
+  const activeBuildingName = useMemo(() => {
+    if (mapId === 'Campus_Map') return 'Campus Map';
+    const b = buildings.find((x) => x.id === activeBuildingId);
+    return b ? b.name : 'Campus Map';
+  }, [mapId, buildings, activeBuildingId]);
+
   const buildingFloors = useMemo(() => {
     if (!activeBuildingId || activeBuildingId === 'campus') return [];
     return floors
       .filter((f) => f.building === activeBuildingId)
       .sort((a, b) => a.floor - b.floor);
   }, [floors, activeBuildingId]);
+
+  const handleSelectBuilding = useCallback(
+    (buildingId: string | 'campus') => {
+      setIsBuildingDropdownOpen(false);
+      if (buildingId === 'campus') {
+        onMapChange?.('Campus_Map');
+      } else {
+        const bFloors = floors.filter((f) => f.building === buildingId).sort((a, b) => a.floor - b.floor);
+        if (bFloors.length > 0) {
+          onMapChange?.(bFloors[0].map);
+        }
+      }
+    },
+    [floors, onMapChange]
+  );
 
   return (
     <motion.div
@@ -564,30 +587,76 @@ export default function MapBox({
 
         {/* Floating Map Controls overlay (Bottom Right) */}
         {mapId && (
-          <div className="absolute bottom-6 right-6 z-20 flex flex-col items-end gap-3 pointer-events-none select-none">
-            {/* Floor Switcher */}
-            {buildingFloors.length > 0 && (
-              <div className="flex flex-col bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-black/[0.04] p-1.5 gap-1.5 pointer-events-auto">
-                {buildingFloors.slice().reverse().map((f) => {
-                  const isActive = f.map === mapId;
-                  const label = f.floor === 0 ? 'G' : `L${f.floor}`;
-                  return (
+          <div className="absolute bottom-6 right-6 z-20 flex items-end gap-3 pointer-events-none select-none">
+            {/* Building & Floor Selector */}
+            <div className="flex items-center bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-black/[0.04] p-1.5 gap-1.5 pointer-events-auto relative">
+              {/* Building Dropdown Trigger */}
+              <div className="relative">
+                <button
+                  onClick={() => setIsBuildingDropdownOpen(!isBuildingDropdownOpen)}
+                  className="px-3.5 h-10 rounded-xl flex items-center gap-2 text-xs font-bold text-gray-700 hover:bg-orange-50 hover:text-[#ff602e] transition-all duration-200"
+                >
+                  <Building2 className="w-4 h-4 text-[#ff602e]" />
+                  <span>{activeBuildingName}</span>
+                  <ChevronUp className="w-3.5 h-3.5 text-gray-400" />
+                </button>
+
+                {isBuildingDropdownOpen && (
+                  <div className="absolute bottom-full mb-2 right-0 w-40 bg-white rounded-xl shadow-xl border border-black/[0.04] p-1.5 flex flex-col gap-0.5 z-30">
                     <button
-                      key={f.map}
-                      onClick={() => onMapChange?.(f.map)}
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold transition-all duration-200 ${
-                        isActive
-                          ? 'bg-[#ff602e] text-white shadow-md shadow-orange-500/20'
+                      onClick={() => handleSelectBuilding('campus')}
+                      className={`w-full text-left px-3 py-2 text-xs font-bold rounded-lg transition-colors ${
+                        mapId === 'Campus_Map'
+                          ? 'bg-orange-50 text-[#ff602e]'
                           : 'text-gray-700 hover:bg-orange-50 hover:text-[#ff602e]'
                       }`}
-                      title={f.label}
                     >
-                      {label}
+                      Campus Map
                     </button>
-                  );
-                })}
+                    {buildings.map((b) => (
+                      <button
+                        key={b.id}
+                        onClick={() => handleSelectBuilding(b.id)}
+                        className={`w-full text-left px-3 py-2 text-xs font-bold rounded-lg transition-colors ${
+                          activeBuildingId === b.id
+                            ? 'bg-orange-50 text-[#ff602e]'
+                            : 'text-gray-700 hover:bg-orange-50 hover:text-[#ff602e]'
+                        }`}
+                      >
+                        {b.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
+
+              {/* Floor Buttons (Horizontal) */}
+              {buildingFloors.length > 0 && (
+                <>
+                  <div className="h-6 w-[1px] bg-gray-200" />
+                  <div className="flex items-center gap-1">
+                    {buildingFloors.map((f) => {
+                      const isActive = f.map === mapId;
+                      const label = f.floor === 0 ? 'G' : `F${f.floor}`;
+                      return (
+                        <button
+                          key={f.map}
+                          onClick={() => onMapChange?.(f.map)}
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold transition-all duration-200 ${
+                            isActive
+                              ? 'bg-[#ff602e] text-white shadow-md shadow-orange-500/20'
+                              : 'text-gray-700 hover:bg-orange-50 hover:text-[#ff602e]'
+                          }`}
+                          title={f.label}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
 
             {/* Zoom & Recenter Control Stack */}
             <div className="flex flex-col bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-black/[0.04] p-1.5 gap-1.5 pointer-events-auto">
@@ -618,20 +687,6 @@ export default function MapBox({
               >
                 <RotateCcw className="w-4.5 h-4.5" />
               </button>
-
-              {/* Quick toggle to Campus Map */}
-              {mapId !== 'Campus_Map' && (
-                <>
-                  <div className="h-[1px] bg-gray-100 mx-1" />
-                  <button
-                    onClick={() => onMapChange?.('Campus_Map')}
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-700 hover:bg-orange-50 hover:text-[#ff602e] transition-all duration-200"
-                    title="Back to Campus Map"
-                  >
-                    <Building2 className="w-4.5 h-4.5" />
-                  </button>
-                </>
-              )}
             </div>
           </div>
         )}

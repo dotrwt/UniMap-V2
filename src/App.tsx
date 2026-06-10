@@ -17,8 +17,7 @@ const LoadingFallback = () => (
 );
 
 function CampusMapWrapper() {
-  const navigate = useNavigate();
-  return <CampusMapPage onOpenDeveloperPage={() => navigate('/support')} />;
+  return <CampusMapPage />;
 }
 
 /** Root App component setting up global routing, theme, and code-split pages. */

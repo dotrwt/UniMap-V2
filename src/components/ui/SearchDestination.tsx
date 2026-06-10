@@ -27,6 +27,11 @@ export default function SearchDestination({
   graph,
 }: SearchDestinationProps) {
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    setSearchQuery(destination?.name || '');
+  }, [destination]);
+
   const debouncedQuery = useDebouncedValue(searchQuery, 120);
   const normalizedQuery = useMemo(() => debouncedQuery.trim().toLowerCase(), [debouncedQuery]);
   const [showSuggestions, setShowSuggestions] = useState(false);
