@@ -7,7 +7,6 @@ import { usePathfinding } from '@/hooks/usePathfinding';
 import { searchNodes } from '@/lib/graphUtils';
 import { formatDistance, formatTime } from '@/lib/routeBuilder';
 import Map from './Map';
-import { ThemeToggle } from '@/components/ui';
 
 export default function MapPage() {
   const navigate = useNavigate();
@@ -25,6 +24,7 @@ export default function MapPage() {
     clearRoute,
     currentRoute,
     error: routeError,
+    floors,
   } = useMapStore();
 
   const { isComputing } = usePathfinding();
@@ -41,14 +41,11 @@ export default function MapPage() {
   const fromContainerRef = useRef<HTMLDivElement>(null);
   const toContainerRef = useRef<HTMLDivElement>(null);
 
-  // Automatically select the first building and floor when the graph loads
+  // Automatically select Campus_Map and floor 1 when the graph loads
   useEffect(() => {
     if (graph && !activeMap) {
-      const defaultBuilding = graph.buildings[0];
-      if (defaultBuilding) {
-        setActiveMap(defaultBuilding.id);
-        setActiveFloor(0);
-      }
+      setActiveMap('Campus_Map');
+      setActiveFloor(1);
     }
   }, [graph, activeMap, setActiveMap, setActiveFloor]);
 
@@ -86,7 +83,7 @@ export default function MapPage() {
   }, [toQuery, graph, selectedTo]);
 
   const activeBuilding = useMemo(() => {
-    if (!graph || !activeMap) return null;
+    if (!graph || !activeMap || activeMap === 'Campus_Map') return null;
     return graph.buildings.find(b => b.id === activeMap) || null;
   }, [graph, activeMap]);
 
@@ -99,7 +96,7 @@ export default function MapPage() {
   const handleBuildingChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const bId = e.target.value;
     setActiveMap(bId);
-    setActiveFloor(0);
+    setActiveFloor(bId === 'Campus_Map' ? 1 : 0);
   };
 
   const handleStartNavigation = () => {
@@ -161,6 +158,7 @@ export default function MapPage() {
               onChange={handleBuildingChange}
               className="bg-transparent border-none text-xs font-semibold text-on-surface-variant focus:ring-0 focus:outline-none cursor-pointer py-1 pr-6"
             >
+              <option value="Campus_Map">Campus Map</option>
               {graph.buildings.map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.name}
@@ -171,11 +169,10 @@ export default function MapPage() {
         )}
 
         <div className="flex items-center gap-2">
-          <ThemeToggle />
           <button
-            onClick={() => navigate('/about')}
+            onClick={() => navigate('/support')}
             className="p-2 hover:bg-surface-variant transition-colors rounded-full"
-            aria-label="About page"
+            aria-label="Support page"
           >
             <span className="material-symbols-outlined text-on-surface-variant">info</span>
           </button>
@@ -215,6 +212,12 @@ export default function MapPage() {
                           setSelectedFrom(node);
                           setFromQuery(node.name);
                           setShowFromSuggestions(false);
+
+                          const match = floors.find((f) => f.map === node.map);
+                          if (match) {
+                            if (activeMap !== match.building) setActiveMap(match.building);
+                            if (activeFloor !== match.floor) setActiveFloor(match.floor);
+                          }
                         }}
                         className="w-full text-left px-3 py-2 text-[11px] hover:bg-primary-container/20 text-on-surface transition-colors"
                       >
@@ -256,6 +259,12 @@ export default function MapPage() {
                           setSelectedTo(node);
                           setToQuery(node.name);
                           setShowToSuggestions(false);
+
+                          const match = floors.find((f) => f.map === node.map);
+                          if (match) {
+                            if (activeMap !== match.building) setActiveMap(match.building);
+                            if (activeFloor !== match.floor) setActiveFloor(match.floor);
+                          }
                         }}
                         className="w-full text-left px-3 py-2 text-[11px] hover:bg-primary-container/20 text-on-surface transition-colors"
                       >
@@ -405,11 +414,17 @@ export default function MapPage() {
       </main>
 
       {/* Floating Floor Switcher and controls (bottom right) */}
-      {activeBuilding && (
-        <div className="fixed bottom-6 right-6 flex items-end gap-3 z-30">
-          {/* Floor Switcher */}
-          <div className="bg-surface shadow-md rounded-2xl p-1 border border-outline-variant/30 flex gap-1 items-center">
-            {activeBuilding.floorIds.map((_, idx) => (
+      <div className="fixed bottom-6 right-6 flex items-end gap-3 z-30">
+        {/* Floor Switcher */}
+        <div className="bg-surface shadow-md rounded-2xl p-1 border border-outline-variant/30 flex gap-1 items-center">
+          {activeMap === 'Campus_Map' ? (
+            <button
+              className="px-3.5 py-1 text-xs font-bold rounded-xl bg-primary-container text-on-primary-container"
+            >
+              L1
+            </button>
+          ) : (
+            activeBuilding?.floorIds.map((_, idx) => (
               <button
                 key={idx}
                 onClick={() => setActiveFloor(idx)}
@@ -421,28 +436,39 @@ export default function MapPage() {
               >
                 {idx === 0 ? 'G' : `L${idx}`}
               </button>
-            ))}
-          </div>
+            ))
+          )}
+        </div>
 
-          {/* Map zoom controls */}
-          <div className="flex flex-col bg-surface shadow-md rounded-2xl overflow-hidden border border-outline-variant/30">
-            <button className="p-2.5 hover:bg-surface-variant transition-colors border-b border-outline-variant/30 flex items-center justify-center">
-              <span className="material-symbols-outlined text-on-surface-variant text-[20px]">add</span>
-            </button>
-            <button className="p-2.5 hover:bg-surface-variant transition-colors flex items-center justify-center">
-              <span className="material-symbols-outlined text-on-surface-variant text-[20px]">remove</span>
-            </button>
-          </div>
-
+        {/* Map zoom controls */}
+        <div className="flex flex-col bg-surface shadow-md rounded-2xl overflow-hidden border border-outline-variant/30">
           <button
-            onClick={clearRoute}
-            className="bg-surface shadow-md rounded-2xl p-3 border border-outline-variant/30 hover:bg-surface-variant transition-colors flex items-center justify-center"
-            aria-label="Recenter navigation"
+            onClick={() => useMapStore.getState().zoomIn()}
+            className="p-2.5 hover:bg-surface-variant transition-colors border-b border-outline-variant/30 flex items-center justify-center cursor-pointer"
+            aria-label="Zoom In"
           >
-            <span className="material-symbols-outlined text-primary text-[20px]">my_location</span>
+            <span className="material-symbols-outlined text-on-surface-variant text-[20px]">add</span>
+          </button>
+          <button
+            onClick={() => useMapStore.getState().zoomOut()}
+            className="p-2.5 hover:bg-surface-variant transition-colors flex items-center justify-center cursor-pointer"
+            aria-label="Zoom Out"
+          >
+            <span className="material-symbols-outlined text-on-surface-variant text-[20px]">remove</span>
           </button>
         </div>
-      )}
+
+        <button
+          onClick={() => {
+            clearRoute();
+            useMapStore.getState().resetTransform();
+          }}
+          className="bg-surface shadow-md rounded-2xl p-3 border border-outline-variant/30 hover:bg-surface-variant transition-colors flex items-center justify-center cursor-pointer"
+          aria-label="Recenter navigation"
+        >
+          <span className="material-symbols-outlined text-primary text-[20px]">my_location</span>
+        </button>
+      </div>
     </div>
   );
 }

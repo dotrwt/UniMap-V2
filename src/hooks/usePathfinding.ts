@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useMapStore } from '@/store/mapStore';
 import { dijkstra } from '@/lib/dijkstra';
+import { buildGlobalGraph } from '@/lib/multiMapNavigation';
 import { buildRoute } from '@/lib/routeBuilder';
 import { DEFAULT_ROUTE_OPTIONS } from '@/constants';
 import type { Route } from '@/types';
@@ -33,11 +34,11 @@ export function usePathfinding(): {
     setIsComputing(true);
     const runPathfinding = () => {
       try {
+        const adjacencyGraph = buildGlobalGraph(graph.edges);
         const nodeIds = dijkstra(
-          graph,
+          adjacencyGraph,
           selectedFrom.id,
-          selectedTo.id,
-          DEFAULT_ROUTE_OPTIONS
+          selectedTo.id
         );
 
         if (!nodeIds) {
