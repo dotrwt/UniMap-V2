@@ -1,6 +1,6 @@
 // src/App.tsx
 import React, { Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './styles/globals.css';
 
 // Lazy loaded page components
