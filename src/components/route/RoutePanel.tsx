@@ -1,6 +1,7 @@
-import { Navigation, CornerUpRight, CornerUpLeft, ArrowUp, ArrowDown, MapPin, School, BookOpen, Flame, Compass } from 'lucide-react';
-import NavigationPanel from '@/components/ui/NavigationPanel';
+// src/components/route/RoutePanel.tsx
+import { Navigation, CornerUpRight, CornerUpLeft, ArrowUp, ArrowDown, MapPin, School, BookOpen, Flame, Compass, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useCampusNavigation } from '@/hooks/useCampusNavigation';
+import { parseRoomName } from '@/lib/roomParser';
 
 export interface RoutePanelProps {}
 
@@ -21,11 +22,16 @@ export function RoutePanel({}: RoutePanelProps) {
     isNavigating,
     isComputingRoute,
     navigationDirections,
+    navigationSteps,
+    activeStepIndex,
+    setActiveStepIndex,
     handleDestinationSelect,
     handleCurrentLocationSelect,
     handleResetNavigation,
     handleStartNavigation,
-    campusLocations
+    campusLocations,
+    nodesMap,
+    floors
   } = useCampusNavigation();
 
   const isRouteActive = destination && currentLocation;
@@ -46,9 +52,29 @@ export function RoutePanel({}: RoutePanelProps) {
     }
   };
 
+  const getStepLabel = (step: any, index: number) => {
+    const startNode = nodesMap[step.start_node];
+    const endNode = nodesMap[step.end_node];
+    const startName = startNode ? (startNode.name || parseRoomName(startNode.id).name) : step.start_node;
+    const endName = endNode ? (endNode.name || parseRoomName(endNode.id).name) : step.end_node;
+    return {
+      title: `Step ${String(index + 1).padStart(2, '0')}`,
+      desc: `${startName} to ${endName}`
+    };
+  };
+
+  const getMapDisplayName = (mapId: string | null) => {
+    if (!mapId) return 'Campus';
+    if (mapId === 'Campus_Map') return 'Campus Map';
+    const floorMeta = floors.find(f => f.map === mapId);
+    if (floorMeta) {
+      return `${floorMeta.building.toUpperCase()} - ${floorMeta.floor === 0 ? 'G' : `F${floorMeta.floor}`}`;
+    }
+    return mapId.replace('_', ' ');
+  };
+
   const handleSelectPopularSpot = (loc: typeof POPULAR_SPOTS[0]) => {
     handleDestinationSelect(loc);
-    // default current location if empty
     if (!currentLocation) {
       const defaultStart = campusLocations.find(l => l.id === 'Jubilee_Gate') || {
         id: 'room_J001',
@@ -83,7 +109,7 @@ export function RoutePanel({}: RoutePanelProps) {
         {isRouteActive ? (
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Route Summary */}
-            <div className="px-6 pb-4 flex items-center justify-between">
+            <div className="px-6 pb-2 flex items-center justify-between">
               <div
                 onClick={() => setIsBottomSheetExpanded(!isBottomSheetExpanded)}
                 className="flex-1 cursor-pointer"
@@ -108,6 +134,37 @@ export function RoutePanel({}: RoutePanelProps) {
                 </svg>
               </button>
             </div>
+
+            {/* Step Selection Buttons (Horizontal timeline) */}
+            {isNavigating && navigationSteps.length > 0 && (
+              <div className="px-6 py-2 flex items-center gap-2 overflow-x-auto custom-scrollbar-hide shrink-0">
+                {navigationSteps.map((step, idx) => {
+                  const isActive = idx === activeStepIndex;
+                  const { title, desc } = getStepLabel(step, idx);
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => setActiveStepIndex(idx)}
+                      className={`px-4 py-2 rounded-2xl border flex-shrink-0 flex flex-col transition-all cursor-pointer ${
+                        isActive
+                          ? 'bg-orange-50 border-orange-200 text-[#ff602e]'
+                          : 'bg-[#fcfaf6] border-black/5 text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-4">
+                        <span className="text-[9px] font-black uppercase tracking-wider">{title}</span>
+                        <span className="text-[8px] font-bold bg-white px-1 py-0.5 rounded text-gray-400 border border-black/5 uppercase">
+                          {getMapDisplayName(step.map)}
+                        </span>
+                      </div>
+                      <span className="text-[11px] font-bold text-gray-900 mt-1 max-w-[130px] truncate">
+                        {desc}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
             {/* Scrollable Step list */}
             <div className="flex-1 overflow-y-auto px-6 py-4 border-t border-gray-100">
@@ -140,34 +197,56 @@ export function RoutePanel({}: RoutePanelProps) {
                 </div>
               ) : (
                 <div className="text-center py-8 text-xs font-semibold text-gray-400">
-                  No steps generated. Tap Start Navigation to compute path.
+                  {isNavigating ? 'No steps generated.' : 'Tap Start Navigation to compute path.'}
                 </div>
               )}
             </div>
 
             {/* Action Buttons Footer */}
             <div className="p-4 bg-white border-t border-gray-100 flex items-center gap-3">
-              <button
-                onClick={() => {
-                  if (!isNavigating) {
-                    handleStartNavigation();
-                  } else {
-                    handleResetNavigation();
-                  }
-                }}
-                className="flex-1 h-12 rounded-2xl bg-[#2f55d4] hover:bg-blue-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all cursor-pointer"
-              >
-                <Navigation className="w-4 h-4 fill-white" />
-                {isNavigating ? 'End Navigation' : 'Start Navigation'}
-              </button>
-              <button
-                onClick={handleResetNavigation}
-                className="w-12 h-12 rounded-2xl bg-gray-100 hover:bg-gray-200 text-blue-600 flex items-center justify-center transition-colors active:scale-95 cursor-pointer"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                </svg>
-              </button>
+              {isNavigating ? (
+                <>
+                  <button
+                    disabled={activeStepIndex === 0}
+                    onClick={() => setActiveStepIndex(p => Math.max(0, p - 1))}
+                    className="flex-1 h-12 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    Prev Step
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (activeStepIndex === navigationSteps.length - 1) {
+                        handleResetNavigation();
+                      } else {
+                        setActiveStepIndex(p => Math.min(navigationSteps.length - 1, p + 1));
+                      }
+                    }}
+                    className="flex-1 h-12 rounded-2xl bg-[#ff602e] hover:bg-[#ff7b52] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 active:scale-[0.98] transition-all cursor-pointer"
+                  >
+                    {activeStepIndex === navigationSteps.length - 1 ? 'Finish' : 'Next Step'}
+                    {activeStepIndex !== navigationSteps.length - 1 && <ArrowRight className="w-4 h-4" />}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={handleStartNavigation}
+                    className="flex-1 h-12 rounded-2xl bg-[#2f55d4] hover:bg-blue-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all cursor-pointer"
+                  >
+                    <Navigation className="w-4 h-4 fill-white" />
+                    Start Navigation
+                  </button>
+                  <button
+                    onClick={handleResetNavigation}
+                    className="w-12 h-12 rounded-2xl bg-gray-100 hover:bg-gray-200 text-blue-600 flex items-center justify-center transition-colors active:scale-95 cursor-pointer"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                    </svg>
+                  </button>
+                </>
+              )}
             </div>
           </div>
         ) : (
@@ -212,12 +291,111 @@ export function RoutePanel({}: RoutePanelProps) {
     <>
       {/* Navigation Panel */}
       {isNavigating && (
-        <div className="border-t border-gray-100 pt-4">
-          <NavigationPanel
-            isNavigating={isNavigating}
-            navigationDirections={navigationDirections}
-            onResetNavigation={handleResetNavigation}
-          />
+        <div className="border-t border-gray-100 pt-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+              <Navigation className="w-4.5 h-4.5 text-[#ff602e]" />
+              Navigation
+            </h3>
+            <button
+              onClick={handleResetNavigation}
+              className="text-xs font-bold text-red-500 hover:text-red-600 hover:bg-red-50 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
+            >
+              End Route
+            </button>
+          </div>
+
+          {/* Steps selector buttons list */}
+          <div className="space-y-2">
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Route Steps</span>
+            <div className="relative pl-4 space-y-3">
+              {/* Timeline Connector Line */}
+              <div className="absolute left-[7px] top-3.5 bottom-3.5 w-[2px] bg-gray-100" />
+
+              {navigationSteps.map((step, idx) => {
+                const isActive = idx === activeStepIndex;
+                const { title, desc } = getStepLabel(step, idx);
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => setActiveStepIndex(idx)}
+                    className={`w-full text-left relative flex items-start gap-3 p-2.5 rounded-xl transition-all border ${
+                      isActive
+                        ? 'bg-orange-50/75 border-orange-200/80 shadow-sm'
+                        : 'bg-transparent border-transparent hover:bg-gray-50'
+                    }`}
+                  >
+                    {/* Timeline circle marker */}
+                    <div className={`absolute -left-[13px] top-3.5 w-2.5 h-2.5 rounded-full border-2 ${
+                      isActive ? 'bg-[#ff602e] border-white ring-2 ring-orange-200' : 'bg-gray-300 border-white'
+                    }`} />
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${isActive ? 'text-[#ff602e]' : 'text-gray-400'}`}>
+                          {title}
+                        </span>
+                        <span className="text-[9px] font-bold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded uppercase">
+                          {getMapDisplayName(step.map)}
+                        </span>
+                      </div>
+                      <p className="text-xs font-bold text-gray-900 mt-0.5">
+                        {desc}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Active Step walking instructions */}
+          {navigationSteps[activeStepIndex] && (
+            <div className="bg-[#fcfaf6] border border-black/[0.03] rounded-2xl p-4 space-y-3.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-[#ff602e] uppercase tracking-wider">
+                  Walking Instructions
+                </span>
+                <span className="text-[10px] font-bold text-gray-400">
+                  {navigationDirections.length} directions
+                </span>
+              </div>
+
+              <div className="space-y-3.5 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
+                {navigationDirections.map((step, index) => (
+                  <div key={index} className="flex items-start gap-3">
+                    <div className="flex items-center justify-center w-7 h-7 bg-white border border-black/5 rounded-lg shrink-0 text-[#ff602e]">
+                      {renderDirectionIcon(step.direction)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-gray-800 leading-snug">{step.instruction}</p>
+                      {step.distance && (
+                        <p className="text-[10px] text-gray-400 font-bold mt-0.5">{step.distance}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Prev / Next buttons */}
+              <div className="flex items-center gap-2 pt-1.5">
+                <button
+                  disabled={activeStepIndex === 0}
+                  onClick={() => setActiveStepIndex(p => Math.max(0, p - 1))}
+                  className="flex-1 h-9 rounded-xl bg-white border border-gray-200 text-gray-700 font-bold text-xs disabled:opacity-50 disabled:pointer-events-none hover:bg-gray-50 active:scale-95 transition-all cursor-pointer"
+                >
+                  Previous Step
+                </button>
+                <button
+                  disabled={activeStepIndex === navigationSteps.length - 1}
+                  onClick={() => setActiveStepIndex(p => Math.min(navigationSteps.length - 1, p + 1))}
+                  className="flex-1 h-9 rounded-xl bg-[#ff602e] text-white font-bold text-xs disabled:opacity-50 disabled:pointer-events-none hover:bg-[#ff7b52] active:scale-95 transition-all cursor-pointer"
+                >
+                  Next Step
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

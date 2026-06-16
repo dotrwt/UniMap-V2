@@ -45,6 +45,7 @@ export interface CampusNavigationContextType {
   setActiveStepIndex: React.Dispatch<React.SetStateAction<number>>;
   setSelectedMapId: React.Dispatch<React.SetStateAction<string | null>>;
   campusLocations: any[];
+  nodesMap: Record<string, MapNode>;
 }
 
 const CampusNavigationContext = createContext<CampusNavigationContextType | undefined>(undefined);
@@ -302,6 +303,28 @@ export function CampusNavigationProvider({ children }: { children: React.ReactNo
     );
   }, [mobileSearchQuery, campusLocations]);
 
+  // Effect 1: Update SVG/instructions when activeStepIndex changes
+  useEffect(() => {
+    if (isNavigating && navigationSteps[activeStepIndex]) {
+      activateStep(navigationSteps[activeStepIndex]);
+      setSelectedMapId(null); // Clear manual map override to snap to the step's map!
+      setAutoFitNonce((n) => n + 1);
+    }
+  }, [activeStepIndex, isNavigating, navigationSteps, activateStep]);
+
+  // Effect 2: Update activeStepIndex if the user manually switches activeMapId
+  useEffect(() => {
+    if (isNavigating && navigationSteps.length > 0) {
+      const currentMapOfStep = navigationSteps[activeStepIndex]?.map;
+      if (currentMapOfStep !== activeMapId) {
+        const matchingStepIdx = navigationSteps.findIndex(s => s.map === activeMapId);
+        if (matchingStepIdx !== -1) {
+          setActiveStepIndex(matchingStepIdx);
+        }
+      }
+    }
+  }, [activeMapId, isNavigating, navigationSteps, activeStepIndex]);
+
   const contextValue = useMemo(() => ({
     nodes,
     edges,
@@ -339,6 +362,7 @@ export function CampusNavigationProvider({ children }: { children: React.ReactNo
     setActiveStepIndex,
     setSelectedMapId,
     campusLocations,
+    nodesMap,
   }), [
     nodes,
     edges,
@@ -370,6 +394,7 @@ export function CampusNavigationProvider({ children }: { children: React.ReactNo
     handleSwapLocations,
     handleStartNavigation,
     campusLocations,
+    nodesMap,
   ]);
 
   return (
