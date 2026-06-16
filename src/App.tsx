@@ -5,7 +5,7 @@ import './styles/globals.css';
 
 // Lazy loaded page components
 const LandingPage = React.lazy(() => import('@/pages/Landing/LandingPage'));
-const CampusMapPage = React.lazy(() => import('@/pages/Map/CampusMapPage'));
+const MapPage = React.lazy(() => import('@/pages/Map/MapPage'));
 const SupportPage = React.lazy(() => import('@/pages/Support/SupportPage'));
 const NotFoundPage = React.lazy(() => import('@/pages/404'));
 
@@ -17,7 +17,7 @@ const LoadingFallback = () => (
 );
 
 function CampusMapWrapper() {
-  return <CampusMapPage />;
+  return <MapPage />;
 }
 
 /** Root App component setting up global routing, theme, and code-split pages. */
