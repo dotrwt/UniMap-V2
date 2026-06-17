@@ -53,6 +53,8 @@ export interface CampusNavigationContextType {
   setSelectedMapId: React.Dispatch<React.SetStateAction<string | null>>;
   campusLocations: any[];
   nodesMap: Record<string, MapNode>;
+  routeDistance: number;
+  routeDuration: number;
 }
 
 const CampusNavigationContext = createContext<CampusNavigationContextType | undefined>(undefined);
@@ -93,10 +95,13 @@ export function CampusNavigationProvider({ children }: { children: React.ReactNo
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [autoFitNonce, setAutoFitNonce] = useState(0);
   const [selectedMapId, setSelectedMapId] = useState<string | null>(null);
+  
+  // Dynamic Route Metrics
+  const [routeDistance, setRouteDistance] = useState<number>(0);
+  const [routeDuration, setRouteDuration] = useState<number>(0);
 
   const unmountedRef = useRef(false);
   const routeAbortRef = useRef<AbortController | null>(null);
-  const routeRequestIdRef = useRef(0);
 
   // Load datasets from backend APIs
   useEffect(() => {
@@ -206,6 +211,8 @@ export function CampusNavigationProvider({ children }: { children: React.ReactNo
     setActiveStepIndex(0);
     setAutoFitNonce((n) => n + 1);
     setSelectedMapId(null);
+    setRouteDistance(0);
+    setRouteDuration(0);
   }, []);
 
   const handleDestinationClear = useCallback(() => {
@@ -263,86 +270,120 @@ export function CampusNavigationProvider({ children }: { children: React.ReactNo
     [nodesMap, edgeIndex]
   );
 
-  const handleStartNavigation = useCallback(async () => {
-    if (!destination || !currentLocation) return;
+  // Auto-compute route steps and dynamic metrics
+  useEffect(() => {
+    if (!currentLocation || !destination) {
+      setPathPoints('');
+      setNavigationDirections([]);
+      setNavigationSteps([]);
+      setRouteDistance(0);
+      setRouteDuration(0);
+      return;
+    }
 
+    let active = true;
     setIsComputingRoute(true);
-    const requestId = ++routeRequestIdRef.current;
     routeAbortRef.current?.abort();
     const controller = new AbortController();
     routeAbortRef.current = controller;
 
-    try {
-      const result = await computeMultiMapRouteAsync(
-        nodes,
-        edges,
-        currentLocation.id,
-        destination.id,
-        {
-          signal: controller.signal,
-          yieldEvery: 2000,
-          includeFullPath: false,
-          nodesMap,
-          graph,
-        }
-      );
-
-      if (controller.signal.aborted || requestId !== routeRequestIdRef.current) return;
-
-      if (!result || !result.steps || result.steps.length === 0) {
-        setPathPoints('');
-        setNavigationDirections([
+    const runRouting = async () => {
+      try {
+        const result = await computeMultiMapRouteAsync(
+          nodes,
+          edges,
+          currentLocation.id,
+          destination.id,
           {
-            direction: 'straight',
-            instruction: 'No path found between these locations',
-            distance: '',
-          },
-        ]);
-        setNavigationSteps([]);
-        setIsNavigating(true);
-        return;
-      }
+            signal: controller.signal,
+            yieldEvery: 2000,
+            includeFullPath: true,
+            nodesMap,
+            graph,
+          }
+        );
 
-      setNavigationSteps(result.steps);
-      setActiveStepIndex(0);
-      setIsNavigating(true);
-      activateStep(result.steps[0]);
-      setAutoFitNonce((n) => n + 1);
-    } finally {
-      if (requestId === routeRequestIdRef.current) {
-        setIsComputingRoute(false);
-      }
-    }
-  }, [destination, currentLocation, nodes, edges, nodesMap, graph, activateStep]);
+        if (!active || controller.signal.aborted) return;
 
-  const activeStep = navigationSteps[activeStepIndex] || null;
-  const activeMapId =
+        if (!result || !result.steps || result.steps.length === 0) {
+          setPathPoints('');
+          setNavigationDirections([
+            {
+              direction: 'straight',
+              instruction: 'No path found between these locations',
+              distance: '',
+            },
+          ]);
+          setNavigationSteps([]);
+          setRouteDistance(0);
+          setRouteDuration(0);
+          return;
+        }
+
+        // Calculate total distance & duration using edge index
+        let totalDist = 0;
+        let stairsCount = 0;
+        let liftCount = 0;
+
+        if (result.fullPath && result.fullPath.length > 1) {
+          for (let i = 1; i < result.fullPath.length; i++) {
+            const from = result.fullPath[i - 1];
+            const to = result.fullPath[i];
+            const edge = edgeIndex.get(`${from}|${to}`);
+            if (edge) {
+              totalDist += edge.distance ?? (edge as any).weight ?? 0;
+              if (edge.type === 'stairs') stairsCount++;
+              if (edge.type === 'lift') liftCount++;
+            }
+          }
+        }
+
+        let estTime = totalDist / 1.4; // 1.4 m/s walking speed
+        estTime += stairsCount * 20;
+        estTime += liftCount * 30;
+
+        setRouteDistance(totalDist);
+        setRouteDuration(estTime);
+        setNavigationSteps(result.steps);
+      } catch (err) {
+        console.error("Automatic route calculation failed:", err);
+      } finally {
+        if (active && routeAbortRef.current === controller) {
+          setIsComputingRoute(false);
+        }
+      }
+    };
+
+    runRouting();
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [currentLocation?.id, destination?.id, nodes, edges, nodesMap, graph, edgeIndex]);
+
+  const activeStep = useMemo(() => navigationSteps[activeStepIndex] || null, [navigationSteps, activeStepIndex]);
+  const activeMapId = useMemo(() => 
     selectedMapId ||
-    (isNavigating && activeStep?.map) ||
+    (activeStep?.map) ||
     currentLocation?.map ||
     destination?.map ||
-    'Campus_Map';
+    'Campus_Map',
+    [selectedMapId, activeStep, currentLocation, destination]
+  );
 
-  const filteredSuggestions = useMemo(() => {
-    const q = mobileSearchQuery.trim().toLowerCase();
-    if (!q) return campusLocations.slice(0, 10);
-    return campusLocations.filter(loc =>
-      (loc.searchName ?? loc.name.toLowerCase()).includes(q)
-    );
-  }, [mobileSearchQuery, campusLocations]);
-
-  // Effect 1: Update SVG/instructions when activeStepIndex changes
+  // Effect 1: Update SVG/instructions when activeStepIndex or navigationSteps change
   useEffect(() => {
-    if (isNavigating && navigationSteps[activeStepIndex]) {
+    if (navigationSteps[activeStepIndex]) {
       activateStep(navigationSteps[activeStepIndex]);
       setSelectedMapId(null); // Clear manual map override to snap to the step's map!
       setAutoFitNonce((n) => n + 1);
     }
-  }, [activeStepIndex, isNavigating, navigationSteps, activateStep]);
+  }, [activeStepIndex, navigationSteps, activateStep]);
 
   // Effect 2: Update activeStepIndex if the user manually switches activeMapId
   useEffect(() => {
-    if (isNavigating && navigationSteps.length > 0) {
+    if (navigationSteps.length > 0) {
       const currentMapOfStep = navigationSteps[activeStepIndex]?.map;
       if (currentMapOfStep !== activeMapId) {
         const matchingStepIdx = navigationSteps.findIndex(s => s.map === activeMapId);
@@ -351,7 +392,22 @@ export function CampusNavigationProvider({ children }: { children: React.ReactNo
         }
       }
     }
-  }, [activeMapId, isNavigating, navigationSteps, activeStepIndex]);
+  }, [activeMapId, navigationSteps, activeStepIndex]);
+
+  const handleStartNavigation = useCallback(async () => {
+    if (!destination || !currentLocation) return;
+    setIsNavigating(true);
+    setActiveStepIndex(0);
+    setAutoFitNonce((n) => n + 1);
+  }, [destination, currentLocation]);
+
+  const filteredSuggestions = useMemo(() => {
+    const q = mobileSearchQuery.trim().toLowerCase();
+    if (!q) return campusLocations.slice(0, 10);
+    return campusLocations.filter(loc =>
+      (loc.searchName ?? loc.name.toLowerCase()).includes(q)
+    );
+  }, [mobileSearchQuery, campusLocations]);
 
   const contextValue = useMemo(() => ({
     nodes,
@@ -391,6 +447,8 @@ export function CampusNavigationProvider({ children }: { children: React.ReactNo
     setSelectedMapId,
     campusLocations,
     nodesMap,
+    routeDistance,
+    routeDuration,
   }), [
     nodes,
     edges,
@@ -423,6 +481,8 @@ export function CampusNavigationProvider({ children }: { children: React.ReactNo
     handleStartNavigation,
     campusLocations,
     nodesMap,
+    routeDistance,
+    routeDuration,
   ]);
 
   return (

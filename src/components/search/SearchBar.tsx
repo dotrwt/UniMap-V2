@@ -2,7 +2,21 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Navigation, ArrowRight, Menu, ArrowUpDown, School, ArrowLeft, X, MapPin } from 'lucide-react';
+import { 
+  Search, 
+  Navigation, 
+  ArrowRight, 
+  Menu, 
+  ArrowUpDown, 
+  School, 
+  ArrowLeft, 
+  X, 
+  MapPin,
+  CornerUpLeft,
+  CornerUpRight,
+  ArrowUp,
+  ArrowDown
+} from 'lucide-react';
 import { Button } from '@/components/ui';
 import SearchDestination from '@/components/ui/SearchDestination';
 import SearchCurrentLocation from '@/components/ui/SearchCurrentLocation';
@@ -30,16 +44,76 @@ export function SearchBar({}: SearchBarProps) {
     handleDestinationClear,
     handleCurrentLocationSelect,
     handleCurrentLocationClear,
+    handleResetNavigation,
     handleSwapLocations,
     handleStartNavigation,
     campusLocations,
-    edges
+    edges,
+    navigationSteps,
+    activeStepIndex,
+    navigationDirections
   } = useCampusNavigation();
 
   const graph = useMemo(() => buildGlobalGraph(edges), [edges]);
 
+  const renderGuidanceIcon = (direction?: string) => {
+    switch (direction) {
+      case 'left':
+        return <CornerUpLeft className="w-7 h-7 text-white animate-bounce" />;
+      case 'right':
+        return <CornerUpRight className="w-7 h-7 text-white animate-bounce" />;
+      case 'up':
+        return <ArrowUp className="w-7 h-7 text-white animate-pulse" />;
+      case 'down':
+        return <ArrowDown className="w-7 h-7 text-white animate-pulse" />;
+      case 'straight':
+      default:
+        return <ArrowUp className="w-7 h-7 text-white animate-pulse" />;
+    }
+  };
+
   if (isMobile) {
     const isRouteActive = destination && currentLocation;
+
+    if (isNavigating) {
+      const activeStep = navigationSteps[activeStepIndex] || null;
+      const currentInstruction = navigationDirections[0]?.instruction || 'Head to start point';
+      const currentDirection = navigationDirections[0]?.direction || 'straight';
+      const currentDistance = navigationDirections[0]?.distance || '';
+
+      return (
+        <div className="absolute top-4 left-4 right-4 z-20 bg-gradient-to-r from-emerald-600 to-teal-500 rounded-2xl shadow-xl border border-emerald-500/20 p-4 flex items-center gap-4 text-white animate-in slide-in-from-top duration-300">
+          {/* Direction Icon Container */}
+          <div className="w-11 h-11 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center shrink-0 border border-white/10">
+            {renderGuidanceIcon(currentDirection)}
+          </div>
+
+          {/* Instruction Details */}
+          <div className="flex-1 min-w-0">
+            <span className="text-[9px] font-black uppercase tracking-wider text-emerald-100 block">
+              {activeStep ? `Step ${activeStepIndex + 1} of ${navigationSteps.length} • ${activeStep.map ? activeStep.map.replace('_', ' ') : 'Campus'}` : 'Navigating'}
+            </span>
+            <p className="text-xs font-black mt-0.5 leading-snug truncate">
+              {currentInstruction}
+            </p>
+            {currentDistance && (
+              <p className="text-[10px] text-emerald-100 font-bold mt-0.5">
+                For {currentDistance}
+              </p>
+            )}
+          </div>
+
+          {/* Exit Button */}
+          <button
+            onClick={handleResetNavigation}
+            className="p-2 hover:bg-white/10 rounded-xl text-emerald-50 transition-colors cursor-pointer shrink-0"
+            title="Exit Navigation"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      );
+    }
 
     return (
       <>
@@ -90,53 +164,49 @@ export function SearchBar({}: SearchBarProps) {
 
               <div
                 onClick={() => setActiveSearchField('dest')}
-                className="flex-1 flex items-center gap-2 cursor-pointer text-gray-400"
+                className="flex-1 flex items-center gap-2 cursor-pointer min-w-0"
               >
-                <Search className="w-4 h-4 text-gray-400" />
-                <span className="text-xs font-semibold">Search destination room, lab, washroom...</span>
+                {destination ? (
+                  <>
+                    <MapPin className="w-4 h-4 text-red-500 shrink-0" />
+                    <span className="text-xs font-bold text-gray-900 truncate">
+                      {destination.name}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Search className="w-4 h-4 text-gray-400 shrink-0" />
+                    <span className="text-xs font-semibold text-gray-400 truncate">
+                      Search destination room, lab, washroom...
+                    </span>
+                  </>
+                )}
               </div>
+
+              {destination && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDestinationClear();
+                  }}
+                  className="p-1 hover:bg-gray-100 rounded-lg text-gray-400 cursor-pointer shrink-0"
+                  aria-label="Clear destination"
+                >
+                  <X className="w-4.5 h-4.5" />
+                </button>
+              )}
             </div>
           ) : (
             /* Dual Stacked Capsule (When route is active) */
             <div className="bg-white rounded-2xl shadow-lg border border-black/5 p-3 flex items-center gap-3">
               <div className="relative shrink-0">
                 <button
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  onClick={handleCurrentLocationClear}
                   className="p-1.5 hover:bg-gray-100 rounded-xl text-gray-700 transition-colors cursor-pointer"
-                  aria-label="Menu"
+                  aria-label="Back"
                 >
-                  <Menu className="w-5 h-5" />
+                  <ArrowLeft className="w-5 h-5" />
                 </button>
-
-                <AnimatePresence>
-                  {isMenuOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="absolute left-0 mt-3 w-40 bg-white rounded-xl shadow-xl border border-black/[0.04] p-1.5 flex flex-col gap-0.5 z-30"
-                    >
-                      <button
-                        onClick={() => {
-                          navigate('/');
-                          setIsMenuOpen(false);
-                        }}
-                        className="w-full text-left px-3 py-2 text-xs font-bold text-gray-700 hover:bg-orange-50 hover:text-[#ff602e] rounded-lg transition-colors cursor-pointer"
-                      >
-                        Home
-                      </button>
-                      <button
-                        onClick={() => {
-                          navigate('/support');
-                          setIsMenuOpen(false);
-                        }}
-                        className="w-full text-left px-3 py-2 text-xs font-bold text-gray-700 hover:bg-orange-50 hover:text-[#ff602e] rounded-lg transition-colors cursor-pointer"
-                      >
-                        Support
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
               </div>
 
               {/* Stacked inputs */}
@@ -196,7 +266,7 @@ export function SearchBar({}: SearchBarProps) {
                     setActiveSearchField(null);
                     setMobileSearchQuery('');
                   }}
-                  className="p-2 hover:bg-gray-100 rounded-xl text-gray-655 cursor-pointer"
+                  className="p-2 hover:bg-gray-100 rounded-xl text-gray-655 cursor-pointer block"
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </button>

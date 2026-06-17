@@ -1,8 +1,23 @@
 // src/components/route/RoutePanel.tsx
 import { memo } from 'react';
-import { Navigation, CornerUpRight, CornerUpLeft, ArrowUp, ArrowDown, MapPin, School, BookOpen, Flame, Compass, ArrowRight, ArrowLeft } from 'lucide-react';
+import { 
+  Navigation, 
+  CornerUpRight, 
+  CornerUpLeft, 
+  ArrowUp, 
+  ArrowDown, 
+  MapPin, 
+  School, 
+  BookOpen, 
+  Flame, 
+  Compass, 
+  ArrowRight, 
+  ArrowLeft,
+  X
+} from 'lucide-react';
 import { useCampusNavigation } from '@/hooks/useCampusNavigation';
 import { parseRoomName } from '@/lib/roomParser';
+import { formatTime, formatDistance } from '@/lib/routeBuilder';
 
 export interface RoutePanelProps {}
 
@@ -27,12 +42,15 @@ export const RoutePanel = memo(function RoutePanel({}: RoutePanelProps) {
     activeStepIndex,
     setActiveStepIndex,
     handleDestinationSelect,
+    handleDestinationClear,
     handleCurrentLocationSelect,
     handleResetNavigation,
     handleStartNavigation,
     campusLocations,
     nodesMap,
-    floors
+    floors,
+    routeDistance,
+    routeDuration
   } = useCampusNavigation();
 
   const isRouteActive = destination && currentLocation;
@@ -76,20 +94,8 @@ export const RoutePanel = memo(function RoutePanel({}: RoutePanelProps) {
 
   const handleSelectPopularSpot = (loc: typeof POPULAR_SPOTS[0]) => {
     handleDestinationSelect(loc);
-    if (!currentLocation) {
-      const defaultStart = campusLocations.find(l => l.id === 'Jubilee_Gate') || {
-        id: 'room_J001',
-        name: 'Conclave',
-        searchName: 'conclave',
-        map: 'Main_GF',
-        building: 'Main',
-        floor: 0,
-        category: 'Academic',
-        x: 406.8033,
-        y: 487.5583,
-      };
-      handleCurrentLocationSelect(defaultStart);
-    }
+    // Google maps style: when popular spot selected, let it trigger Destination Place Card.
+    // Do not automatically set currentLocation to Jubilee Gate so the user sees the Place card first!
   };
 
   if (isMobile) {
@@ -102,158 +108,283 @@ export const RoutePanel = memo(function RoutePanel({}: RoutePanelProps) {
         {/* Drag Handle */}
         <div
           onClick={() => setIsBottomSheetExpanded(!isBottomSheetExpanded)}
-          className="w-full py-3 flex justify-center cursor-pointer select-none"
+          className="w-full py-3 flex justify-center cursor-pointer select-none shrink-0"
         >
           <div className="w-10 h-1 bg-gray-300 rounded-full" />
         </div>
 
-        {isRouteActive ? (
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Route Summary */}
-            <div className="px-6 pb-2 flex items-center justify-between">
-              <div
-                onClick={() => setIsBottomSheetExpanded(!isBottomSheetExpanded)}
-                className="flex-1 cursor-pointer"
-              >
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-xl font-black text-gray-900">
-                    {isComputingRoute ? 'Computing...' : '4 mins'}
+        {isNavigating ? (
+          // Navigation Mode (Active)
+          !isBottomSheetExpanded ? (
+            // Collapsed Active Navigation Dashboard
+            <div className="flex items-center justify-between px-6 py-2.5 w-full shrink-0">
+              <div className="flex flex-col min-w-0">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-lg font-black text-emerald-600">
+                    {isComputingRoute ? 'Computing...' : formatTime(routeDuration)}
                   </span>
-                  <span className="text-sm font-bold text-gray-400">
-                    (320m)
-                  </span>
+                  {!isComputingRoute && (
+                    <span className="text-xs text-gray-400 font-bold">
+                      ({formatDistance(routeDistance)})
+                    </span>
+                  )}
                 </div>
-                <p className="text-xs font-bold text-green-600 mt-0.5">
-                  Fastest route via Main Atrium
-                </p>
+                <span className="text-[10px] text-gray-400 font-bold block mt-0.5 truncate">
+                  Step {activeStepIndex + 1} of {navigationSteps.length}
+                </span>
               </div>
 
-              {/* Share Button */}
-              <button className="w-10 h-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center transition-colors active:scale-95 cursor-pointer">
-                <svg className="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8.684 10.742l4.646-2.323m0 7.162l-4.646-2.323M21 12a3 3 0 11-6 0 3 3 0 016 0zm-11-7a3 3 0 11-6 0 3 3 0 016 0zm0 14a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={activeStepIndex === 0}
+                  onClick={() => setActiveStepIndex((p) => Math.max(0, p - 1))}
+                  className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center transition-all disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+                  title="Previous Step"
+                >
+                  <ArrowLeft className="w-4.5 h-4.5" />
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (activeStepIndex === navigationSteps.length - 1) {
+                      handleResetNavigation();
+                    } else {
+                      setActiveStepIndex((p) => Math.min(navigationSteps.length - 1, p + 1));
+                    }
+                  }}
+                  className="h-10 px-4 rounded-xl bg-[#ff602e] hover:bg-[#ff7b52] text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-md shadow-orange-500/10 cursor-pointer"
+                >
+                  <span>{activeStepIndex === navigationSteps.length - 1 ? 'Finish' : 'Next'}</span>
+                  {activeStepIndex !== navigationSteps.length - 1 && <ArrowRight className="w-3.5 h-3.5" />}
+                </button>
+              </div>
             </div>
-
-            {/* Step Selection Buttons (Horizontal timeline) */}
-            {isNavigating && navigationSteps.length > 0 && (
-              <div className="px-6 py-2 flex items-center gap-2 overflow-x-auto custom-scrollbar-hide shrink-0">
-                {navigationSteps.map((step, idx) => {
-                  const isActive = idx === activeStepIndex;
-                  const { title, desc } = getStepLabel(step, idx);
-                  return (
-                    <button
-                      key={idx}
-                      onClick={() => setActiveStepIndex(idx)}
-                      className={`px-4 py-2 rounded-2xl border flex-shrink-0 flex flex-col transition-all cursor-pointer ${
-                        isActive
-                          ? 'bg-orange-50 border-orange-200 text-[#ff602e]'
-                          : 'bg-[#fcfaf6] border-black/5 text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-4">
-                        <span className="text-[9px] font-black uppercase tracking-wider">{title}</span>
-                        <span className="text-[8px] font-bold bg-white px-1 py-0.5 rounded text-gray-400 border border-black/5 uppercase">
-                          {getMapDisplayName(step.map)}
-                        </span>
-                      </div>
-                      <span className="text-[11px] font-bold text-gray-900 mt-1 max-w-[130px] truncate">
-                        {desc}
+          ) : (
+            // Expanded Active Navigation Dashboard
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {/* Route Summary */}
+              <div className="px-6 pb-2 flex items-center justify-between">
+                <div>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-xl font-black text-gray-900">
+                      {isComputingRoute ? 'Computing...' : formatTime(routeDuration)}
+                    </span>
+                    {!isComputingRoute && (
+                      <span className="text-sm font-bold text-gray-400">
+                        ({formatDistance(routeDistance)})
                       </span>
-                    </button>
-                  );
-                })}
+                    )}
+                  </div>
+                  <p className="text-xs font-bold text-emerald-600 mt-0.5">
+                    Active Step-by-Step Navigation
+                  </p>
+                </div>
               </div>
-            )}
 
-            {/* Scrollable Step list */}
-            <div className="flex-1 overflow-y-auto px-6 py-4 border-t border-gray-100">
-              {navigationDirections.length > 0 ? (
-                <div className="relative pl-8 space-y-6">
-                  {/* Vertical line connecting steps */}
-                  <div className="absolute left-[15px] top-4 bottom-8 w-[2px] bg-blue-100 pointer-events-none" />
-
-                  {navigationDirections.map((step, idx) => {
-                    const isLast = idx === navigationDirections.length - 1;
+              {/* Step Selection timeline */}
+              {navigationSteps.length > 0 && (
+                <div className="px-6 py-2 flex items-center gap-2 overflow-x-auto custom-scrollbar-hide shrink-0">
+                  {navigationSteps.map((step, idx) => {
+                    const isActive = idx === activeStepIndex;
+                    const { title, desc } = getStepLabel(step, idx);
                     return (
-                      <div key={idx} className="relative flex flex-col gap-1">
-                        {/* Step Icon */}
-                        <div className={`absolute -left-[32px] top-0.5 w-8 h-8 rounded-full flex items-center justify-center z-10 ${
-                          isLast ? 'bg-red-50 border border-red-100 text-red-500' : 'bg-blue-50 border border-blue-100 text-blue-600'
-                        }`}>
-                          {isLast ? <MapPin className="w-4 h-4" /> : renderDirectionIcon(step.direction)}
+                      <button
+                        key={idx}
+                        onClick={() => setActiveStepIndex(idx)}
+                        className={`px-4 py-2 rounded-2xl border flex-shrink-0 flex flex-col transition-all cursor-pointer ${
+                          isActive
+                            ? 'bg-orange-50 border-orange-200 text-[#ff602e]'
+                            : 'bg-[#fcfaf6] border-black/5 text-gray-700 hover:bg-gray-55'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-4">
+                          <span className="text-[9px] font-black uppercase tracking-wider">{title}</span>
+                          <span className="text-[8px] font-bold bg-white px-1 py-0.5 rounded text-gray-400 border border-black/5 uppercase">
+                            {getMapDisplayName(step.map)}
+                          </span>
                         </div>
-                        <div>
-                          <p className="text-sm font-bold text-gray-900 leading-snug">
-                            {step.instruction}
-                          </p>
-                          <p className="text-xs font-semibold text-gray-400 mt-0.5">
-                            {step.distance}
-                          </p>
-                        </div>
-                      </div>
+                        <span className="text-[11px] font-bold text-gray-900 mt-1 max-w-[130px] truncate">
+                          {desc}
+                        </span>
+                      </button>
                     );
                   })}
                 </div>
-              ) : (
-                <div className="text-center py-8 text-xs font-semibold text-gray-400">
-                  {isNavigating ? 'No steps generated.' : 'Tap Start Navigation to compute path.'}
-                </div>
               )}
+
+              {/* Scrollable Step list */}
+              <div className="flex-1 overflow-y-auto px-6 py-4 border-t border-gray-100">
+                {navigationDirections.length > 0 ? (
+                  <div className="relative pl-8 space-y-6">
+                    {/* Vertical line connecting steps */}
+                    <div className="absolute left-[15px] top-4 bottom-8 w-[2px] bg-blue-100 pointer-events-none" />
+
+                    {navigationDirections.map((step, idx) => {
+                      const isLast = idx === navigationDirections.length - 1;
+                      return (
+                        <div key={idx} className="relative flex flex-col gap-1">
+                          {/* Step Icon */}
+                          <div className={`absolute -left-[32px] top-0.5 w-8 h-8 rounded-full flex items-center justify-center z-10 ${
+                            isLast ? 'bg-red-50 border border-red-100 text-red-500' : 'bg-blue-50 border border-blue-100 text-blue-600'
+                          }`}>
+                            {isLast ? <MapPin className="w-4 h-4" /> : renderDirectionIcon(step.direction)}
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-gray-900 leading-snug">
+                              {step.instruction}
+                            </p>
+                            <p className="text-xs font-semibold text-gray-400 mt-0.5">
+                              {step.distance}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-xs font-semibold text-gray-400">
+                    No steps generated.
+                  </div>
+                )}
+              </div>
+
+              {/* Footer step controls */}
+              <div className="p-4 bg-white border-t border-gray-100 flex items-center gap-3 shrink-0">
+                <button
+                  disabled={activeStepIndex === 0}
+                  onClick={() => setActiveStepIndex(p => Math.max(0, p - 1))}
+                  className="flex-1 h-12 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Prev Step
+                </button>
+                <button
+                  onClick={() => {
+                    if (activeStepIndex === navigationSteps.length - 1) {
+                      handleResetNavigation();
+                    } else {
+                      setActiveStepIndex(p => Math.min(navigationSteps.length - 1, p + 1));
+                    }
+                  }}
+                  className="flex-1 h-12 rounded-2xl bg-[#ff602e] hover:bg-[#ff7b52] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 active:scale-[0.98] transition-all cursor-pointer"
+                >
+                  {activeStepIndex === navigationSteps.length - 1 ? 'Finish' : 'Next Step'}
+                  {activeStepIndex !== navigationSteps.length - 1 && <ArrowRight className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+          )
+        ) : isRouteActive ? (
+          // Route Planning / Preview Mode
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Route Summary */}
+            <div className="px-6 pb-4 flex items-center justify-between shrink-0">
+              <div className="flex-1">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-xl font-black text-gray-900">
+                    {isComputingRoute ? 'Computing...' : formatTime(routeDuration)}
+                  </span>
+                  {!isComputingRoute && (
+                    <span className="text-sm font-bold text-gray-400">
+                      ({formatDistance(routeDistance)})
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs font-bold text-emerald-600 mt-0.5">
+                  Fastest route via indoor paths
+                </p>
+              </div>
             </div>
 
             {/* Action Buttons Footer */}
-            <div className="p-4 bg-white border-t border-gray-100 flex items-center gap-3">
-              {isNavigating ? (
-                <>
-                  <button
-                    disabled={activeStepIndex === 0}
-                    onClick={() => setActiveStepIndex(p => Math.max(0, p - 1))}
-                    className="flex-1 h-12 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                    Prev Step
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (activeStepIndex === navigationSteps.length - 1) {
-                        handleResetNavigation();
-                      } else {
-                        setActiveStepIndex(p => Math.min(navigationSteps.length - 1, p + 1));
-                      }
-                    }}
-                    className="flex-1 h-12 rounded-2xl bg-[#ff602e] hover:bg-[#ff7b52] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 active:scale-[0.98] transition-all cursor-pointer"
-                  >
-                    {activeStepIndex === navigationSteps.length - 1 ? 'Finish' : 'Next Step'}
-                    {activeStepIndex !== navigationSteps.length - 1 && <ArrowRight className="w-4 h-4" />}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={handleStartNavigation}
-                    className="flex-1 h-12 rounded-2xl bg-[#2f55d4] hover:bg-blue-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all cursor-pointer"
-                  >
-                    <Navigation className="w-4 h-4 fill-white" />
-                    Start Navigation
-                  </button>
-                  <button
-                    onClick={handleResetNavigation}
-                    className="w-12 h-12 rounded-2xl bg-gray-100 hover:bg-gray-200 text-blue-600 flex items-center justify-center transition-colors active:scale-95 cursor-pointer"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                    </svg>
-                  </button>
-                </>
-              )}
+            <div className="p-4 bg-white border-t border-gray-100 flex items-center gap-3 mt-auto shrink-0">
+              <button
+                onClick={handleStartNavigation}
+                className="flex-1 h-12 rounded-2xl bg-[#2f55d4] hover:bg-blue-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all cursor-pointer"
+              >
+                <Navigation className="w-4 h-4 fill-white" />
+                Start Navigation
+              </button>
+              <button
+                onClick={handleResetNavigation}
+                className="w-12 h-12 rounded-2xl bg-gray-100 hover:bg-gray-200 text-red-500 flex items-center justify-center transition-colors active:scale-95 cursor-pointer"
+                title="Cancel Route"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        ) : destination ? (
+          // Place Details Card (Destination only, no start)
+          <div className="flex-1 flex flex-col overflow-hidden px-6 pb-4">
+            <div className="flex items-start justify-between pb-3 border-b border-gray-100 shrink-0">
+              <div className="min-w-0">
+                <span className="text-[9px] font-black uppercase tracking-wider text-[#ff602e] bg-orange-50 px-2.5 py-1 rounded-md">
+                  {destination.category}
+                </span>
+                <h3 className="text-lg font-black text-gray-900 mt-2 truncate">{destination.name}</h3>
+                <p className="text-xs font-bold text-gray-400 mt-1">
+                  {destination.building} • Floor {destination.floor === 0 ? 'G' : `F${destination.floor}`}
+                </p>
+              </div>
+              <button
+                onClick={handleDestinationClear}
+                className="p-1.5 hover:bg-gray-100 rounded-xl text-gray-400 cursor-pointer shrink-0"
+                aria-label="Clear destination"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto py-4 space-y-3">
+              <div className="bg-[#fcfaf6] border border-black/[0.03] rounded-2xl p-4 flex items-start gap-3.5">
+                <School className="w-5 h-5 text-[#ff602e] shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="text-xs font-bold text-gray-900">Location Details</h4>
+                  <p className="text-[10px] text-gray-500 mt-1 leading-relaxed">
+                    This {destination.category.toLowerCase()} is located in the {destination.building} on Floor {destination.floor === 0 ? 'Ground' : destination.floor}.
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-[#fcfaf6] border border-black/[0.03] rounded-2xl p-4 flex items-start gap-3.5">
+                <Compass className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="text-xs font-bold text-gray-900">Entrance Route</h4>
+                  <p className="text-[10px] text-gray-500 mt-1 leading-relaxed">
+                    Accessible via campus pathways and stairs/lift connections.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-gray-100 flex items-center gap-3 shrink-0">
+              <button
+                onClick={() => {
+                  const defaultStart = campusLocations.find(l => l.id === 'Jubilee_Gate') || {
+                    id: 'room_J001',
+                    name: 'Conclave',
+                    searchName: 'conclave',
+                    map: 'Main_GF',
+                    building: 'Main',
+                    floor: 0,
+                    category: 'Academic',
+                    x: 406.8033,
+                    y: 487.5583,
+                  };
+                  handleCurrentLocationSelect(defaultStart);
+                }}
+                className="flex-1 h-12 rounded-2xl bg-[#ff602e] hover:bg-[#ff7b52] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 active:scale-[0.98] transition-all cursor-pointer"
+              >
+                <Navigation className="w-4 h-4 fill-white" />
+                Directions
+              </button>
             </div>
           </div>
         ) : (
+          // Empty State (popular spots list)
           <div className="flex-1 flex flex-col overflow-hidden px-6">
-            {/* Collapsed/Empty Route Mode: Popular spots preview */}
-            <div className="pb-3 select-none">
+            <div className="pb-3 select-none shrink-0">
               <h3 className="text-base font-black text-gray-900 uppercase tracking-wider">Explore Campus</h3>
               <p className="text-[11px] font-bold text-gray-400 mt-0.5">Select a destination to plan your route</p>
             </div>
@@ -323,7 +454,7 @@ export const RoutePanel = memo(function RoutePanel({}: RoutePanelProps) {
                     className={`w-full text-left relative flex items-start gap-3 p-2.5 rounded-xl transition-all border ${
                       isActive
                         ? 'bg-orange-50/75 border-orange-200/80 shadow-sm'
-                        : 'bg-transparent border-transparent hover:bg-gray-50'
+                        : 'bg-transparent border-transparent hover:bg-gray-55'
                     }`}
                   >
                     {/* Timeline circle marker */}
