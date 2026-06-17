@@ -48,6 +48,7 @@ export const RoutePanel = memo(function RoutePanel({}: RoutePanelProps) {
     handleStartNavigation,
     campusLocations,
     nodesMap,
+    edges,
     floors,
     routeDistance,
     routeDuration
@@ -71,11 +72,77 @@ export const RoutePanel = memo(function RoutePanel({}: RoutePanelProps) {
     }
   };
 
+  const cleanNodeName = (nodeId: string) => {
+    const node = nodesMap[nodeId];
+    if (!node) return nodeId;
+
+    if (node.type === 'room' || node.type === 'landmark' || node.type === 'entrance' || node.type === 'exit') {
+      const name = node.name || parseRoomName(node.id)?.name;
+      if (name) {
+        const lower = name.toLowerCase();
+        if (!lower.includes('node') && !lower.includes('junction') && !lower.includes('road') && !lower.includes('corridor') && !lower.includes('intersection')) {
+          return name;
+        }
+      }
+    }
+
+    const edgesList = edges || [];
+    for (const edge of edgesList) {
+      const from = edge.from_node ?? (edge as any).from;
+      const to = edge.to_node ?? (edge as any).to;
+      if (from === nodeId || to === nodeId) {
+        const neighborId = from === nodeId ? to : from;
+        const neighbor = nodesMap[neighborId];
+        if (neighbor && (neighbor.type === 'room' || neighbor.type === 'landmark' || neighbor.type === 'entrance' || neighbor.type === 'exit')) {
+          const name = neighbor.name || parseRoomName(neighborId)?.name;
+          if (name) {
+            const lower = name.toLowerCase();
+            if (!lower.includes('node') && !lower.includes('junction') && !lower.includes('road') && !lower.includes('corridor') && !lower.includes('intersection')) {
+              return name;
+            }
+          }
+        }
+      }
+    }
+
+    if (node.name) {
+      const cleaned = node.name
+        .replace(/intersection/gi, '')
+        .replace(/corridor/gi, '')
+        .replace(/road/gi, '')
+        .replace(/node/gi, '')
+        .replace(/junction/gi, '')
+        .replace(/  +/g, ' ')
+        .trim();
+      if (cleaned) return cleaned;
+    }
+
+    return 'Pathway';
+  };
+
   const getStepLabel = (step: any, index: number) => {
-    const startNode = nodesMap[step.start_node];
-    const endNode = nodesMap[step.end_node];
-    const startName = startNode ? (startNode.name || parseRoomName(startNode.id).name) : step.start_node;
-    const endName = endNode ? (endNode.name || parseRoomName(endNode.id).name) : step.end_node;
+    let startName = cleanNodeName(step.start_node);
+    const endName = cleanNodeName(step.end_node);
+    if (startName === endName) {
+      const node = nodesMap[step.start_node];
+      if (node && node.name) {
+        const cleaned = node.name
+          .replace(/intersection/gi, '')
+          .replace(/corridor/gi, '')
+          .replace(/road/gi, '')
+          .replace(/node/gi, '')
+          .replace(/junction/gi, '')
+          .replace(/  +/g, ' ')
+          .trim();
+        if (cleaned) {
+          startName = cleaned;
+        } else {
+          startName = 'Pathway';
+        }
+      } else {
+        startName = 'Pathway';
+      }
+    }
     return {
       title: `Step ${String(index + 1).padStart(2, '0')}`,
       desc: `${startName} to ${endName}`
