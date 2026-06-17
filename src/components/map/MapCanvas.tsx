@@ -1,4 +1,5 @@
 // src/components/map/MapCanvas.tsx
+import { memo } from 'react';
 import MapBox from '@/components/ui/MapBox';
 import { useCampusNavigation } from '@/hooks/useCampusNavigation';
 
@@ -6,7 +7,7 @@ export interface MapCanvasProps {
   className?: string;
 }
 
-export function MapCanvas({ className = '' }: MapCanvasProps) {
+function MapCanvasComponent({ className = '' }: MapCanvasProps) {
   const {
     activeMapId,
     destination,
@@ -35,3 +36,6 @@ export function MapCanvas({ className = '' }: MapCanvasProps) {
     </div>
   );
 }
+
+export const MapCanvas = memo(MapCanvasComponent);
+

@@ -8,6 +8,13 @@ import { buildNavigationStepViewModel } from '@/pages/Map/services/navigationSte
 import type { MapNode, MapEdge, Building, FloorMap } from '@/types';
 import { parseRoomName } from '@/lib/roomParser';
 
+// Module-level caches to avoid multiple fetch requests on StrictMode double-mounting
+let cachedNodes: MapNode[] | null = null;
+let cachedEdges: MapEdge[] | null = null;
+let cachedBuildings: Building[] | null = null;
+let cachedFloors: FloorMap[] | null = null;
+let fetchPromise: Promise<[MapNode[], MapEdge[], Building[], FloorMap[]]> | null = null;
+
 export interface CampusNavigationContextType {
   nodes: MapNode[];
   edges: MapEdge[];
@@ -94,12 +101,32 @@ export function CampusNavigationProvider({ children }: { children: React.ReactNo
   // Load datasets from backend APIs
   useEffect(() => {
     let active = true;
-    Promise.all([
-      fetchNodes(),
-      fetchEdges(),
-      fetchBuildings(),
-      fetchFloors()
-    ]).then(([fetchedNodes, fetchedEdges, fetchedBuildings, fetchedFloors]) => {
+
+    if (cachedNodes && cachedEdges && cachedBuildings && cachedFloors) {
+      setNodes(cachedNodes);
+      setEdges(cachedEdges);
+      setBuildings(cachedBuildings);
+      setFloors(cachedFloors);
+      setLoading(false);
+      return;
+    }
+
+    if (!fetchPromise) {
+      fetchPromise = Promise.all([
+        fetchNodes(),
+        fetchEdges(),
+        fetchBuildings(),
+        fetchFloors()
+      ]).then((data) => {
+        cachedNodes = data[0];
+        cachedEdges = data[1];
+        cachedBuildings = data[2];
+        cachedFloors = data[3];
+        return data;
+      });
+    }
+
+    fetchPromise.then(([fetchedNodes, fetchedEdges, fetchedBuildings, fetchedFloors]) => {
       if (!active) return;
       setNodes(fetchedNodes);
       setEdges(fetchedEdges);
@@ -109,6 +136,7 @@ export function CampusNavigationProvider({ children }: { children: React.ReactNo
     }).catch(err => {
       console.error("Failed to load map data from APIs", err);
       if (active) setLoading(false);
+      fetchPromise = null;
     });
 
     return () => {

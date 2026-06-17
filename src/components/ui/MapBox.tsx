@@ -88,7 +88,8 @@ export default function MapBox({
 }: MapBoxProps) {
   const prefersReducedMotion = useReducedMotion();
 
-  const [zoomState, setZoomState] = useState(1);
+  const [canZoomIn, setCanZoomIn] = useState(true);
+  const [canZoomOut, setCanZoomOut] = useState(true);
   const [isBuildingDropdownOpen, setIsBuildingDropdownOpen] = useState(false);
   const [svgContent, setSvgContent] = useState<string>('');
 
@@ -99,7 +100,10 @@ export default function MapBox({
     onChange: (result: any) => {
       const val = typeof result === 'object' && result !== null && 'value' in result ? result.value.zoom : undefined;
       if (typeof val === 'number') {
-        setZoomState(val);
+        const nextCanZoomIn = val < 5;
+        const nextCanZoomOut = val > 0.5;
+        setCanZoomIn((prev) => (prev !== nextCanZoomIn ? nextCanZoomIn : prev));
+        setCanZoomOut((prev) => (prev !== nextCanZoomOut ? nextCanZoomOut : prev));
       }
     },
     config: { tension: 220, friction: 28 }
@@ -273,6 +277,17 @@ export default function MapBox({
   const showFloorPlan = !!mapId;
   const shouldShowDestination = !!destination && destination.map === mapId;
   const shouldShowCurrentLocation = !!currentLocation && currentLocation.map === mapId;
+
+  // Springs to animate pin entry scaling without causing React component re-renders
+  const destSpring = useSpring({
+    scale: shouldShowDestination ? 1 : 0,
+    config: { tension: 300, friction: 20 }
+  });
+
+  const currentLocSpring = useSpring({
+    scale: shouldShowCurrentLocation ? 1 : 0,
+    config: { tension: 300, friction: 20 }
+  });
 
   // Resolve Cloudinary Map URL dynamically from the floors data array
   const mapSrc = useMemo(() => {
@@ -488,11 +503,9 @@ export default function MapBox({
                 )}
 
                 {shouldShowDestination && destination.x !== undefined && destination.y !== undefined && (
-                  <motion.g
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
+                  <animated.g
                     style={{
-                      transform: `scale(${1 / zoomState})`,
+                      transform: to([zoom, destSpring.scale], (z, s) => `scale(${s / z})`),
                       transformOrigin: `${destination.x}px ${destination.y - 10}px`
                     }}
                   >
@@ -540,15 +553,13 @@ export default function MapBox({
                     >
                       {destination.name}
                     </text>
-                  </motion.g>
+                  </animated.g>
                 )}
 
                 {shouldShowCurrentLocation && currentLocation.x !== undefined && currentLocation.y !== undefined && (
-                  <motion.g
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
+                  <animated.g
                     style={{
-                      transform: `scale(${1 / zoomState})`,
+                      transform: to([zoom, currentLocSpring.scale], (z, s) => `scale(${s / z})`),
                       transformOrigin: `${currentLocation.x}px ${currentLocation.y - 10}px`
                     }}
                   >
@@ -596,7 +607,7 @@ export default function MapBox({
                     >
                       You are here
                     </text>
-                  </motion.g>
+                  </animated.g>
                 )}
               </svg>
             </div>
@@ -717,7 +728,7 @@ export default function MapBox({
               <button
                 onClick={handleZoomIn}
                 className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-700 hover:bg-orange-50 hover:text-[#ff602e] transition-all duration-200"
-                disabled={zoomState >= 5}
+                disabled={!canZoomIn}
                 title="Zoom In"
               >
                 <ZoomIn className="w-5 h-5" />
@@ -726,7 +737,7 @@ export default function MapBox({
               <button
                 onClick={handleZoomOut}
                 className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-700 hover:bg-orange-50 hover:text-[#ff602e] transition-all duration-200"
-                disabled={zoomState <= 0.5}
+                disabled={!canZoomOut}
                 title="Zoom Out"
               >
                 <ZoomOut className="w-5 h-5" />

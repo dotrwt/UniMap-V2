@@ -1,4 +1,5 @@
 // src/components/route/RoutePanel.tsx
+import { memo } from 'react';
 import { Navigation, CornerUpRight, CornerUpLeft, ArrowUp, ArrowDown, MapPin, School, BookOpen, Flame, Compass, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useCampusNavigation } from '@/hooks/useCampusNavigation';
 import { parseRoomName } from '@/lib/roomParser';
@@ -12,7 +13,7 @@ const POPULAR_SPOTS = [
   { id: 'Jubilee_Gate', name: 'Jubilee Gate', map: 'Campus_Map', x: 749.9669, y: 127.5277, building: 'Campus', floor: 0, category: 'Gate', desc: 'Main Campus Entrance', color: 'bg-blue-500/10 text-blue-600', icon: Compass }
 ];
 
-export function RoutePanel({}: RoutePanelProps) {
+export const RoutePanel = memo(function RoutePanel({}: RoutePanelProps) {
   const {
     isMobile,
     isBottomSheetExpanded,
@@ -448,4 +449,4 @@ export function RoutePanel({}: RoutePanelProps) {
       )}
     </>
   );
-}
+});

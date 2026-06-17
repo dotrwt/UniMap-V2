@@ -1,9 +1,7 @@
-// src/components/ui/MapLayout.tsx
 import React from 'react';
 import { useCampusNavigation } from '@/hooks/useCampusNavigation';
 import { SearchBar } from '@/components/search/SearchBar';
 import { MapCanvas } from '@/components/map/MapCanvas';
-import { RoutePanel } from '@/components/route/RoutePanel';
 import { MapHeader } from '@/components/ui/MapHeader';
 
 export interface MapLayoutProps {
@@ -28,7 +26,7 @@ export function MapLayout({ children }: MapLayoutProps) {
   const header = childrenArray.find(c => React.isValidElement(c) && (c.type === MapHeader || (c.type as any)?.name === 'MapHeader'));
   const searchBar = childrenArray.find(c => React.isValidElement(c) && (c.type === SearchBar || (c.type as any)?.name === 'SearchBar'));
   const mapCanvas = childrenArray.find(c => React.isValidElement(c) && (c.type === MapCanvas || (c.type as any)?.name === 'MapCanvas'));
-  const routePanel = childrenArray.find(c => React.isValidElement(c) && (c.type === RoutePanel || (c.type as any)?.name === 'RoutePanel'));
+  const routePanel = childrenArray.find(c => React.isValidElement(c) && ((c.type as any)?.name === 'RoutePanel'));
 
   if (isMobile) {
     return (
