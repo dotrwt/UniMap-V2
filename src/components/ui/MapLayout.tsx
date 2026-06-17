@@ -53,7 +53,7 @@ export function MapLayout({ children }: MapLayoutProps) {
       {header}
 
       {/* Floating Search & Route Drawer (Left Side) */}
-      <div className="absolute top-6 left-6 z-10 w-[385px] h-[calc(100vh-48px)] flex flex-col bg-gradient-to-b from-white/95 via-white/95 to-[#faf8f5]/98 backdrop-blur-md rounded-[24px] shadow-2xl border border-black/[0.04] overflow-hidden pointer-events-auto">
+      <div className="absolute top-6 left-6 z-10 w-[385px] h-[calc(100vh-48px)] flex flex-col bg-gradient-to-b from-white via-white to-[#faf8f5] rounded-[24px] shadow-2xl border border-black/[0.04] overflow-hidden pointer-events-auto">
         {/* Drawer Mini Header */}
         <div className="p-5 border-b border-gray-100 flex items-center gap-2 bg-gradient-to-r from-[#ff602e]/5 to-[#ff7b52]/5">
           <span className="text-base font-black text-gray-900 tracking-wider uppercase">UniMap Navigation</span>

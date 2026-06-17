@@ -105,49 +105,153 @@ export default function MapBox({
     config: { tension: 220, friction: 28 }
   }));
 
-  useEffect(() => {
-    if (!isNavigating) {
-      springApi.start({ x: 0, y: 0, zoom: 1 });
+  const containerRef = useRef<HTMLDivElement>(null);
+  const svgContainerRef = useRef<HTMLDivElement>(null);
+
+  const getZoomTarget = useCallback((nextZ: number) => {
+    const el = containerRef.current;
+    if (!el) return { x: x.get(), y: y.get() };
+    const rect = el.getBoundingClientRect();
+    const cx = rect.width / 2;
+    const cy = rect.height / 2;
+
+    const currentZ = zoom.get();
+    const currentX = x.get();
+    const currentY = y.get();
+
+    let mx = 0;
+    let my = 0;
+
+    const hasDest = destination && destination.map === mapId && destination.x !== undefined && destination.y !== undefined;
+    const hasStart = currentLocation && currentLocation.map === mapId && currentLocation.x !== undefined && currentLocation.y !== undefined;
+
+    if (hasDest) {
+      mx = destination.x;
+      my = destination.y;
+    } else if (hasStart) {
+      mx = currentLocation.x;
+      my = currentLocation.y;
+    } else {
+      mx = (cx - currentX) / currentZ;
+      my = (cy - currentY) / currentZ;
     }
-  }, [mapId, isNavigating, springApi]);
+
+    const nextX = currentX - mx * (nextZ - currentZ);
+    const nextY = currentY - my * (nextZ - currentZ);
+
+    return { x: nextX, y: nextY };
+  }, [x, y, zoom, destination, currentLocation, mapId]);
 
   const handleZoomIn = useCallback(() => {
     const currentZ = zoom.get();
-    const nextZ = Math.min(currentZ * 1.2, 5);
-    console.log('Zooming In. Current:', currentZ, 'Next:', nextZ);
-    springApi.start({ zoom: nextZ });
-  }, [zoom, springApi]);
+    const nextZ = Math.min(currentZ * 1.3, 5);
+    const target = getZoomTarget(nextZ);
+    console.log('Zooming In to:', target.x, target.y, nextZ);
+    springApi.start({ x: target.x, y: target.y, zoom: nextZ, config: { tension: 180, friction: 26 } });
+  }, [zoom, getZoomTarget, springApi]);
 
   const handleZoomOut = useCallback(() => {
     const currentZ = zoom.get();
-    const nextZ = Math.max(currentZ / 1.2, 0.5);
-    console.log('Zooming Out. Current:', currentZ, 'Next:', nextZ);
-    springApi.start({ zoom: nextZ });
-  }, [zoom, springApi]);
+    const nextZ = Math.max(currentZ / 1.3, 0.5);
+    const target = getZoomTarget(nextZ);
+    console.log('Zooming Out to:', target.x, target.y, nextZ);
+    springApi.start({ x: target.x, y: target.y, zoom: nextZ, config: { tension: 180, friction: 26 } });
+  }, [zoom, getZoomTarget, springApi]);
 
   const handleResetZoom = useCallback(() => {
     console.log('Resetting Zoom.');
     springApi.start({ x: 0, y: 0, zoom: 1 });
   }, [springApi]);
 
-  const containerRef = useRef<HTMLDivElement>(null);
-  const svgContainerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!isNavigating) {
+      springApi.start({ x: 0, y: 0, zoom: 1 });
+    }
+  }, [mapId, isNavigating, springApi]);
 
   useGesture(
     {
-      onDrag: ({ offset: [dx, dy] }) => {
-        springApi.start({ x: dx, y: dy, immediate: true });
+      onDrag: ({ active, offset: [dx, dy], velocity: [vx, vy], direction: [dirX, dirY] }) => {
+        if (active) {
+          springApi.start({ x: dx, y: dy, immediate: true });
+        } else {
+          const speed = Math.sqrt(vx * vx + vy * vy);
+          if (speed > 0.15) {
+            const momentumScale = Math.min(250, speed * 150);
+            const targetX = dx + dirX * momentumScale;
+            const targetY = dy + dirY * momentumScale;
+            springApi.start({
+              x: targetX,
+              y: targetY,
+              immediate: false,
+              config: { tension: 150, friction: 32, velocity: [vx * dirX, vy * dirY] }
+            });
+          } else {
+            springApi.start({
+              x: dx,
+              y: dy,
+              immediate: false,
+              config: { tension: 180, friction: 26 }
+            });
+          }
+        }
       },
-      onPinch: ({ offset: [dScale] }) => {
-        springApi.start({ zoom: Math.max(0.5, Math.min(5, dScale)), immediate: true });
+      onPinch: ({ active, offset: [dScale], origin: [ox, oy] }) => {
+        const el = containerRef.current;
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        const cx = ox - rect.left;
+        const cy = oy - rect.top;
+
+        const currentZ = zoom.get();
+        const currentX = x.get();
+        const currentY = y.get();
+
+        const nextZoom = Math.max(0.5, Math.min(5, dScale));
+
+        const mx = (cx - currentX) / currentZ;
+        const my = (cy - currentY) / currentZ;
+
+        const nextX = currentX - mx * (nextZoom - currentZ);
+        const nextY = currentY - my * (nextZoom - currentZ);
+
+        springApi.start({
+          x: nextX,
+          y: nextY,
+          zoom: nextZoom,
+          immediate: active,
+          config: { tension: 180, friction: 26 }
+        });
       },
       onWheel: ({ event, delta: [, dy] }) => {
         if (event.ctrlKey || event.metaKey) {
           event.preventDefault();
-          const factor = dy > 0 ? 0.92 : 1.08;
-          const currentZoom = zoom.get();
-          const nextZoom = Math.max(0.5, Math.min(5, currentZoom * factor));
-          springApi.start({ zoom: nextZoom });
+          const el = containerRef.current;
+          if (!el) return;
+          const rect = el.getBoundingClientRect();
+          const cx = event.clientX - rect.left;
+          const cy = event.clientY - rect.top;
+
+          const currentZ = zoom.get();
+          const currentX = x.get();
+          const currentY = y.get();
+
+          const factor = dy > 0 ? 0.90 : 1.10;
+          const nextZoom = Math.max(0.5, Math.min(5, currentZ * factor));
+
+          const mx = (cx - currentX) / currentZ;
+          const my = (cy - currentY) / currentZ;
+
+          const nextX = currentX - mx * (nextZoom - currentZ);
+          const nextY = currentY - my * (nextZoom - currentZ);
+
+          springApi.start({
+            x: nextX,
+            y: nextY,
+            zoom: nextZoom,
+            immediate: false,
+            config: { tension: 180, friction: 26 }
+          });
         }
       }
     },
@@ -200,6 +304,8 @@ export default function MapBox({
       svgEl.setAttribute('height', '100%');
       svgEl.setAttribute('preserveAspectRatio', 'xMidYMid meet');
       svgEl.setAttribute('shape-rendering', 'geometricPrecision');
+      svgEl.style.backfaceVisibility = 'hidden';
+      svgEl.style.webkitBackfaceVisibility = 'hidden';
 
       const elements = svgEl.querySelectorAll('path, line, polyline, rect');
       elements.forEach((el) => {
@@ -246,18 +352,20 @@ export default function MapBox({
     const bboxW = Math.max(1, maxX - minX);
     const bboxH = Math.max(1, maxY - minY);
     const pad = Math.max(24, Math.min(w, h) * 0.06);
-    const availW = Math.max(1, w - 2 * pad);
+
+    const isDesktop = w >= 768;
+    const availW = isDesktop ? Math.max(1, w - 410 - 2 * pad) : Math.max(1, w - 2 * pad);
     const availH = Math.max(1, h - 2 * pad);
 
     const nextZoom = Math.max(0.5, Math.min(5, Math.min(availW / bboxW, availH / bboxH)));
 
     const bboxCenterX = (minX + maxX) / 2;
     const bboxCenterY = (minY + maxY) / 2;
-    const centerX = w / 2;
-    const centerY = h / 2;
+    const cx = isDesktop ? (w + 410) / 2 : w / 2;
+    const cy = h / 2;
 
-    const nextPanX = -nextZoom * (bboxCenterX - centerX);
-    const nextPanY = -nextZoom * (bboxCenterY - centerY);
+    const nextPanX = cx - bboxCenterX * nextZoom;
+    const nextPanY = cy - bboxCenterY * nextZoom;
 
     lastAutoFitRef.current = autoFitNonce;
     springApi.start({ x: nextPanX, y: nextPanY, zoom: nextZoom });
@@ -311,6 +419,9 @@ export default function MapBox({
             style={{
               transform: to([x, y, zoom], (px, py, z) => `translate(${px}px, ${py}px) scale(${z})`),
               transformOrigin: '0 0',
+              willChange: 'auto',
+              backfaceVisibility: 'hidden',
+              WebkitBackfaceVisibility: 'hidden',
             }}
           >
             <div className="relative w-full h-full">
@@ -330,7 +441,12 @@ export default function MapBox({
                 className="absolute inset-0 w-full h-full pointer-events-none z-10"
                 viewBox={`0 0 ${svgWidth} ${svgHeight}`}
                 preserveAspectRatio="xMidYMid meet"
-                style={{ mixBlendMode: 'normal' }}
+                style={{
+                  mixBlendMode: 'normal',
+                  shapeRendering: 'geometricPrecision',
+                  backfaceVisibility: 'hidden',
+                  WebkitBackfaceVisibility: 'hidden',
+                }}
               >
                 {isNavigating && pathPoints && (
                   <motion.g
@@ -394,8 +510,11 @@ export default function MapBox({
                         r="8"
                         fill="#ff602e"
                         opacity="0.3"
+                        style={{
+                          transformOrigin: `${destination.x}px ${destination.y}px`
+                        }}
                         animate={{
-                          r: [8, 16, 8],
+                          scale: [1, 2, 1],
                           opacity: [0.3, 0, 0.3]
                         }}
                         transition={{
@@ -447,8 +566,11 @@ export default function MapBox({
                         r="8"
                         fill="#10b981"
                         opacity="0.3"
+                        style={{
+                          transformOrigin: `${currentLocation.x}px ${currentLocation.y}px`
+                        }}
                         animate={{
-                          r: [8, 16, 8],
+                          scale: [1, 2, 1],
                           opacity: [0.3, 0, 0.3]
                         }}
                         transition={{
