@@ -13,7 +13,8 @@ import {
   Compass, 
   ArrowRight, 
   ArrowLeft,
-  X
+  X,
+  Accessibility
 } from 'lucide-react';
 import { useCampusNavigation } from '@/hooks/useCampusNavigation';
 import { parseRoomName } from '@/lib/roomParser';
@@ -51,7 +52,12 @@ export const RoutePanel = memo(function RoutePanel({}: RoutePanelProps) {
     edges,
     floors,
     routeDistance,
-    routeDuration
+    routeDuration,
+    accessibleOnly,
+    setAccessibleOnly,
+    isSimulating,
+    setIsSimulating,
+    compassHeading
   } = useCampusNavigation();
 
   const isRouteActive = destination && currentLocation;
@@ -230,8 +236,8 @@ export const RoutePanel = memo(function RoutePanel({}: RoutePanelProps) {
             // Expanded Active Navigation Dashboard
             <div className="flex-1 flex flex-col overflow-hidden">
               {/* Route Summary */}
-              <div className="px-6 pb-2 flex items-center justify-between">
-                <div>
+              <div className="px-6 pb-4 flex items-center justify-between shrink-0">
+                <div className="flex-1">
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-xl font-black text-gray-900">
                       {isComputingRoute ? 'Computing...' : formatTime(routeDuration)}
@@ -243,8 +249,49 @@ export const RoutePanel = memo(function RoutePanel({}: RoutePanelProps) {
                     )}
                   </div>
                   <p className="text-xs font-bold text-emerald-600 mt-0.5">
-                    Active Step-by-Step Navigation
+                    {accessibleOnly ? 'Step-free route via lifts & ramps' : 'Fastest route via indoor paths'}
                   </p>
+                </div>
+              </div>
+
+              {/* Simulation walk control & Step-Free toggle inside active navigation */}
+              <div className="px-6 pb-4 shrink-0 flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsSimulating(!isSimulating)}
+                  className={`w-full h-10 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer border ${
+                    isSimulating 
+                      ? 'bg-emerald-50 border-emerald-200 text-emerald-700 shadow-sm shadow-emerald-500/10'
+                      : 'bg-white border-neutral-200 text-neutral-700 hover:bg-neutral-50'
+                  }`}
+                >
+                  <Compass className={`w-4 h-4 ${isSimulating ? 'animate-spin' : ''}`} style={{ animationDuration: '3s' }} />
+                  <span>{isSimulating ? 'Simulating Walk (Click to Pause)' : 'Simulate Walk / Turn-by-Turn'}</span>
+                </button>
+
+                <div className="flex items-center justify-between bg-[#fcfaf6] border border-black/[0.03] rounded-2xl p-4 shadow-sm select-none">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                      <Accessibility className="w-4.5 h-4.5" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-black text-gray-800">Step-Free Routes Only</span>
+                      <span className="text-[10px] text-gray-400 font-bold">Avoid stairs & use lifts</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setAccessibleOnly(!accessibleOnly)}
+                    className={`w-11 h-6 rounded-full transition-colors relative focus:outline-none cursor-pointer ${
+                      accessibleOnly ? 'bg-blue-600' : 'bg-gray-200'
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${
+                        accessibleOnly ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
                 </div>
               </div>
 
@@ -358,8 +405,36 @@ export const RoutePanel = memo(function RoutePanel({}: RoutePanelProps) {
                   )}
                 </div>
                 <p className="text-xs font-bold text-emerald-600 mt-0.5">
-                  Fastest route via indoor paths
+                  {accessibleOnly ? 'Step-free route via lifts & ramps' : 'Fastest route via indoor paths'}
                 </p>
+              </div>
+            </div>
+
+            {/* Step-Free Toggle Option */}
+            <div className="px-6 pb-4 shrink-0">
+              <div className="flex items-center justify-between bg-[#fcfaf6] border border-black/[0.03] rounded-2xl p-4 shadow-sm select-none">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                    <Accessibility className="w-4.5 h-4.5" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-black text-gray-800">Step-Free Routes Only</span>
+                    <span className="text-[10px] text-gray-400 font-bold">Avoid stairs & use lifts</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAccessibleOnly(!accessibleOnly)}
+                  className={`w-11 h-6 rounded-full transition-colors relative focus:outline-none cursor-pointer ${
+                    accessibleOnly ? 'bg-blue-600' : 'bg-gray-200'
+                  }`}
+                >
+                  <span
+                    className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${
+                      accessibleOnly ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
               </div>
             </div>
 
@@ -502,6 +577,28 @@ export const RoutePanel = memo(function RoutePanel({}: RoutePanelProps) {
             >
               End Route
             </button>
+          </div>
+
+          {/* Walk Simulation HUD for Desktop */}
+          <div className="flex items-center gap-3 p-3 bg-emerald-50/50 border border-emerald-100/50 rounded-2xl shadow-sm">
+            <div className="w-10 h-10 rounded-xl bg-white border border-emerald-100 flex items-center justify-center shrink-0" title="Compass Heading">
+              <Compass 
+                className="w-5.5 h-5.5 text-emerald-600 transition-transform duration-300 ease-out"
+                style={{ transform: `rotate(${compassHeading}deg)` }}
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-black text-emerald-800">
+                {isSimulating ? 'Active Walk Simulation' : 'Desktop Navigation active'}
+              </p>
+              <button
+                type="button"
+                onClick={() => setIsSimulating(!isSimulating)}
+                className="text-[10px] font-bold text-[#ff602e] hover:text-[#ff7b52] underline mt-0.5 cursor-pointer"
+              >
+                {isSimulating ? 'Pause Walk' : 'Simulate Walking'}
+              </button>
+            </div>
           </div>
 
           {/* Steps selector buttons list */}

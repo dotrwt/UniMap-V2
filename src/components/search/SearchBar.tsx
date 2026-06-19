@@ -15,7 +15,9 @@ import {
   CornerUpLeft,
   CornerUpRight,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  Accessibility,
+  Compass
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import SearchDestination from '@/components/ui/SearchDestination';
@@ -51,10 +53,14 @@ export function SearchBar({}: SearchBarProps) {
     edges,
     navigationSteps,
     activeStepIndex,
-    navigationDirections
+    navigationDirections,
+    accessibleOnly,
+    setAccessibleOnly,
+    compassHeading,
+    isSimulating
   } = useCampusNavigation();
 
-  const graph = useMemo(() => buildGlobalGraph(edges), [edges]);
+  const graph = useMemo(() => buildGlobalGraph(edges, { accessibleOnly }), [edges, accessibleOnly]);
 
   const renderGuidanceIcon = (direction?: string) => {
     switch (direction) {
@@ -82,16 +88,25 @@ export function SearchBar({}: SearchBarProps) {
       const currentDistance = navigationDirections[0]?.distance || '';
 
       return (
-        <div className="absolute top-4 left-4 right-4 z-20 bg-gradient-to-r from-emerald-600 to-teal-500 rounded-2xl shadow-xl border border-emerald-500/20 p-4 flex items-center gap-4 text-white animate-in slide-in-from-top duration-300">
+        <div className="absolute top-4 left-4 right-4 z-20 bg-gradient-to-r from-emerald-600 to-teal-500 rounded-2xl shadow-xl border border-emerald-500/20 p-4 flex items-center gap-3 text-white animate-in slide-in-from-top duration-300">
           {/* Direction Icon Container */}
-          <div className="w-11 h-11 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center shrink-0 border border-white/10">
+          <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center shrink-0 border border-white/10">
             {renderGuidanceIcon(currentDirection)}
+          </div>
+
+          {/* Compass Icon Container */}
+          <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center shrink-0 border border-white/10" title="Device Compass">
+            <Compass 
+              className="w-5.5 h-5.5 text-white transition-transform duration-300 ease-out"
+              style={{ transform: `rotate(${compassHeading}deg)` }}
+            />
           </div>
 
           {/* Instruction Details */}
           <div className="flex-1 min-w-0">
-            <span className="text-[9px] font-black uppercase tracking-wider text-emerald-100 block">
+            <span className="text-[8px] font-black uppercase tracking-wider text-emerald-100 block">
               {activeStep ? `Step ${activeStepIndex + 1} of ${navigationSteps.length} • ${activeStep.map ? activeStep.map.replace('_', ' ') : 'Campus'}` : 'Navigating'}
+              {isSimulating && " • SIMULATING"}
             </span>
             <p className="text-xs font-black mt-0.5 leading-snug truncate">
               {currentInstruction}
@@ -368,6 +383,32 @@ export function SearchBar({}: SearchBarProps) {
             title="Swap locations"
           >
             <ArrowUpDown className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Step-Free Toggle Option for Desktop */}
+        <div className="flex items-center justify-between bg-white border border-neutral-200/60 rounded-xl p-3 shadow-sm select-none">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+              <Accessibility className="w-4.5 h-4.5" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs font-black text-gray-800">Step-Free Routes Only</span>
+              <span className="text-[10px] text-gray-400 font-bold">Avoid stairs & use lifts</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setAccessibleOnly(!accessibleOnly)}
+            className={`w-11 h-6 rounded-full transition-colors relative focus:outline-none cursor-pointer ${
+              accessibleOnly ? 'bg-blue-600' : 'bg-gray-200'
+            }`}
+          >
+            <span
+              className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${
+                accessibleOnly ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
           </button>
         </div>
 

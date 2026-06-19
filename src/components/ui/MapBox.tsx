@@ -7,6 +7,7 @@ import { useGesture } from '@use-gesture/react';
 import type { FloorMap, Building } from '@/types';
 import MainCover from '@/assets/Main_Cover.webp';
 import AICover from '@/assets/AI_Cover.webp';
+import { useCampusNavigation } from '@/hooks/useCampusNavigation';
 
 interface Point {
   x: number;
@@ -87,6 +88,12 @@ export default function MapBox({
   onMapChange,
 }: MapBoxProps) {
   const prefersReducedMotion = useReducedMotion();
+  const {
+    isSimulating,
+    simulatedNodeId,
+    nodesMap,
+    compassHeading,
+  } = useCampusNavigation();
 
   const [canZoomIn, setCanZoomIn] = useState(true);
   const [canZoomOut, setCanZoomOut] = useState(true);
@@ -126,10 +133,15 @@ export default function MapBox({
     let mx = 0;
     let my = 0;
 
+    const simulatedNode = isSimulating && simulatedNodeId ? nodesMap[simulatedNodeId] : null;
+    const hasSimulated = simulatedNode && simulatedNode.map === mapId && simulatedNode.x !== undefined && simulatedNode.y !== undefined;
     const hasDest = destination && destination.map === mapId && destination.x !== undefined && destination.y !== undefined;
     const hasStart = currentLocation && currentLocation.map === mapId && currentLocation.x !== undefined && currentLocation.y !== undefined;
 
-    if (hasDest) {
+    if (hasSimulated) {
+      mx = simulatedNode.x;
+      my = simulatedNode.y;
+    } else if (hasDest) {
       mx = destination.x;
       my = destination.y;
     } else if (hasStart) {
@@ -144,7 +156,7 @@ export default function MapBox({
     const nextY = currentY - my * (nextZ - currentZ);
 
     return { x: nextX, y: nextY };
-  }, [x, y, zoom, destination, currentLocation, mapId]);
+  }, [x, y, zoom, destination, currentLocation, mapId, isSimulating, simulatedNodeId, nodesMap]);
 
   const handleZoomIn = useCallback(() => {
     const currentZ = zoom.get();
@@ -276,7 +288,7 @@ export default function MapBox({
 
   const showFloorPlan = !!mapId;
   const shouldShowDestination = !!destination && destination.map === mapId;
-  const shouldShowCurrentLocation = !!currentLocation && currentLocation.map === mapId;
+  const shouldShowCurrentLocation = !isSimulating && !!currentLocation && currentLocation.map === mapId;
 
   // Springs to animate pin entry scaling without causing React component re-renders
   const destSpring = useSpring({
@@ -385,6 +397,42 @@ export default function MapBox({
     lastAutoFitRef.current = autoFitNonce;
     springApi.start({ x: nextPanX, y: nextPanY, zoom: nextZoom });
   }, [autoFitNonce, isNavigating, pathBbox, svgHeight, svgWidth, springApi]);
+
+  // Camera pans to follow the simulated node during simulation!
+  useEffect(() => {
+    if (!isSimulating || !simulatedNodeId || !nodesMap) return;
+    const node = nodesMap[simulatedNodeId];
+    if (!node || node.map !== mapId) return;
+
+    const el = containerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const w = rect.width;
+    const h = rect.height;
+    if (!(w > 0 && h > 0)) return;
+
+    const baseScale = Math.min(w / svgWidth, h / svgHeight) || 1;
+    const offsetX = (w - svgWidth * baseScale) / 2;
+    const offsetY = (h - svgHeight * baseScale) / 2;
+
+    const nodeViewportX = node.x * baseScale + offsetX;
+    const nodeViewportY = node.y * baseScale + offsetY;
+
+    const isDesktop = w >= 768;
+    const cx = isDesktop ? (w + 410) / 2 : w / 2;
+    const cy = h / 2;
+
+    const currentZoom = zoom.get();
+    const nextPanX = cx - nodeViewportX * currentZoom;
+    const nextPanY = cy - nodeViewportY * currentZoom;
+
+    springApi.start({ x: nextPanX, y: nextPanY });
+  }, [simulatedNodeId, isSimulating, mapId, nodesMap, svgWidth, svgHeight, springApi]);
+
+  const simulatedNode = useMemo(() => {
+    if (!isSimulating || !simulatedNodeId || !nodesMap) return null;
+    return nodesMap[simulatedNodeId] || null;
+  }, [isSimulating, simulatedNodeId, nodesMap]);
 
   // Resolve current building floors
   const activeFloorMeta = useMemo(() => floors.find((f) => f.map === mapId), [floors, mapId]);
@@ -606,6 +654,64 @@ export default function MapBox({
                       className="pointer-events-auto select-none"
                     >
                       You are here
+                    </text>
+                  </animated.g>
+                )}
+
+                {isSimulating && simulatedNode && simulatedNode.map === mapId && (
+                  <animated.g
+                    style={{
+                      transform: to([zoom], (z) => `scale(${1 / z})`),
+                      transformOrigin: `${simulatedNode.x}px ${simulatedNode.y}px`
+                    }}
+                  >
+                    <circle
+                      cx={simulatedNode.x}
+                      cy={simulatedNode.y}
+                      r="10"
+                      fill="#3b82f6"
+                      opacity="0.3"
+                    />
+                    {!prefersReducedMotion ? (
+                      <motion.circle
+                        cx={simulatedNode.x}
+                        cy={simulatedNode.y}
+                        r="15"
+                        fill="#3b82f6"
+                        opacity="0.2"
+                        style={{
+                          transformOrigin: `${simulatedNode.x}px ${simulatedNode.y}px`
+                        }}
+                        animate={{
+                          scale: [0.8, 1.6, 0.8],
+                          opacity: [0.3, 0.05, 0.3]
+                        }}
+                        transition={{
+                          repeat: Infinity,
+                          duration: 1.5
+                        }}
+                      />
+                    ) : null}
+                    <g
+                      transform={`translate(${simulatedNode.x}, ${simulatedNode.y}) rotate(${compassHeading})`}
+                    >
+                      <polygon
+                        points="0,-8 6,6 0,2 -6,6"
+                        fill="#3b82f6"
+                        stroke="#ffffff"
+                        strokeWidth="1.5"
+                      />
+                    </g>
+                    <text
+                      x={simulatedNode.x}
+                      y={simulatedNode.y - 25}
+                      textAnchor="middle"
+                      fontSize="10"
+                      fill="#1d4ed8"
+                      fontWeight="bold"
+                      className="pointer-events-auto select-none"
+                    >
+                      Simulating Walk
                     </text>
                   </animated.g>
                 )}

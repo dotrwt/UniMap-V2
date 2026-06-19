@@ -55,6 +55,12 @@ export interface CampusNavigationContextType {
   nodesMap: Record<string, MapNode>;
   routeDistance: number;
   routeDuration: number;
+  accessibleOnly: boolean;
+  setAccessibleOnly: (val: boolean) => void;
+  isSimulating: boolean;
+  setIsSimulating: (val: boolean) => void;
+  simulatedNodeId: string | null;
+  compassHeading: number;
 }
 
 const CampusNavigationContext = createContext<CampusNavigationContextType | undefined>(undefined);
@@ -99,6 +105,14 @@ export function CampusNavigationProvider({ children }: { children: React.ReactNo
   // Dynamic Route Metrics
   const [routeDistance, setRouteDistance] = useState<number>(0);
   const [routeDuration, setRouteDuration] = useState<number>(0);
+
+  // New accessibility and live tracking/compass states
+  const [accessibleOnly, setAccessibleOnly] = useState(false);
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [simulatedNodeId, setSimulatedNodeId] = useState<string | null>(null);
+  const [simulatedPathIndex, setSimulatedPathIndex] = useState<number>(0);
+  const [compassHeading, setCompassHeading] = useState<number>(0);
+  const [fullRoutePath, setFullRoutePath] = useState<string[]>([]);
 
   const unmountedRef = useRef(false);
   const routeAbortRef = useRef<AbortController | null>(null);
@@ -154,7 +168,7 @@ export function CampusNavigationProvider({ children }: { children: React.ReactNo
 
   // Compute lookup structures
   const nodesMap = useMemo(() => buildNodesMap(nodes), [nodes]);
-  const graph = useMemo(() => buildGlobalGraph(edges), [edges]);
+  const graph = useMemo(() => buildGlobalGraph(edges, { accessibleOnly }), [edges, accessibleOnly]);
   const edgeIndex = useMemo(() => buildUndirectedEdgeIndex(edges), [edges]);
 
   // Compute searchable location objects
@@ -163,7 +177,7 @@ export function CampusNavigationProvider({ children }: { children: React.ReactNo
     const buildingsById = Object.fromEntries(buildings.map((b) => [b.id, b]));
 
     return nodes
-      .filter((n) => n.type !== 'corridor' && n.type !== 'junction')
+      .filter((n) => n.type !== 'corridor' && n.type !== 'junction' && n.type !== 'intersection')
       .map((n) => {
         const parsed = parseRoomName(n.id);
         const mapMeta = n.map ? mapsById[n.map] : null;
@@ -300,6 +314,7 @@ export function CampusNavigationProvider({ children }: { children: React.ReactNo
             includeFullPath: true,
             nodesMap,
             graph,
+            accessibleOnly,
           }
         );
 
@@ -317,6 +332,7 @@ export function CampusNavigationProvider({ children }: { children: React.ReactNo
           setNavigationSteps([]);
           setRouteDistance(0);
           setRouteDuration(0);
+          setFullRoutePath([]);
           return;
         }
 
@@ -345,6 +361,7 @@ export function CampusNavigationProvider({ children }: { children: React.ReactNo
         setRouteDistance(totalDist);
         setRouteDuration(estTime);
         setNavigationSteps(result.steps);
+        setFullRoutePath(result.fullPath || []);
       } catch (err) {
         console.error("Automatic route calculation failed:", err);
       } finally {
@@ -360,7 +377,7 @@ export function CampusNavigationProvider({ children }: { children: React.ReactNo
       active = false;
       controller.abort();
     };
-  }, [currentLocation?.id, destination?.id, nodes, edges, nodesMap, graph, edgeIndex]);
+  }, [currentLocation?.id, destination?.id, nodes, edges, nodesMap, graph, edgeIndex, accessibleOnly]);
 
   const activeStep = useMemo(() => navigationSteps[activeStepIndex] || null, [navigationSteps, activeStepIndex]);
   const activeMapId = useMemo(() => 
@@ -393,6 +410,112 @@ export function CampusNavigationProvider({ children }: { children: React.ReactNo
       }
     }
   }, [activeMapId, navigationSteps, activeStepIndex]);
+
+  // Effect 3: Simulation interval
+  useEffect(() => {
+    if (!isNavigating || !isSimulating || fullRoutePath.length === 0) {
+      setSimulatedNodeId(null);
+      setSimulatedPathIndex(0);
+      return;
+    }
+
+    setSimulatedNodeId(fullRoutePath[0]);
+    setSimulatedPathIndex(0);
+
+    const interval = setInterval(() => {
+      setSimulatedPathIndex((prevIdx) => {
+        const nextIdx = prevIdx + 1;
+        if (nextIdx >= fullRoutePath.length) {
+          clearInterval(interval);
+          setIsSimulating(false);
+          return prevIdx;
+        }
+        const nodeId = fullRoutePath[nextIdx];
+        setSimulatedNodeId(nodeId);
+
+        // Find which step this node belongs to and update activeStepIndex!
+        const stepIndex = navigationSteps.findIndex((s) => s.path_nodes.includes(nodeId));
+        if (stepIndex !== -1) {
+          setActiveStepIndex(stepIndex);
+        }
+
+        // Calculate heading/compass direction to next node
+        if (nextIdx < fullRoutePath.length - 1) {
+          const currNode = nodesMap[nodeId];
+          const nextNode = nodesMap[fullRoutePath[nextIdx + 1]];
+          if (currNode && nextNode) {
+            const dx = nextNode.x - currNode.x;
+            const dy = nextNode.y - currNode.y;
+            const angleRad = Math.atan2(dx, dy);
+            const angleDeg = ((angleRad * 180) / Math.PI + 360) % 360;
+            setCompassHeading(Math.round(angleDeg));
+          }
+        }
+
+        return nextIdx;
+      });
+    }, 2500);
+
+    return () => clearInterval(interval);
+  }, [isNavigating, isSimulating, fullRoutePath, navigationSteps, nodesMap]);
+
+  // Effect 4: Real Device Orientation & Geolocation watch
+  useEffect(() => {
+    if (!isNavigating || isSimulating) return;
+
+    const handleOrientation = (e: DeviceOrientationEvent) => {
+      const heading = (e as any).webkitCompassHeading ?? (360 - (e.alpha ?? 0));
+      if (heading != null) {
+        setCompassHeading(Math.round(heading));
+      }
+    };
+
+    window.addEventListener('deviceorientation', handleOrientation);
+
+    return () => {
+      window.removeEventListener('deviceorientation', handleOrientation);
+    };
+  }, [isNavigating, isSimulating]);
+
+  // Dynamic remaining metrics
+  const dynamicDistance = useMemo(() => {
+    if (!isNavigating || !simulatedNodeId || fullRoutePath.length === 0) {
+      return routeDistance;
+    }
+    let dist = 0;
+    for (let i = simulatedPathIndex + 1; i < fullRoutePath.length; i++) {
+      const from = fullRoutePath[i - 1];
+      const to = fullRoutePath[i];
+      const edge = edgeIndex.get(`${from}|${to}`);
+      if (edge) {
+        dist += edge.distance ?? (edge as any).weight ?? 0;
+      }
+    }
+    return dist;
+  }, [isNavigating, simulatedNodeId, simulatedPathIndex, fullRoutePath, routeDistance, edgeIndex]);
+
+  const dynamicDuration = useMemo(() => {
+    if (!isNavigating || !simulatedNodeId || fullRoutePath.length === 0) {
+      return routeDuration;
+    }
+    let dist = 0;
+    let stairsCount = 0;
+    let liftCount = 0;
+    for (let i = simulatedPathIndex + 1; i < fullRoutePath.length; i++) {
+      const from = fullRoutePath[i - 1];
+      const to = fullRoutePath[i];
+      const edge = edgeIndex.get(`${from}|${to}`);
+      if (edge) {
+        dist += edge.distance ?? (edge as any).weight ?? 0;
+        if (edge.type === 'stairs') stairsCount++;
+        if (edge.type === 'lift') liftCount++;
+      }
+    }
+    let estTime = dist / 1.4;
+    estTime += stairsCount * 20;
+    estTime += liftCount * 30;
+    return estTime;
+  }, [isNavigating, simulatedNodeId, simulatedPathIndex, fullRoutePath, routeDuration, edgeIndex]);
 
   const handleStartNavigation = useCallback(async () => {
     if (!destination || !currentLocation) return;
@@ -447,8 +570,14 @@ export function CampusNavigationProvider({ children }: { children: React.ReactNo
     setSelectedMapId,
     campusLocations,
     nodesMap,
-    routeDistance,
-    routeDuration,
+    routeDistance: dynamicDistance,
+    routeDuration: dynamicDuration,
+    accessibleOnly,
+    setAccessibleOnly,
+    isSimulating,
+    setIsSimulating,
+    simulatedNodeId,
+    compassHeading,
   }), [
     nodes,
     edges,
@@ -481,8 +610,12 @@ export function CampusNavigationProvider({ children }: { children: React.ReactNo
     handleStartNavigation,
     campusLocations,
     nodesMap,
-    routeDistance,
-    routeDuration,
+    dynamicDistance,
+    dynamicDuration,
+    accessibleOnly,
+    isSimulating,
+    simulatedNodeId,
+    compassHeading,
   ]);
 
   return (
