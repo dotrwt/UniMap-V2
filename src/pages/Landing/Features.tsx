@@ -1,6 +1,7 @@
 // src/pages/Landing/Features.tsx
 import { Link } from 'react-router-dom';
 import { Layers, Search, Accessibility, Navigation, School, HelpCircle, Coffee, Compass } from 'lucide-react';
+import BorderGlow from '@/components/ui/borderGlow/borderGlow';
 import './features.css';
 
 export default function Features() {
@@ -38,191 +39,227 @@ export default function Features() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
 
               {/* Card 1: Multi-Floor Routing with Floor Switcher / Step list mockup */}
-              <div className="feature-grid-card feature-glass-card rounded-[32px] p-8 flex flex-col justify-between h-[480px] relative overflow-hidden group">
-                {/* Top Area: Floor Selector & Step List */}
-                <div className="h-[240px] w-full flex items-center justify-center relative overflow-hidden">
-                  <div className="absolute w-40 h-40 rounded-full bg-orange-500/10 blur-3xl pointer-events-none" />
-                  
-                  {/* Visual: Floating Floor Cards in 3D perspective */}
-                  <div className="relative w-[210px] h-[190px] flex gap-3 items-center justify-center select-none" style={{ perspective: '800px' }}>
-                    {/* Floor switcher tabs */}
-                    <div className="flex flex-col gap-1.5 p-1.5 bg-neutral-900/90 border border-white/10 rounded-xl shadow-xl -rotate-[6deg] transform translate-x-2 z-20">
-                      {['L3', 'L2', 'L1', 'GF'].map((floor) => (
-                        <div
-                          key={floor}
-                          className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black tracking-wider transition-all duration-300 ${
-                            floor === 'L2'
-                              ? 'bg-[#ff602e] text-white shadow-md shadow-[#ff602e]/30 scale-105'
-                              : 'text-neutral-400 hover:text-white'
-                          }`}
-                        >
-                          {floor}
-                        </div>
-                      ))}
-                    </div>
+              <BorderGlow
+                className="feature-grid-card h-[480px] w-full relative overflow-hidden group cursor-pointer"
+                borderRadius={32}
+                backgroundColor="rgba(10, 10, 10, 0.75)"
+                glowColor="15 100 60"
+                colors={['#ff602e', '#ff8054', '#ffa27e']}
+                glowIntensity={1.2}
+              >
+                <div className="p-8 flex flex-col justify-between h-full w-full">
+                  {/* Top Area: Floor Selector & Step List */}
+                  <div className="h-[240px] w-full flex items-center justify-center relative overflow-hidden">
+                    <div className="absolute w-40 h-40 rounded-full bg-orange-500/10 blur-3xl pointer-events-none" />
+                    
+                    {/* Visual: Floating Floor Cards in 3D perspective */}
+                    <div className="relative w-[210px] h-[190px] flex gap-3 items-center justify-center select-none" style={{ perspective: '800px' }}>
+                      {/* Floor switcher tabs */}
+                      <div className="flex flex-col gap-1.5 p-1.5 bg-neutral-900/90 border border-white/10 rounded-xl shadow-xl -rotate-[6deg] transform translate-x-2 z-20">
+                        {['L3', 'L2', 'L1', 'GF'].map((floor) => (
+                          <div
+                            key={floor}
+                            className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black tracking-wider transition-all duration-300 ${
+                              floor === 'L2'
+                                ? 'bg-[#ff602e] text-white shadow-md shadow-[#ff602e]/30 scale-105'
+                                : 'text-neutral-400 hover:text-white'
+                            }`}
+                          >
+                            {floor}
+                          </div>
+                        ))}
+                      </div>
 
-                    {/* Step list snippet */}
-                    <div className="flex-1 flex flex-col gap-2 p-3 bg-neutral-950/85 border border-white/5 rounded-2xl shadow-xl rotate-[4deg] translate-x-1 z-10 text-left">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                        <span className="text-[9px] font-bold text-neutral-200 truncate">Enter Main Block • GF</span>
-                      </div>
-                      <div className="flex items-center gap-2 pl-1 border-l border-neutral-800 py-1">
-                        <div className="w-4 h-4 rounded bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
-                          <Layers size={10} />
+                      {/* Step list snippet */}
+                      <div className="flex-1 flex flex-col gap-2 p-3 bg-neutral-950/85 border border-white/5 rounded-2xl shadow-xl rotate-[4deg] translate-x-1 z-10 text-left">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
+                          <span className="text-[9px] font-bold text-neutral-200 truncate">Enter Main Block • GF</span>
                         </div>
-                        <span className="text-[9px] text-neutral-400 font-bold truncate">Take Lift to L2</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2.5 h-2.5 rounded-full bg-[#ff602e] flex items-center justify-center shrink-0">
-                          <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                        <div className="flex items-center gap-2 pl-1 border-l border-neutral-800 py-1">
+                          <div className="w-4 h-4 rounded bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
+                            <Layers size={10} />
+                          </div>
+                          <span className="text-[9px] text-neutral-400 font-bold truncate">Take Lift to L2</span>
                         </div>
-                        <span className="text-[9px] font-bold text-white truncate">Target: Room L204</span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-full bg-[#ff602e] flex items-center justify-center shrink-0">
+                            <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                          </div>
+                          <span className="text-[9px] font-bold text-white truncate">Target: Room L204</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Bottom Text Area */}
-                <div className="relative z-10">
-                  <Layers className="w-5 h-5 text-neutral-400 mb-3" />
-                  <h3 className="text-[17px] font-bold text-white mb-1.5">Multi-Floor Navigation</h3>
-                  <p className="text-neutral-400 text-xs leading-relaxed max-w-sm">
-                    Seamless transitions and routing steps across multiple building levels and floor plans.
-                  </p>
+                  {/* Bottom Text Area */}
+                  <div className="relative z-10">
+                    <Layers className="w-5 h-5 text-neutral-400 mb-3" />
+                    <h3 className="text-[17px] font-bold text-white mb-1.5">Multi-Floor Navigation</h3>
+                    <p className="text-neutral-400 text-xs leading-relaxed max-w-sm">
+                      Seamless transitions and routing steps across multiple building levels and floor plans.
+                    </p>
+                  </div>
                 </div>
-              </div>
+              </BorderGlow>
 
               {/* Card 2: Room Finder with campus Search List mockup */}
-              <div className="feature-grid-card feature-glass-card rounded-[32px] p-8 flex flex-col justify-between h-[480px] relative overflow-hidden group">
-                {/* Top Area: Floating Campus Search list */}
-                <div className="h-[240px] w-full flex items-center justify-center relative overflow-hidden">
-                  <div className="absolute w-40 h-40 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
-                  
-                  <div className="w-[85%] bg-neutral-900/90 border border-white/10 rounded-2xl p-3 shadow-2xl rotate-[-4deg] translate-y-3 flex flex-col gap-2.5 text-left select-none">
-                    {/* Search bar mockup */}
-                    <div className="flex items-center gap-2 bg-neutral-950 border border-white/5 rounded-xl px-2.5 py-1.5">
-                      <Search className="w-3.5 h-3.5 text-[#ff602e] shrink-0" />
-                      <span className="text-[10px] font-medium text-neutral-500">Search rooms, labs, blocks...</span>
-                    </div>
-
-                    {/* Results stack */}
-                    <div className="flex flex-col gap-1.5">
-                      <div className="flex items-center justify-between p-1.5 bg-white/5 rounded-lg border border-white/5">
-                        <div>
-                          <h5 className="text-[10px] font-bold text-white">CIoT Lab</h5>
-                          <p className="text-[8px] text-neutral-400">AI Building • Floor 0</p>
-                        </div>
-                        <span className="text-[7px] font-black uppercase bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded">Lab</span>
+              <BorderGlow
+                className="feature-grid-card h-[480px] w-full relative overflow-hidden group cursor-pointer"
+                borderRadius={32}
+                backgroundColor="rgba(10, 10, 10, 0.75)"
+                glowColor="190 100 50"
+                colors={['#06b6d4', '#22d3ee', '#67e8f9']}
+                glowIntensity={1.2}
+              >
+                <div className="p-8 flex flex-col justify-between h-full w-full">
+                  {/* Top Area: Floating Campus Search list */}
+                  <div className="h-[240px] w-full flex items-center justify-center relative overflow-hidden">
+                    <div className="absolute w-40 h-40 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
+                    
+                    <div className="w-[85%] bg-neutral-900/90 border border-white/10 rounded-2xl p-3 shadow-2xl rotate-[-4deg] translate-y-3 flex flex-col gap-2.5 text-left select-none">
+                      {/* Search bar mockup */}
+                      <div className="flex items-center gap-2 bg-neutral-950 border border-white/5 rounded-xl px-2.5 py-1.5">
+                        <Search className="w-3.5 h-3.5 text-[#ff602e] shrink-0" />
+                        <span className="text-[10px] font-medium text-neutral-500">Search rooms, labs, blocks...</span>
                       </div>
-                      <div className="flex items-center justify-between p-1.5 bg-white/5 rounded-lg border border-white/5">
-                        <div>
-                          <h5 className="text-[10px] font-bold text-white">Conclave Centre</h5>
-                          <p className="text-[8px] text-neutral-400">Main Building • Floor 0</p>
+
+                      {/* Results stack */}
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center justify-between p-1.5 bg-white/5 rounded-lg border border-white/5">
+                          <div>
+                            <h5 className="text-[10px] font-bold text-white">CIoT Lab</h5>
+                            <p className="text-[8px] text-neutral-400">AI Building • Floor 0</p>
+                          </div>
+                          <span className="text-[7px] font-black uppercase bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded">Lab</span>
                         </div>
-                        <span className="text-[7px] font-black uppercase bg-orange-500/20 text-[#ff602e] px-1.5 py-0.5 rounded">Seminar</span>
+                        <div className="flex items-center justify-between p-1.5 bg-white/5 rounded-lg border border-white/5">
+                          <div>
+                            <h5 className="text-[10px] font-bold text-white">Conclave Centre</h5>
+                            <p className="text-[8px] text-neutral-400">Main Building • Floor 0</p>
+                          </div>
+                          <span className="text-[7px] font-black uppercase bg-orange-500/20 text-[#ff602e] px-1.5 py-0.5 rounded">Seminar</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Bottom Text Area */}
-                <div className="relative z-10">
-                  <Search className="w-5 h-5 text-neutral-400 mb-3" />
-                  <h3 className="text-[17px] font-bold text-white mb-1.5">Smart Room Finder</h3>
-                  <p className="text-neutral-400 text-xs leading-relaxed max-w-sm">
-                    Search classrooms, labs, offices, and facilities instantly and get directions in seconds.
-                  </p>
+                  {/* Bottom Text Area */}
+                  <div className="relative z-10">
+                    <Search className="w-5 h-5 text-neutral-400 mb-3" />
+                    <h3 className="text-[17px] font-bold text-white mb-1.5">Smart Room Finder</h3>
+                    <p className="text-neutral-400 text-xs leading-relaxed max-w-sm">
+                      Search classrooms, labs, offices, and facilities instantly and get directions in seconds.
+                    </p>
+                  </div>
                 </div>
-              </div>
+              </BorderGlow>
 
               {/* Card 3: Accessibility-First with Step-Free toggle mockup */}
-              <div className="feature-grid-card feature-glass-card rounded-[32px] p-8 flex flex-col justify-between h-[480px] relative overflow-hidden group">
-                {/* Top Area: Accessibility toggles */}
-                <div className="h-[240px] w-full flex items-center justify-center relative overflow-hidden">
-                  <div className="absolute w-40 h-40 rounded-full bg-pink-500/10 blur-3xl pointer-events-none" />
-                  
-                  <div className="w-[85%] bg-neutral-900/90 border border-white/10 rounded-2xl p-4 shadow-2xl rotate-[3deg] translate-y-3 flex flex-col gap-3 text-left select-none">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-pink-500/10 text-pink-500 flex items-center justify-center shrink-0">
-                          <Accessibility size={16} />
+              <BorderGlow
+                className="feature-grid-card h-[480px] w-full relative overflow-hidden group cursor-pointer"
+                borderRadius={32}
+                backgroundColor="rgba(10, 10, 10, 0.75)"
+                glowColor="330 100 60"
+                colors={['#ec4899', '#f472b6', '#f472b6']}
+                glowIntensity={1.2}
+              >
+                <div className="p-8 flex flex-col justify-between h-full w-full">
+                  {/* Top Area: Accessibility toggles */}
+                  <div className="h-[240px] w-full flex items-center justify-center relative overflow-hidden">
+                    <div className="absolute w-40 h-40 rounded-full bg-pink-500/10 blur-3xl pointer-events-none" />
+                    
+                    <div className="w-[85%] bg-neutral-900/90 border border-white/10 rounded-2xl p-4 shadow-2xl rotate-[3deg] translate-y-3 flex flex-col gap-3 text-left select-none">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-lg bg-pink-500/10 text-pink-500 flex items-center justify-center shrink-0">
+                            <Accessibility size={16} />
+                          </div>
+                          <div>
+                            <h5 className="text-[10px] font-bold text-white">Step-Free Routing</h5>
+                            <p className="text-[8px] text-neutral-450">Avoid stairs and escalators</p>
+                          </div>
                         </div>
-                        <div>
-                          <h5 className="text-[10px] font-bold text-white">Step-Free Routing</h5>
-                          <p className="text-[8px] text-neutral-400">Avoid stairs and escalators</p>
+                        {/* Premium Toggle Switch in active state */}
+                        <div className="w-8 h-4.5 rounded-full bg-[#ff602e] p-0.5 flex items-center justify-end cursor-pointer">
+                          <div className="w-3.5 h-3.5 rounded-full bg-white shadow-sm" />
                         </div>
                       </div>
-                      {/* Premium Toggle Switch in active state */}
-                      <div className="w-8 h-4.5 rounded-full bg-[#ff602e] p-0.5 flex items-center justify-end cursor-pointer">
-                        <div className="w-3.5 h-3.5 rounded-full bg-white shadow-sm" />
-                      </div>
-                    </div>
 
-                    <div className="border-t border-white/5 pt-2.5 flex items-center gap-3">
-                      <div className="flex-1 flex items-center gap-2 py-1 px-2 bg-neutral-950 rounded-lg border border-white/5">
-                        <span className="text-[8px] text-emerald-500 font-extrabold uppercase">Elevators</span>
-                        <span className="text-[8px] text-neutral-400">Preferred</span>
-                      </div>
-                      <div className="flex-1 flex items-center gap-2 py-1 px-2 bg-neutral-950 rounded-lg border border-white/5">
-                        <span className="text-[8px] text-red-500 font-extrabold uppercase">Stairs</span>
-                        <span className="text-[8px] text-neutral-450">Avoided</span>
+                      <div className="border-t border-white/5 pt-2.5 flex items-center gap-3">
+                        <div className="flex-1 flex items-center gap-2 py-1 px-2 bg-neutral-950 rounded-lg border border-white/5">
+                          <span className="text-[8px] text-emerald-500 font-extrabold uppercase">Elevators</span>
+                          <span className="text-[8px] text-neutral-400">Preferred</span>
+                        </div>
+                        <div className="flex-1 flex items-center gap-2 py-1 px-2 bg-neutral-950 rounded-lg border border-white/5">
+                          <span className="text-[8px] text-red-500 font-extrabold uppercase">Stairs</span>
+                          <span className="text-[8px] text-neutral-450">Avoided</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Bottom Text Area */}
-                <div className="relative z-10">
-                  <Accessibility className="w-5 h-5 text-neutral-400 mb-3" />
-                  <h3 className="text-[17px] font-bold text-white mb-1.5">Accessibility First</h3>
-                  <p className="text-neutral-400 text-xs leading-relaxed max-w-sm">
-                    Customize paths to prefer step-free alternatives like ramps and elevators.
-                  </p>
+                  {/* Bottom Text Area */}
+                  <div className="relative z-10">
+                    <Accessibility className="w-5 h-5 text-neutral-400 mb-3" />
+                    <h3 className="text-[17px] font-bold text-white mb-1.5">Accessibility First</h3>
+                    <p className="text-neutral-400 text-xs leading-relaxed max-w-sm">
+                      Customize paths to prefer step-free alternatives like ramps and elevators.
+                    </p>
+                  </div>
                 </div>
-              </div>
+              </BorderGlow>
 
               {/* Card 4: Live ETA HUD mockup */}
-              <div className="feature-grid-card feature-glass-card rounded-[32px] p-8 flex flex-col justify-between h-[480px] relative overflow-hidden group">
-                {/* Top Area: Live HUD card */}
-                <div className="h-[240px] w-full flex items-center justify-center relative overflow-hidden">
-                  <div className="absolute w-40 h-40 rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
-                  
-                  <div className="w-[85%] bg-neutral-900/90 border border-white/10 rounded-2xl p-4 shadow-2xl rotate-[-3deg] translate-y-3 flex flex-col gap-3 text-left select-none">
-                    <div className="flex justify-between items-center text-neutral-400">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-500 flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        Active Navigation
-                      </span>
-                      <span className="text-[8px] text-neutral-450 font-bold">ETA: 3 min</span>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-[#ff602e]/10 text-[#ff602e] flex items-center justify-center shrink-0">
-                        <Compass className="w-5 h-5 rotate-[45deg]" />
+              <BorderGlow
+                className="feature-grid-card h-[480px] w-full relative overflow-hidden group cursor-pointer"
+                borderRadius={32}
+                backgroundColor="rgba(10, 10, 10, 0.75)"
+                glowColor="220 100 60"
+                colors={['#3b82f6', '#60a5fa', '#93c5fd']}
+                glowIntensity={1.2}
+              >
+                <div className="p-8 flex flex-col justify-between h-full w-full">
+                  {/* Top Area: Live HUD card */}
+                  <div className="h-[240px] w-full flex items-center justify-center relative overflow-hidden">
+                    <div className="absolute w-40 h-40 rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
+                    
+                    <div className="w-[85%] bg-neutral-900/90 border border-white/10 rounded-2xl p-4 shadow-2xl rotate-[-3deg] translate-y-3 flex flex-col gap-3 text-left select-none">
+                      <div className="flex justify-between items-center text-neutral-400">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-500 flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          Active Navigation
+                        </span>
+                        <span className="text-[8px] text-neutral-450 font-bold">ETA: 3 min</span>
                       </div>
-                      <div>
-                        <h4 className="text-[11px] font-extrabold text-white">Turn Left in 20m</h4>
-                        <p className="text-[8px] text-neutral-450">After passing the central lobby stairs</p>
-                      </div>
-                    </div>
 
-                    {/* Progress indicator */}
-                    <div className="w-full bg-neutral-950 h-1.5 rounded-full overflow-hidden">
-                      <div className="bg-[#ff602e] h-full w-[65%]" />
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-[#ff602e]/10 text-[#ff602e] flex items-center justify-center shrink-0">
+                          <Compass className="w-5 h-5 rotate-[45deg]" />
+                        </div>
+                        <div>
+                          <h4 className="text-[11px] font-extrabold text-white">Turn Left in 20m</h4>
+                          <p className="text-[8px] text-neutral-450">After passing the central lobby stairs</p>
+                        </div>
+                      </div>
+
+                      {/* Progress indicator */}
+                      <div className="w-full bg-neutral-950 h-1.5 rounded-full overflow-hidden">
+                        <div className="bg-[#ff602e] h-full w-[65%]" />
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Bottom Text Area */}
-                <div className="relative z-10">
-                  <Navigation className="w-5 h-5 text-neutral-400 mb-3" />
-                  <h3 className="text-[17px] font-bold text-white mb-1.5">Live ETA & Compass</h3>
-                  <p className="text-neutral-400 text-xs leading-relaxed max-w-sm">
-                    Track your position and remaining travel time with responsive direction cues.
-                  </p>
+                  {/* Bottom Text Area */}
+                  <div className="relative z-10">
+                    <Navigation className="w-5 h-5 text-neutral-400 mb-3" />
+                    <h3 className="text-[17px] font-bold text-white mb-1.5">Live ETA & Compass</h3>
+                    <p className="text-neutral-400 text-xs leading-relaxed max-w-sm">
+                      Track your position and remaining travel time with responsive direction cues.
+                    </p>
+                  </div>
                 </div>
-              </div>
+              </BorderGlow>
 
             </div>
           </div>

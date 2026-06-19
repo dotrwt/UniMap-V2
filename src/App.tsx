@@ -1,6 +1,7 @@
 // src/App.tsx
 import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import useSmoothScroll from '@/hooks/smoothscroll';
 import './styles/globals.css';
 
 // Lazy loaded page components
@@ -22,6 +23,7 @@ function CampusMapWrapper() {
 
 /** Root App component setting up global routing, theme, and code-split pages. */
 export default function App() {
+  useSmoothScroll();
   return (
     <Router>
       <Suspense fallback={<LoadingFallback />}>

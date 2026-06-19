@@ -17,6 +17,14 @@ export default function Footer() {
         <div className="footer-star-glow" />
         <div className="footer-star-glow-2" />
 
+        {/* Shooting Stars */}
+        <div className="shooting-stars-container">
+          <div className="shooting-star shooting-star-1" />
+          <div className="shooting-star shooting-star-2" />
+          <div className="shooting-star shooting-star-3" />
+          <div className="shooting-star shooting-star-4" />
+        </div>
+
         {/* Content Area - Relative & Z-indexed to be above the glow/stars */}
         <div className="relative z-10 w-full max-w-6xl flex flex-col items-center text-center">
 

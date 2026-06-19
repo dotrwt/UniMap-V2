@@ -90,3 +90,76 @@
   filter: blur(15px);
   pointer-events: none;
 }
+
+/* Shooting Stars effect */
+.shooting-stars-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.shooting-star {
+  position: absolute;
+  height: 1.5px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0) 100%);
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 1));
+  border-radius: 999px;
+  opacity: 0;
+}
+
+@keyframes shoot-star {
+  0% {
+    transform: translate(0, 0) rotate(-45deg) scale(0);
+    width: 0;
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.85;
+    width: var(--star-width, 70px);
+    transform: translate(0, 0) rotate(-45deg) scale(1);
+  }
+  30% {
+    transform: translate(-300px, 300px) rotate(-45deg) scale(0.3);
+    width: 100px;
+    opacity: 0;
+  }
+  100% {
+    transform: translate(-300px, 300px) rotate(-45deg) scale(0);
+    width: 0;
+    opacity: 0;
+  }
+}
+
+.shooting-star-1 {
+  top: 15%;
+  right: 10%;
+  --star-width: 60px;
+  animation: shoot-star 6s ease-in-out infinite;
+  animation-delay: 0s;
+}
+
+.shooting-star-2 {
+  top: 25%;
+  right: 28%;
+  --star-width: 80px;
+  animation: shoot-star 8s ease-in-out infinite;
+  animation-delay: 2s;
+}
+
+.shooting-star-3 {
+  top: 5%;
+  right: 45%;
+  --star-width: 50px;
+  animation: shoot-star 5s ease-in-out infinite;
+  animation-delay: 3.8s;
+}
+
+.shooting-star-4 {
+  top: 35%;
+  right: 18%;
+  --star-width: 70px;
+  animation: shoot-star 7s ease-in-out infinite;
+  animation-delay: 1.2s;
+}
