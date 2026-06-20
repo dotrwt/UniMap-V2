@@ -1,26 +1,24 @@
 // src/pages/Support/Developer.tsx
 import BorderGlow from '@/components/ui/borderGlow/borderGlow';
-import mentorSarah from '@/assets/mentor_sarah.png';
-import mentorDavid from '@/assets/mentor_david.png';
-import { Code2, GraduationCap, Mail, BriefcaseBusiness } from 'lucide-react';
+import DrSA from '@/assets/DrSA.webp';
+import DrMD from '@/assets/DrMD.webp';
+import { Code2, GraduationCap, Mail, Globe } from 'lucide-react';
 
 export default function Developer() {
   const mentors = [
     {
-      name: 'Dr. Sarah Jenkins',
-      role: 'Project Guide & Advisor',
+      name: 'Dr. S. A. Jenkins',
       dept: 'Department of Computer Science',
-      image: mentorSarah,
+      image: DrSA,
       email: 's.jenkins@unimap.edu',
-      linkedin: 'https://linkedin.com'
+      website: 'https://unimap.edu'
     },
     {
-      name: 'Prof. David Miller',
-      role: 'Technical Mentor',
+      name: 'Prof. M. D. Miller',
       dept: 'Department of Information Technology',
-      image: mentorDavid,
+      image: DrMD,
       email: 'd.miller@unimap.edu',
-      linkedin: 'https://linkedin.com'
+      website: 'https://unimap.edu'
     }
   ];
 
@@ -95,7 +93,7 @@ export default function Developer() {
           >
             <div className="p-7 flex flex-col justify-between h-full w-full">
               <div>
-                {/* Photo / Avatar Placeholder */}
+                {/* Photo / Avatar */}
                 <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-white/10 mb-6 group-hover:border-[#ff602e]/50 transition-colors duration-300">
                   <img
                     src={mentor.image}
@@ -105,9 +103,6 @@ export default function Developer() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                 </div>
 
-                <span className="text-[10px] uppercase font-bold tracking-wider text-[#ff602e] block mb-2">
-                  {mentor.role}
-                </span>
                 <h3 className="text-xl font-bold text-white mb-1">{mentor.name}</h3>
                 <p className="text-[11px] text-neutral-400 mb-2">{mentor.dept}</p>
               </div>
@@ -122,13 +117,13 @@ export default function Developer() {
                   <Mail className="w-4 h-4" />
                 </a>
                 <a
-                  href={mentor.linkedin}
+                  href={mentor.website}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-neutral-400 hover:text-[#ff602e] hover:bg-[#ff602e]/10 hover:border-[#ff602e]/20 transition-all duration-300"
-                  title="LinkedIn"
+                  title="Website"
                 >
-                  <BriefcaseBusiness className="w-4 h-4" />
+                  <Globe className="w-4 h-4" />
                 </a>
               </div>
             </div>
