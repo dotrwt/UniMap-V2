@@ -7,18 +7,18 @@ import { Code2, GraduationCap, Mail, Globe } from 'lucide-react';
 export default function Developer() {
   const mentors = [
     {
-      name: 'Dr. S. A. Jenkins',
-      dept: 'Department of Computer Science',
+      name: 'Dr. Saurabh Agarwal',
+      dept: 'Assistant Professor, Department of Computer Science',
       image: DrSA,
-      email: 's.jenkins@unimap.edu',
-      website: 'https://unimap.edu'
+      email: 'saurabhagarwal@mitsgwalior.in',
+      website: 'https://web.mitsgwalior.in/faculty-profiles-cse-2/dr-saurabh-agarwal'
     },
     {
-      name: 'Prof. M. D. Miller',
-      dept: 'Department of Information Technology',
+      name: 'Dr. Manish Dixit',
+      dept: 'Professor & Head, Department of Computer Science',
       image: DrMD,
-      email: 'd.miller@unimap.edu',
-      website: 'https://unimap.edu'
+      email: 'dixitmits@mitsgwalior.in',
+      website: 'https://web.mitsgwalior.in/faculty-profiles-cse-2/dr-manish-dixit-2'
     }
   ];
 
@@ -39,7 +39,7 @@ export default function Developer() {
           Meet the Creators
         </h2>
         <p className="text-neutral-450 text-sm mt-3 max-w-xl mx-auto">
-          UniMap V2 was built under expert academic guidance to bring a premium, high-fidelity mapping experience to our campus.
+          UniMap was built under expert academic guidance to bring a premium, high-fidelity mapping experience to our campus.
         </p>
       </div>
 
@@ -48,10 +48,11 @@ export default function Developer() {
 
         {/* Developer Card (dotrwt) */}
         <BorderGlow
-          className="h-[380px] relative overflow-hidden group cursor-pointer"
+          className="h-[380px] relative overflow-visible group cursor-pointer"
           borderRadius={24}
           backgroundColor="rgba(15, 15, 15, 0.75)"
-          glowColor="15 100 60"
+          glowColor="270 90 70"
+          colors={['#c084fc', '#f472b6', '#38bdf8']}
           glowIntensity={1.2}
         >
           <div className="p-7 flex flex-col justify-between h-full w-full">
@@ -85,10 +86,11 @@ export default function Developer() {
         {mentors.map((mentor, index) => (
           <BorderGlow
             key={index}
-            className="h-[380px] relative overflow-hidden group cursor-pointer"
+            className="h-[380px] relative overflow-visible group cursor-pointer"
             borderRadius={24}
             backgroundColor="rgba(15, 15, 15, 0.75)"
-            glowColor="15 100 60"
+            glowColor="270 90 70"
+            colors={['#c084fc', '#f472b6', '#38bdf8']}
             glowIntensity={1.2}
           >
             <div className="p-7 flex flex-col justify-between h-full w-full">
