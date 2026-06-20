@@ -1,5 +1,4 @@
 // src/pages/Support/Developer.tsx
-import BorderGlow from '@/components/ui/borderGlow/borderGlow';
 import DrSA from '@/assets/DrSA.webp';
 import DrMD from '@/assets/DrMD.webp';
 import { Code2, GraduationCap, Mail, Globe } from 'lucide-react';
@@ -47,15 +46,8 @@ export default function Developer() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto px-2">
 
         {/* Developer Card (dotrwt) */}
-        <BorderGlow
-          className="h-[380px] relative overflow-visible group cursor-pointer"
-          borderRadius={24}
-          backgroundColor="rgba(15, 15, 15, 0.75)"
-          glowColor="270 90 70"
-          colors={['#c084fc', '#f472b6', '#38bdf8']}
-          glowIntensity={1.2}
-        >
-          <div className="p-7 flex flex-col justify-between h-full w-full">
+        <div className="h-[380px] rounded-[24px] border border-white/10 bg-[#0f0f0f]/75 p-7 flex flex-col justify-between relative overflow-hidden group hover:border-[#ff602e]/30 transition-all duration-300">
+          <div className="flex flex-col justify-between h-full w-full">
             <div>
               <div className="w-12 h-12 rounded-2xl bg-[#ff602e]/10 text-[#ff602e] flex items-center justify-center mb-6">
                 <Code2 className="w-6 h-6" />
@@ -80,20 +72,15 @@ export default function Developer() {
               </a>
             </div>
           </div>
-        </BorderGlow>
+        </div>
 
         {/* Mentor Cards */}
         {mentors.map((mentor, index) => (
-          <BorderGlow
+          <div
             key={index}
-            className="h-[380px] relative overflow-visible group cursor-pointer"
-            borderRadius={24}
-            backgroundColor="rgba(15, 15, 15, 0.75)"
-            glowColor="270 90 70"
-            colors={['#c084fc', '#f472b6', '#38bdf8']}
-            glowIntensity={1.2}
+            className="h-[380px] rounded-[24px] border border-white/10 bg-[#0f0f0f]/75 p-7 flex flex-col justify-between relative overflow-hidden group hover:border-[#ff602e]/30 transition-all duration-300"
           >
-            <div className="p-7 flex flex-col justify-between h-full w-full">
+            <div className="flex flex-col justify-between h-full w-full">
               <div>
                 {/* Photo / Avatar */}
                 <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-white/10 mb-6 group-hover:border-[#ff602e]/50 transition-colors duration-300">
@@ -129,7 +116,7 @@ export default function Developer() {
                 </a>
               </div>
             </div>
-          </BorderGlow>
+          </div>
         ))}
 
       </div>
