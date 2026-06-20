@@ -17,6 +17,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     const floors = await db.collection('floors').find({}, { projection: { _id: 0 } }).toArray();
     res.status(200).json({ data: floors });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch floors' });
+    console.error('[API /api/floors] Error:', error);
+    res.status(500).json({
+      error: 'Failed to fetch floors',
+      message: error instanceof Error ? error.message : String(error),
+    });
   }
 }
