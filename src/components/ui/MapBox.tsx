@@ -7,6 +7,7 @@ import { useGesture } from '@use-gesture/react';
 import type { FloorMap, Building } from '@/types';
 import MainCover from '@/assets/Main_Cover.webp';
 import AICover from '@/assets/AI_Cover.webp';
+import { useCampusNavigation } from '@/hooks/useCampusNavigation';
 
 interface Point {
   x: number;
@@ -87,8 +88,15 @@ export default function MapBox({
   onMapChange,
 }: MapBoxProps) {
   const prefersReducedMotion = useReducedMotion();
+  const {
+    isSimulating,
+    simulatedNodeId,
+    nodesMap,
+    compassHeading,
+  } = useCampusNavigation();
 
-  const [zoomState, setZoomState] = useState(1);
+  const [canZoomIn, setCanZoomIn] = useState(true);
+  const [canZoomOut, setCanZoomOut] = useState(true);
   const [isBuildingDropdownOpen, setIsBuildingDropdownOpen] = useState(false);
   const [svgContent, setSvgContent] = useState<string>('');
 
@@ -99,11 +107,77 @@ export default function MapBox({
     onChange: (result: any) => {
       const val = typeof result === 'object' && result !== null && 'value' in result ? result.value.zoom : undefined;
       if (typeof val === 'number') {
-        setZoomState(val);
+        const nextCanZoomIn = val < 5;
+        const nextCanZoomOut = val > 0.5;
+        setCanZoomIn((prev) => (prev !== nextCanZoomIn ? nextCanZoomIn : prev));
+        setCanZoomOut((prev) => (prev !== nextCanZoomOut ? nextCanZoomOut : prev));
       }
     },
     config: { tension: 220, friction: 28 }
   }));
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const svgContainerRef = useRef<HTMLDivElement>(null);
+
+  const getZoomTarget = useCallback((nextZ: number) => {
+    const el = containerRef.current;
+    if (!el) return { x: x.get(), y: y.get() };
+    const rect = el.getBoundingClientRect();
+    const cx = rect.width / 2;
+    const cy = rect.height / 2;
+
+    const currentZ = zoom.get();
+    const currentX = x.get();
+    const currentY = y.get();
+
+    let mx = 0;
+    let my = 0;
+
+    const simulatedNode = isSimulating && simulatedNodeId ? nodesMap[simulatedNodeId] : null;
+    const hasSimulated = simulatedNode && simulatedNode.map === mapId && simulatedNode.x !== undefined && simulatedNode.y !== undefined;
+    const hasDest = destination && destination.map === mapId && destination.x !== undefined && destination.y !== undefined;
+    const hasStart = currentLocation && currentLocation.map === mapId && currentLocation.x !== undefined && currentLocation.y !== undefined;
+
+    if (hasSimulated) {
+      mx = simulatedNode.x;
+      my = simulatedNode.y;
+    } else if (hasDest) {
+      mx = destination.x;
+      my = destination.y;
+    } else if (hasStart) {
+      mx = currentLocation.x;
+      my = currentLocation.y;
+    } else {
+      mx = (cx - currentX) / currentZ;
+      my = (cy - currentY) / currentZ;
+    }
+
+    const nextX = currentX - mx * (nextZ - currentZ);
+    const nextY = currentY - my * (nextZ - currentZ);
+
+    return { x: nextX, y: nextY };
+  }, [x, y, zoom, destination, currentLocation, mapId, isSimulating, simulatedNodeId, nodesMap]);
+
+  const handleZoomIn = useCallback(() => {
+    const currentZ = zoom.get();
+    const nextZ = Math.min(currentZ * 1.3, 5);
+    const target = getZoomTarget(nextZ);
+    console.log('Zooming In to:', target.x, target.y, nextZ);
+    springApi.start({ x: target.x, y: target.y, zoom: nextZ, config: { tension: 180, friction: 26 } });
+  }, [zoom, getZoomTarget, springApi]);
+
+  const handleZoomOut = useCallback(() => {
+    const currentZ = zoom.get();
+    const nextZ = Math.max(currentZ / 1.3, 0.5);
+    const target = getZoomTarget(nextZ);
+    console.log('Zooming Out to:', target.x, target.y, nextZ);
+    springApi.start({ x: target.x, y: target.y, zoom: nextZ, config: { tension: 180, friction: 26 } });
+  }, [zoom, getZoomTarget, springApi]);
+
+  const handleResetZoom = useCallback(() => {
+    console.log('Resetting Zoom.');
+    springApi.start({ x: 0, y: 0, zoom: 1 });
+  }, [springApi]);
 
   useEffect(() => {
     if (!isNavigating) {
@@ -111,43 +185,89 @@ export default function MapBox({
     }
   }, [mapId, isNavigating, springApi]);
 
-  const handleZoomIn = useCallback(() => {
-    const currentZ = zoom.get();
-    const nextZ = Math.min(currentZ * 1.2, 5);
-    console.log('Zooming In. Current:', currentZ, 'Next:', nextZ);
-    springApi.start({ zoom: nextZ });
-  }, [zoom, springApi]);
-
-  const handleZoomOut = useCallback(() => {
-    const currentZ = zoom.get();
-    const nextZ = Math.max(currentZ / 1.2, 0.5);
-    console.log('Zooming Out. Current:', currentZ, 'Next:', nextZ);
-    springApi.start({ zoom: nextZ });
-  }, [zoom, springApi]);
-
-  const handleResetZoom = useCallback(() => {
-    console.log('Resetting Zoom.');
-    springApi.start({ x: 0, y: 0, zoom: 1 });
-  }, [springApi]);
-
-  const containerRef = useRef<HTMLDivElement>(null);
-  const svgContainerRef = useRef<HTMLDivElement>(null);
-
   useGesture(
     {
-      onDrag: ({ offset: [dx, dy] }) => {
-        springApi.start({ x: dx, y: dy, immediate: true });
+      onDrag: ({ active, offset: [dx, dy], velocity: [vx, vy], direction: [dirX, dirY] }) => {
+        if (active) {
+          springApi.start({ x: dx, y: dy, immediate: true });
+        } else {
+          const speed = Math.sqrt(vx * vx + vy * vy);
+          if (speed > 0.15) {
+            const momentumScale = Math.min(250, speed * 150);
+            const targetX = dx + dirX * momentumScale;
+            const targetY = dy + dirY * momentumScale;
+            springApi.start({
+              x: targetX,
+              y: targetY,
+              immediate: false,
+              config: { tension: 150, friction: 32, velocity: [vx * dirX, vy * dirY] }
+            });
+          } else {
+            springApi.start({
+              x: dx,
+              y: dy,
+              immediate: false,
+              config: { tension: 180, friction: 26 }
+            });
+          }
+        }
       },
-      onPinch: ({ offset: [dScale] }) => {
-        springApi.start({ zoom: Math.max(0.5, Math.min(5, dScale)), immediate: true });
+      onPinch: ({ active, offset: [dScale], origin: [ox, oy] }) => {
+        const el = containerRef.current;
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        const cx = ox - rect.left;
+        const cy = oy - rect.top;
+
+        const currentZ = zoom.get();
+        const currentX = x.get();
+        const currentY = y.get();
+
+        const nextZoom = Math.max(0.5, Math.min(5, dScale));
+
+        const mx = (cx - currentX) / currentZ;
+        const my = (cy - currentY) / currentZ;
+
+        const nextX = currentX - mx * (nextZoom - currentZ);
+        const nextY = currentY - my * (nextZoom - currentZ);
+
+        springApi.start({
+          x: nextX,
+          y: nextY,
+          zoom: nextZoom,
+          immediate: active,
+          config: { tension: 180, friction: 26 }
+        });
       },
       onWheel: ({ event, delta: [, dy] }) => {
         if (event.ctrlKey || event.metaKey) {
           event.preventDefault();
-          const factor = dy > 0 ? 0.92 : 1.08;
-          const currentZoom = zoom.get();
-          const nextZoom = Math.max(0.5, Math.min(5, currentZoom * factor));
-          springApi.start({ zoom: nextZoom });
+          const el = containerRef.current;
+          if (!el) return;
+          const rect = el.getBoundingClientRect();
+          const cx = event.clientX - rect.left;
+          const cy = event.clientY - rect.top;
+
+          const currentZ = zoom.get();
+          const currentX = x.get();
+          const currentY = y.get();
+
+          const factor = dy > 0 ? 0.90 : 1.10;
+          const nextZoom = Math.max(0.5, Math.min(5, currentZ * factor));
+
+          const mx = (cx - currentX) / currentZ;
+          const my = (cy - currentY) / currentZ;
+
+          const nextX = currentX - mx * (nextZoom - currentZ);
+          const nextY = currentY - my * (nextZoom - currentZ);
+
+          springApi.start({
+            x: nextX,
+            y: nextY,
+            zoom: nextZoom,
+            immediate: false,
+            config: { tension: 180, friction: 26 }
+          });
         }
       }
     },
@@ -168,7 +288,18 @@ export default function MapBox({
 
   const showFloorPlan = !!mapId;
   const shouldShowDestination = !!destination && destination.map === mapId;
-  const shouldShowCurrentLocation = !!currentLocation && currentLocation.map === mapId;
+  const shouldShowCurrentLocation = !isSimulating && !!currentLocation && currentLocation.map === mapId;
+
+  // Springs to animate pin entry scaling without causing React component re-renders
+  const destSpring = useSpring({
+    scale: shouldShowDestination ? 1 : 0,
+    config: { tension: 300, friction: 20 }
+  });
+
+  const currentLocSpring = useSpring({
+    scale: shouldShowCurrentLocation ? 1 : 0,
+    config: { tension: 300, friction: 20 }
+  });
 
   // Resolve Cloudinary Map URL dynamically from the floors data array
   const mapSrc = useMemo(() => {
@@ -200,6 +331,8 @@ export default function MapBox({
       svgEl.setAttribute('height', '100%');
       svgEl.setAttribute('preserveAspectRatio', 'xMidYMid meet');
       svgEl.setAttribute('shape-rendering', 'geometricPrecision');
+      svgEl.style.backfaceVisibility = 'hidden';
+      svgEl.style.webkitBackfaceVisibility = 'hidden';
 
       const elements = svgEl.querySelectorAll('path, line, polyline, rect');
       elements.forEach((el) => {
@@ -246,22 +379,60 @@ export default function MapBox({
     const bboxW = Math.max(1, maxX - minX);
     const bboxH = Math.max(1, maxY - minY);
     const pad = Math.max(24, Math.min(w, h) * 0.06);
-    const availW = Math.max(1, w - 2 * pad);
+
+    const isDesktop = w >= 768;
+    const availW = isDesktop ? Math.max(1, w - 410 - 2 * pad) : Math.max(1, w - 2 * pad);
     const availH = Math.max(1, h - 2 * pad);
 
     const nextZoom = Math.max(0.5, Math.min(5, Math.min(availW / bboxW, availH / bboxH)));
 
     const bboxCenterX = (minX + maxX) / 2;
     const bboxCenterY = (minY + maxY) / 2;
-    const centerX = w / 2;
-    const centerY = h / 2;
+    const cx = isDesktop ? (w + 410) / 2 : w / 2;
+    const cy = h / 2;
 
-    const nextPanX = -nextZoom * (bboxCenterX - centerX);
-    const nextPanY = -nextZoom * (bboxCenterY - centerY);
+    const nextPanX = cx - bboxCenterX * nextZoom;
+    const nextPanY = cy - bboxCenterY * nextZoom;
 
     lastAutoFitRef.current = autoFitNonce;
     springApi.start({ x: nextPanX, y: nextPanY, zoom: nextZoom });
   }, [autoFitNonce, isNavigating, pathBbox, svgHeight, svgWidth, springApi]);
+
+  // Camera pans to follow the simulated node during simulation!
+  useEffect(() => {
+    if (!isSimulating || !simulatedNodeId || !nodesMap) return;
+    const node = nodesMap[simulatedNodeId];
+    if (!node || node.map !== mapId) return;
+
+    const el = containerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const w = rect.width;
+    const h = rect.height;
+    if (!(w > 0 && h > 0)) return;
+
+    const baseScale = Math.min(w / svgWidth, h / svgHeight) || 1;
+    const offsetX = (w - svgWidth * baseScale) / 2;
+    const offsetY = (h - svgHeight * baseScale) / 2;
+
+    const nodeViewportX = node.x * baseScale + offsetX;
+    const nodeViewportY = node.y * baseScale + offsetY;
+
+    const isDesktop = w >= 768;
+    const cx = isDesktop ? (w + 410) / 2 : w / 2;
+    const cy = h / 2;
+
+    const currentZoom = zoom.get();
+    const nextPanX = cx - nodeViewportX * currentZoom;
+    const nextPanY = cy - nodeViewportY * currentZoom;
+
+    springApi.start({ x: nextPanX, y: nextPanY });
+  }, [simulatedNodeId, isSimulating, mapId, nodesMap, svgWidth, svgHeight, springApi]);
+
+  const simulatedNode = useMemo(() => {
+    if (!isSimulating || !simulatedNodeId || !nodesMap) return null;
+    return nodesMap[simulatedNodeId] || null;
+  }, [isSimulating, simulatedNodeId, nodesMap]);
 
   // Resolve current building floors
   const activeFloorMeta = useMemo(() => floors.find((f) => f.map === mapId), [floors, mapId]);
@@ -311,6 +482,9 @@ export default function MapBox({
             style={{
               transform: to([x, y, zoom], (px, py, z) => `translate(${px}px, ${py}px) scale(${z})`),
               transformOrigin: '0 0',
+              willChange: 'auto',
+              backfaceVisibility: 'hidden',
+              WebkitBackfaceVisibility: 'hidden',
             }}
           >
             <div className="relative w-full h-full">
@@ -330,7 +504,12 @@ export default function MapBox({
                 className="absolute inset-0 w-full h-full pointer-events-none z-10"
                 viewBox={`0 0 ${svgWidth} ${svgHeight}`}
                 preserveAspectRatio="xMidYMid meet"
-                style={{ mixBlendMode: 'normal' }}
+                style={{
+                  mixBlendMode: 'normal',
+                  shapeRendering: 'geometricPrecision',
+                  backfaceVisibility: 'hidden',
+                  WebkitBackfaceVisibility: 'hidden',
+                }}
               >
                 {isNavigating && pathPoints && (
                   <motion.g
@@ -372,11 +551,9 @@ export default function MapBox({
                 )}
 
                 {shouldShowDestination && destination.x !== undefined && destination.y !== undefined && (
-                  <motion.g
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
+                  <animated.g
                     style={{
-                      transform: `scale(${1 / zoomState})`,
+                      transform: to([zoom, destSpring.scale], (z, s) => `scale(${s / z})`),
                       transformOrigin: `${destination.x}px ${destination.y - 10}px`
                     }}
                   >
@@ -394,8 +571,11 @@ export default function MapBox({
                         r="8"
                         fill="#ff602e"
                         opacity="0.3"
+                        style={{
+                          transformOrigin: `${destination.x}px ${destination.y}px`
+                        }}
                         animate={{
-                          r: [8, 16, 8],
+                          scale: [1, 2, 1],
                           opacity: [0.3, 0, 0.3]
                         }}
                         transition={{
@@ -421,15 +601,13 @@ export default function MapBox({
                     >
                       {destination.name}
                     </text>
-                  </motion.g>
+                  </animated.g>
                 )}
 
                 {shouldShowCurrentLocation && currentLocation.x !== undefined && currentLocation.y !== undefined && (
-                  <motion.g
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
+                  <animated.g
                     style={{
-                      transform: `scale(${1 / zoomState})`,
+                      transform: to([zoom, currentLocSpring.scale], (z, s) => `scale(${s / z})`),
                       transformOrigin: `${currentLocation.x}px ${currentLocation.y - 10}px`
                     }}
                   >
@@ -447,8 +625,11 @@ export default function MapBox({
                         r="8"
                         fill="#10b981"
                         opacity="0.3"
+                        style={{
+                          transformOrigin: `${currentLocation.x}px ${currentLocation.y}px`
+                        }}
                         animate={{
-                          r: [8, 16, 8],
+                          scale: [1, 2, 1],
                           opacity: [0.3, 0, 0.3]
                         }}
                         transition={{
@@ -474,7 +655,65 @@ export default function MapBox({
                     >
                       You are here
                     </text>
-                  </motion.g>
+                  </animated.g>
+                )}
+
+                {isSimulating && simulatedNode && simulatedNode.map === mapId && (
+                  <animated.g
+                    style={{
+                      transform: to([zoom], (z) => `scale(${1 / z})`),
+                      transformOrigin: `${simulatedNode.x}px ${simulatedNode.y}px`
+                    }}
+                  >
+                    <circle
+                      cx={simulatedNode.x}
+                      cy={simulatedNode.y}
+                      r="10"
+                      fill="#3b82f6"
+                      opacity="0.3"
+                    />
+                    {!prefersReducedMotion ? (
+                      <motion.circle
+                        cx={simulatedNode.x}
+                        cy={simulatedNode.y}
+                        r="15"
+                        fill="#3b82f6"
+                        opacity="0.2"
+                        style={{
+                          transformOrigin: `${simulatedNode.x}px ${simulatedNode.y}px`
+                        }}
+                        animate={{
+                          scale: [0.8, 1.6, 0.8],
+                          opacity: [0.3, 0.05, 0.3]
+                        }}
+                        transition={{
+                          repeat: Infinity,
+                          duration: 1.5
+                        }}
+                      />
+                    ) : null}
+                    <g
+                      transform={`translate(${simulatedNode.x}, ${simulatedNode.y}) rotate(${compassHeading})`}
+                    >
+                      <polygon
+                        points="0,-8 6,6 0,2 -6,6"
+                        fill="#3b82f6"
+                        stroke="#ffffff"
+                        strokeWidth="1.5"
+                      />
+                    </g>
+                    <text
+                      x={simulatedNode.x}
+                      y={simulatedNode.y - 25}
+                      textAnchor="middle"
+                      fontSize="10"
+                      fill="#1d4ed8"
+                      fontWeight="bold"
+                      className="pointer-events-auto select-none"
+                    >
+                      Simulating Walk
+                    </text>
+                  </animated.g>
                 )}
               </svg>
             </div>
@@ -595,7 +834,7 @@ export default function MapBox({
               <button
                 onClick={handleZoomIn}
                 className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-700 hover:bg-orange-50 hover:text-[#ff602e] transition-all duration-200"
-                disabled={zoomState >= 5}
+                disabled={!canZoomIn}
                 title="Zoom In"
               >
                 <ZoomIn className="w-5 h-5" />
@@ -604,7 +843,7 @@ export default function MapBox({
               <button
                 onClick={handleZoomOut}
                 className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-700 hover:bg-orange-50 hover:text-[#ff602e] transition-all duration-200"
-                disabled={zoomState <= 0.5}
+                disabled={!canZoomOut}
                 title="Zoom Out"
               >
                 <ZoomOut className="w-5 h-5" />

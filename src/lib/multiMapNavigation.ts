@@ -3,7 +3,8 @@ import type { MapNode, MapEdge } from '@/types';
 import { dijkstraAsync } from './dijkstra';
 import type { DijkstraGraph } from './dijkstra';
 
-const graphCache = new WeakMap<any, DijkstraGraph>();
+const graphCacheNormal = new WeakMap<any, DijkstraGraph>();
+const graphCacheAccessible = new WeakMap<any, DijkstraGraph>();
 const nodesMapCache = new WeakMap<any, Record<string, MapNode>>();
 
 export interface NavigationStep {
@@ -18,9 +19,15 @@ export interface NavigationStep {
  * Builds an adjacency graph from a flat list of edges.
  * The graph is map‑agnostic; segmentation happens later.
  */
-export function buildGlobalGraph(navigationEdges: MapEdge[]): DijkstraGraph {
+export function buildGlobalGraph(
+  navigationEdges: MapEdge[],
+  options: { accessibleOnly?: boolean } = {}
+): DijkstraGraph {
+  const accessibleOnly = options.accessibleOnly ?? false;
+  
   if (Array.isArray(navigationEdges)) {
-    const cached = graphCache.get(navigationEdges);
+    const cache = accessibleOnly ? graphCacheAccessible : graphCacheNormal;
+    const cached = cache.get(navigationEdges);
     if (cached) return cached;
   }
 
@@ -30,7 +37,14 @@ export function buildGlobalGraph(navigationEdges: MapEdge[]): DijkstraGraph {
     const from = edge.from_node ?? (edge as any).from;
     const to = edge.to_node ?? (edge as any).to;
     const w = edge.distance ?? (edge as any).weight ?? 1;
+    const type = edge.type;
+    
     if (!from || !to) return;
+
+    // Filter out stairs in step-free/accessible mode
+    if (accessibleOnly && type === 'stairs') {
+      return;
+    }
 
     if (!graph[from]) graph[from] = [];
     if (!graph[to]) graph[to] = [];
@@ -41,7 +55,8 @@ export function buildGlobalGraph(navigationEdges: MapEdge[]): DijkstraGraph {
   });
 
   if (Array.isArray(navigationEdges)) {
-    graphCache.set(navigationEdges, graph);
+    const cache = accessibleOnly ? graphCacheAccessible : graphCacheNormal;
+    cache.set(navigationEdges, graph);
   }
 
   return graph;
@@ -129,17 +144,19 @@ export async function computeMultiMapRouteAsync(
     includeFullPath?: boolean;
     nodesMap?: Record<string, MapNode>;
     graph?: DijkstraGraph;
+    accessibleOnly?: boolean;
   } = {}
 ): Promise<{ steps: NavigationStep[]; fullPath?: string[] } | null> {
   const {
     includeFullPath = true,
     nodesMap: precomputedNodesMap,
     graph: precomputedGraph,
+    accessibleOnly = false,
     ...dijkstraOptions
   } = options;
 
   const nodesMap = precomputedNodesMap ?? buildNodesMap(navigationNodes);
-  const graph = precomputedGraph ?? buildGlobalGraph(navigationEdges);
+  const graph = precomputedGraph ?? buildGlobalGraph(navigationEdges, { accessibleOnly });
 
   if (!nodesMap[startNodeId] || !nodesMap[endNodeId]) return null;
 

@@ -1,7 +1,58 @@
 // src/components/ui/Footer.tsx
 import { Link } from 'react-router-dom';
-import { BriefcaseBusiness, Camera, MessageCircle } from 'lucide-react';
 import './footer.css';
+
+const TwitterIcon = ({ size = 16 }: { size?: number }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" />
+  </svg>
+);
+
+const InstagramIcon = ({ size = 16 }: { size?: number }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+  </svg>
+);
+
+const LinkedinIcon = ({ size = 16 }: { size?: number }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+    <rect width="4" height="12" x="2" y="9" />
+    <circle cx="4" cy="4" r="2" />
+  </svg>
+);
 import chrome from '@/assets/chrome.webp';
 import firefox from '@/assets/firefox.webp';
 import apple from '@/assets/safari.webp';
@@ -16,6 +67,14 @@ export default function Footer() {
         <div className="footer-glow" />
         <div className="footer-star-glow" />
         <div className="footer-star-glow-2" />
+
+        {/* Shooting Stars */}
+        <div className="shooting-stars-container">
+          <div className="shooting-star shooting-star-1" />
+          <div className="shooting-star shooting-star-2" />
+          <div className="shooting-star shooting-star-3" />
+          <div className="shooting-star shooting-star-4" />
+        </div>
 
         {/* Content Area - Relative & Z-indexed to be above the glow/stars */}
         <div className="relative z-10 w-full max-w-6xl flex flex-col items-center text-center">
@@ -88,28 +147,28 @@ export default function Footer() {
                 <span className="text-sm font-normal text-neutral-300">Stay in touch</span>
                 <div className="flex gap-4 items-center">
                   <a
-                    href="https://twitter.com"
+                    href="https://x.com/dotrwt"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-neutral-400 hover:text-white transition-colors"
                   >
-                    <MessageCircle size={16} />
+                    <TwitterIcon size={16} />
                   </a>
                   <a
-                    href="https://linkedin.com"
+                    href="https://www.instagram.com/rawwithharsh"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-neutral-400 hover:text-white transition-colors"
                   >
-                    <BriefcaseBusiness size={16} />
+                    <InstagramIcon size={16} />
                   </a>
                   <a
-                    href="https://instagram.com"
+                    href="https://www.linkedin.com/in/harshvardhan-rawat/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-neutral-400 hover:text-white transition-colors"
                   >
-                    <Camera size={16} />
+                    <LinkedinIcon size={16} />
                   </a>
                 </div>
               </div>

@@ -1,4 +1,6 @@
 // src/components/ui/Chip.tsx
+import { memo } from 'react';
+
 export interface ChipProps {
   label: string;
   active?: boolean;
@@ -7,7 +9,7 @@ export interface ChipProps {
 }
 
 /** A selectable filter tag/chip for checking toggle status or option selections. */
-export default function Chip({
+function Chip({
   label,
   active = false,
   onClick,
@@ -30,3 +32,6 @@ export default function Chip({
     </button>
   );
 }
+
+export default memo(Chip);
+

@@ -1,5 +1,5 @@
 // src/hooks/usePathfinding.ts
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useMapStore } from '@/store/mapStore';
 import { dijkstra } from '@/lib/dijkstra';
 import { buildGlobalGraph } from '@/lib/multiMapNavigation';
@@ -21,6 +21,9 @@ export function usePathfinding(): {
 
   const [isComputing, setIsComputing] = useState(false);
 
+  const adjacencyGraphRef = useRef<any>(null);
+  const prevEdgesRef = useRef<any>(null);
+
   useEffect(() => {
     if (!selectedFrom || !selectedTo) {
       setCurrentRoute(null);
@@ -32,9 +35,23 @@ export function usePathfinding(): {
     }
 
     setIsComputing(true);
-    const runPathfinding = () => {
+
+    const timer = setTimeout(() => {
       try {
-        const adjacencyGraph = buildGlobalGraph(graph.edges);
+        if (selectedFrom.id === selectedTo.id) {
+          setError(null);
+          const route = buildRoute(graph, [selectedFrom.id], DEFAULT_ROUTE_OPTIONS);
+          setCurrentRoute(route);
+          return;
+        }
+
+        let adjacencyGraph = adjacencyGraphRef.current;
+        if (!adjacencyGraph || prevEdgesRef.current !== graph.edges) {
+          adjacencyGraph = buildGlobalGraph(graph.edges);
+          adjacencyGraphRef.current = adjacencyGraph;
+          prevEdgesRef.current = graph.edges;
+        }
+
         const nodeIds = dijkstra(
           adjacencyGraph,
           selectedFrom.id,
@@ -61,9 +78,11 @@ export function usePathfinding(): {
       } finally {
         setIsComputing(false);
       }
-    };
+    }, 0);
 
-    runPathfinding();
+    return () => {
+      clearTimeout(timer);
+    };
   }, [graph, selectedFrom, selectedTo, setCurrentRoute, setError]);
 
   return {
@@ -71,3 +90,4 @@ export function usePathfinding(): {
     isComputing,
   };
 }
+

@@ -23,18 +23,16 @@ export default function Map() {
 
   const { svgUrl } = useFloorMap();
   const { svgContent, isLoading, error } = useSvgMap(svgUrl);
-  const {
-    graph,
-    activeMap,
-    activeFloor,
-    selectedFrom,
-    selectedTo,
-    currentRoute,
-    setSelectedFrom,
-    setSelectedTo,
-    transform,
-    setTransform,
-  } = useMapStore();
+  const graph = useMapStore((state) => state.graph);
+  const activeMap = useMapStore((state) => state.activeMap);
+  const activeFloor = useMapStore((state) => state.activeFloor);
+  const selectedFrom = useMapStore((state) => state.selectedFrom);
+  const selectedTo = useMapStore((state) => state.selectedTo);
+  const currentRoute = useMapStore((state) => state.currentRoute);
+  const setSelectedFrom = useMapStore((state) => state.setSelectedFrom);
+  const setSelectedTo = useMapStore((state) => state.setSelectedTo);
+  const transform = useMapStore((state) => state.transform);
+  const setTransform = useMapStore((state) => state.setTransform);
 
   const [viewBox, setViewBox] = useState({ minX: 0, minY: 0, width: 1000, height: 1000 });
   const [imgLoaded, setImgLoaded] = useState(false);
@@ -50,6 +48,13 @@ export default function Map() {
     if (isPanningCursor.current !== panning) {
       isPanningCursor.current = panning;
       forceUpdate({});
+    }
+  };
+
+  const setShapeRendering = (mode: 'optimizeSpeed' | 'geometricPrecision') => {
+    const svgEl = mapRef.current?.querySelector('svg');
+    if (svgEl) {
+      svgEl.setAttribute('shape-rendering', mode);
     }
   };
 
@@ -77,6 +82,7 @@ export default function Map() {
         if (first) {
           wasDraggingRef.current = false;
           setPanningCursor(true);
+          setShapeRendering('optimizeSpeed');
           return [x.get(), y.get()];
         }
 
@@ -95,12 +101,14 @@ export default function Map() {
 
         if (!active) {
           setPanningCursor(false);
+          setShapeRendering('geometricPrecision');
           setTransform({ scale: scale.get(), x: newX, y: newY });
         }
         return memo;
       },
       onPinch: ({ origin: [copX, copY], offset: [s], active, first, memo }) => {
         if (first) {
+          setShapeRendering('optimizeSpeed');
           return {
             x: x.get(),
             y: y.get(),
@@ -128,12 +136,18 @@ export default function Map() {
         });
 
         if (!active) {
+          setShapeRendering('geometricPrecision');
           setTransform({ scale: s_new, x: newX, y: newY });
         }
         return memo;
       },
-      onWheel: ({ event }) => {
+      onWheel: ({ active, event }) => {
         event.preventDefault();
+        
+        if (active) {
+          setShapeRendering('optimizeSpeed');
+        }
+
         const rect = containerRef.current?.getBoundingClientRect();
         if (!rect) return;
 
@@ -154,7 +168,10 @@ export default function Map() {
           immediate: true,
         });
 
-        setTransform({ scale: s_new, x: newX, y: newY });
+        if (!active) {
+          setShapeRendering('geometricPrecision');
+          setTransform({ scale: s_new, x: newX, y: newY });
+        }
       },
     },
     {

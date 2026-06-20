@@ -1,11 +1,13 @@
 import { Navbar, Footer } from '@/components/ui';
+import { HelpCircle } from 'lucide-react';
 import SupportForm from './SupportForm';
+import Developer from './Developer';
 import './Support.css';
 
 /**
  * SupportPage component.
  * Renders the Support Feedback page containing Navbar, SupportForm,
- * and Footer with a glowing dark background layout matching the design reference.
+ * Developer guidance section, and Footer with a glowing dark background layout matching the design reference.
  */
 export default function SupportPage() {
   return (
@@ -19,8 +21,9 @@ export default function SupportPage() {
       {/* Main page content */}
       <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 pt-32 pb-24 md:pt-36 max-w-4xl mx-auto w-full">
         {/* Get Help Badge */}
-        <div className="bg-white/5 border border-white/10 px-4.5 py-1.5 rounded-full mb-6 shadow-sm select-none">
-          <span className="text-[10px] tracking-wide font-medium text-neutral-300">
+        <div className="inline-flex items-center gap-2 bg-[#ff602e]/10 border border-[#ff602e]/20 px-4 py-1.5 rounded-full mb-6 shadow-sm select-none">
+          <HelpCircle className="w-3.5 h-3.5 text-[#ff602e]" />
+          <span className="text-[10px] tracking-wide font-extrabold uppercase text-[#ff602e]">
             Get help
           </span>
         </div>
@@ -33,6 +36,9 @@ export default function SupportPage() {
 
         {/* Support Request Form */}
         <SupportForm />
+
+        {/* Developer / Academic Guidance Section */}
+        <Developer />
       </main>
 
       {/* Standard page Footer */}

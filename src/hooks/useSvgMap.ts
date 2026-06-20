@@ -1,5 +1,8 @@
 // src/hooks/useSvgMap.ts
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
+
+// Module-level global cache mapping url -> SVG text content to persist across unmounts/remounts
+const svgCache: { [url: string]: string } = {};
 
 /** Hook that fetches the SVG content from a Cloudinary URL and returns it as a raw HTML string. */
 export function useSvgMap(svgUrl: string | null): {
@@ -11,9 +14,6 @@ export function useSvgMap(svgUrl: string | null): {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Cache object mapping url -> SVG text content
-  const cache = useRef<{ [url: string]: string }>({});
-
   useEffect(() => {
     if (svgUrl === null) {
       setSvgContent(null);
@@ -24,8 +24,8 @@ export function useSvgMap(svgUrl: string | null): {
     const url: string = svgUrl;
 
     // Return cached content immediately if it exists
-    if (cache.current[url]) {
-      setSvgContent(cache.current[url]);
+    if (svgCache[url]) {
+      setSvgContent(svgCache[url]);
       setIsLoading(false);
       setError(null);
       return;
@@ -42,6 +42,8 @@ export function useSvgMap(svgUrl: string | null): {
           headers: {
             Accept: 'image/svg+xml',
           },
+          // Set fetch priority high to load map images faster
+          ...({ priority: 'high' } as any),
         });
 
         if (!response.ok) {
@@ -51,7 +53,7 @@ export function useSvgMap(svgUrl: string | null): {
         const text = await response.text();
 
         if (!isCancelled) {
-          cache.current[url] = text;
+          svgCache[url] = text;
           setSvgContent(text);
         }
       } catch (err: unknown) {
@@ -77,3 +79,4 @@ export function useSvgMap(svgUrl: string | null): {
 
   return { svgContent, isLoading, error };
 }
+

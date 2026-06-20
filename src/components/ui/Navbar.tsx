@@ -12,30 +12,16 @@ export default function Navbar() {
 
   const isActive = (path: string) => location.pathname === path;
 
-  // On the support page, render the minimalist floating glass-capsule navbar matching design
-  if (location.pathname === '/support') {
-    return (
-      <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between w-[92%] max-w-2xl px-5 py-2.5 rounded-full glass-capsule shadow-xl shadow-black/10">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-[#ff602e] flex items-center justify-center text-white">
-            <Compass size={18} className="animate-spin-slow" />
-          </div>
-        </div>
-
-        <div className="flex items-center gap-6 text-xs font-semibold">
-          <Link to="/map" className="text-neutral-400 hover:text-white transition-colors">Map</Link>
-          <Link to="/support" className="text-white">Support</Link>
-        </div>
-      </nav>
-    );
-  }
-
   // On the landing page, support page, or 404 page, render the custom floating glass-capsule navbar
+  const isSupport = location.pathname === '/support';
+  const isLanding = location.pathname === '/';
   const is404 = !['/', '/map', '/support'].includes(location.pathname);
 
-  if (location.pathname === '/' || is404) {
+  if (isLanding || isSupport || is404) {
     return (
-      <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between w-[92%] max-w-2xl px-5 py-2.5 rounded-full glass-capsule shadow-xl shadow-black/10">
+      <nav className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between w-[92%] max-w-2xl px-5 py-2.5 rounded-full shadow-xl shadow-black/10 ${
+        isSupport ? 'bg-[#121212] border border-white/10' : 'glass-capsule'
+      }`}>
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-[#ff602e] flex items-center justify-center text-white">
             <Compass size={18} className="animate-spin-slow" />
@@ -44,8 +30,8 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-6 text-xs font-semibold text-neutral-400">
-          <Link to="/" className={`hover:text-white transition-colors ${location.pathname === '/' ? 'text-white' : ''}`}>Home</Link>
-          <Link to="/support" className="hover:text-white transition-colors">Support</Link>
+          <Link to="/" className={`hover:text-white transition-colors ${isLanding ? 'text-white' : ''}`}>Home</Link>
+          <Link to="/support" className={`hover:text-white transition-colors ${isSupport ? 'text-white' : ''}`}>Support</Link>
         </div>
 
         <div className="flex items-center gap-2.5">

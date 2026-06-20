@@ -43,7 +43,7 @@ export default function SupportForm() {
           <input
             id="name"
             type="text"
-            placeholder="Akim"
+            placeholder="Rahul"
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="w-full bg-[#1b1b1b] border border-white/[0.04] rounded-[14px] px-4 py-3.5 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-[#ff602e]/30 focus:ring-1 focus:ring-[#ff602e]/30 transition-all duration-200"
@@ -59,7 +59,7 @@ export default function SupportForm() {
           <input
             id="email"
             type="text"
-            placeholder="Perminov"
+            placeholder="rahul@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full bg-[#1b1b1b] border border-white/[0.04] rounded-[14px] px-4 py-3.5 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-[#ff602e]/30 focus:ring-1 focus:ring-[#ff602e]/30 transition-all duration-200"

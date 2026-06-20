@@ -1,5 +1,6 @@
 // src/lib/navigation_instructions.ts
 import type { MapNode, MapEdge } from '@/types';
+import { parseRoomName } from '@/lib/roomParser';
 
 const DIRECTION_MAP: Record<string, string> = {
   straight: 'Go straight',
@@ -12,20 +13,11 @@ const DIRECTION_MAP: Record<string, string> = {
   'u-turn': 'Make a U-turn',
 };
 
-const EDGE_DESCRIPTIONS: Record<string, string> = {
-  corridor_to_corridor: 'along the corridor',
-  room_to_corridor: 'entering the corridor',
-  entry_to_corridor: 'from the entrance',
-  corridor_to_intersection: 'to the intersection',
-  entry_to_room: 'entering the room',
-  room_to_room: 'between rooms',
-};
-
 export interface BasicNavigationInstruction {
   action: 'start' | 'continue' | 'turn' | 'arrive' | 'error';
   location?: string;
   message: string;
-  distance: number;
+  distance: string | number;
   direction?: string;
   distanceInMeters?: number;
   from?: string;
@@ -56,7 +48,7 @@ function calculateAngle(p1: MapNode, p2: MapNode, p3: MapNode): number {
 
 /**
  * Determine turn direction from angle
- * (Negated for screen/SVG coords where Y increases downward)
+ * (Negated for SVG coords where Y increases downward)
  */
 function getTurnDirection(angle: number): string {
   const flipped = -angle;
@@ -77,6 +69,19 @@ function getTurnDirection(angle: number): string {
   }
 }
 
+function getFloorFromMapId(mapId: string): number {
+  if (!mapId) return 0;
+  const parts = mapId.split('_');
+  const suffix = parts[parts.length - 1]?.toLowerCase();
+  if (suffix === 'gf') return 0;
+  if (suffix === 'ff') return 1;
+  if (suffix === 'sf') return 2;
+  if (suffix === 'tf') return 3;
+  const num = parseInt(suffix, 10);
+  if (!isNaN(num)) return num;
+  return 0;
+}
+
 /**
  * Calculate distance between two nodes
  */
@@ -87,7 +92,7 @@ function calculateDistance(node1: MapNode, node2: MapNode): number {
 }
 
 /**
- * Format instruction message
+ * Format basic instruction message
  */
 function formatInstruction(direction: string, distanceInMeters: number): string {
   const action = DIRECTION_MAP[direction] || 'Continue';
@@ -109,7 +114,7 @@ export function generateNavigationInstructions(path: string[], nodes: Record<str
   
   const instructions: BasicNavigationInstruction[] = [];
   
-  // Start instruction
+  // Start instruction placeholder
   instructions.push({
     action: 'start',
     location: path[0],
@@ -117,7 +122,6 @@ export function generateNavigationInstructions(path: string[], nodes: Record<str
     distance: 0
   });
   
-  // Process each segment
   let currentDirection: string | null = null;
   let accumulatedDistance = 0;
   let segmentStart = 0;
@@ -129,7 +133,6 @@ export function generateNavigationInstructions(path: string[], nodes: Record<str
     
     const segmentDistance = calculateDistance(prevNode, currentNode);
     
-    // Determine direction for this segment
     let direction = 'straight';
     if (i < path.length - 1) {
       const nextNode = nodes[path[i + 1]];
@@ -139,7 +142,6 @@ export function generateNavigationInstructions(path: string[], nodes: Record<str
       }
     }
     
-    // If direction changes or last segment, create instruction
     if (direction !== currentDirection || i === path.length - 1) {
       if (currentDirection !== null) {
         const totalDist = accumulatedDistance + (i === path.length - 1 ? segmentDistance : 0);
@@ -165,7 +167,7 @@ export function generateNavigationInstructions(path: string[], nodes: Record<str
     accumulatedDistance += segmentDistance;
   }
   
-  // Arrival instruction
+  // Arrival instruction placeholder
   instructions.push({
     action: 'arrive',
     location: path[path.length - 1],
@@ -177,7 +179,7 @@ export function generateNavigationInstructions(path: string[], nodes: Record<str
 }
 
 /**
- * Enhanced version with edge type information
+ * Build undirected edge index
  */
 export function buildUndirectedEdgeIndex(edges: MapEdge[]): Map<string, MapEdge> {
   if (!Array.isArray(edges)) return new Map();
@@ -194,6 +196,9 @@ export function buildUndirectedEdgeIndex(edges: MapEdge[]): Map<string, MapEdge>
   return index;
 }
 
+/**
+ * Enhanced detailed instructions utilizing neighbor and floor transition context
+ */
 export function generateDetailedNavigationInstructions(
   path: string[],
   nodes: Record<string, MapNode>,
@@ -202,22 +207,152 @@ export function generateDetailedNavigationInstructions(
   const basicInstructions = generateNavigationInstructions(path, nodes);
   const edgeIndex =
     edgesOrIndex instanceof Map ? edgesOrIndex : buildUndirectedEdgeIndex(edgesOrIndex);
-  
-  return basicInstructions.map((instruction) => {
-    if (instruction.action === 'continue' || instruction.action === 'turn') {
-      const fromNode = instruction.from;
-      const toNode = instruction.firstStepTo || instruction.to;
-      
-      if (edgeIndex && fromNode && toNode) {
-        const edge = edgeIndex.get(`${fromNode}|${toNode}`);
-        
-        if (edge) {
-          instruction.edgeType = edge.type;
-          instruction.landmark = EDGE_DESCRIPTIONS[edge.type] || '';
+
+  function getCleanRoomNameOnly(nodeId: string): string | null {
+    const node = nodes[nodeId];
+    if (!node) return null;
+    if (node.type === 'room' || node.type === 'landmark' || node.type === 'entrance' || node.type === 'exit') {
+      const name = node.name || parseRoomName(nodeId)?.name;
+      if (name) {
+        const lower = name.toLowerCase();
+        if (!lower.includes('node') && !lower.includes('junction') && !lower.includes('road') && !lower.includes('corridor') && !lower.includes('intersection')) {
+          return name;
         }
       }
     }
+    return null;
+  }
+
+  function findNearbyRoomName(nodeId: string): string | null {
+    const selfRoom = getCleanRoomNameOnly(nodeId);
+    if (selfRoom) return selfRoom;
+
+    for (const [key] of edgeIndex.entries()) {
+      const parts = key.split('|');
+      if (parts[0] === nodeId) {
+        const room = getCleanRoomNameOnly(parts[1]);
+        if (room) return room;
+      }
+    }
+
+    for (const [key] of edgeIndex.entries()) {
+      const parts = key.split('|');
+      if (parts[0] === nodeId) {
+        const neighborId = parts[1];
+        for (const [subKey] of edgeIndex.entries()) {
+          const subParts = subKey.split('|');
+          if (subParts[0] === neighborId && subParts[1] !== nodeId) {
+            const room = getCleanRoomNameOnly(subParts[1]);
+            if (room) return room;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  function getNodeDisplayName(nodeId: string): string {
+    const selfRoom = getCleanRoomNameOnly(nodeId);
+    if (selfRoom) return selfRoom;
     
+    const nearby = findNearbyRoomName(nodeId);
+    if (nearby) return nearby;
+
+    const node = nodes[nodeId];
+    if (node && node.name) {
+      const cleaned = node.name
+        .replace(/intersection/gi, '')
+        .replace(/corridor/gi, '')
+        .replace(/road/gi, '')
+        .replace(/node/gi, '')
+        .replace(/junction/gi, '')
+        .replace(/  +/g, ' ')
+        .trim();
+      if (cleaned) return cleaned;
+    }
+    return 'pathway';
+  }
+
+  return basicInstructions.map((instruction) => {
+    const fromNode = instruction.from;
+    const toNode = instruction.to;
+
+    if (instruction.action === 'start' && instruction.location) {
+      const selfRoom = getCleanRoomNameOnly(instruction.location);
+      if (selfRoom) {
+        instruction.message = `Starting at ${selfRoom}`;
+      } else {
+        const nearby = findNearbyRoomName(instruction.location);
+        if (nearby) {
+          instruction.message = `Starting near ${nearby}`;
+        } else {
+          instruction.message = `Starting journey at ${getNodeDisplayName(instruction.location)}`;
+        }
+      }
+    }
+    if (instruction.action === 'arrive' && instruction.location) {
+      const selfRoom = getCleanRoomNameOnly(instruction.location);
+      if (selfRoom) {
+        instruction.message = `You have arrived at ${selfRoom}`;
+      } else {
+        const nearby = findNearbyRoomName(instruction.location);
+        if (nearby) {
+          instruction.message = `You have arrived near ${nearby}`;
+        } else {
+          instruction.message = `You have arrived at ${getNodeDisplayName(instruction.location)}`;
+        }
+      }
+    }
+
+    if (instruction.action === 'continue' || instruction.action === 'turn') {
+      let isSpecialTransition = false;
+      if (edgeIndex && fromNode && toNode) {
+        const edge = edgeIndex.get(`${fromNode}|${toNode}`);
+        if (edge) {
+          instruction.edgeType = edge.type;
+          if (edge.type === 'stairs' || edge.type === 'lift' || edge.type === 'ramp') {
+            isSpecialTransition = true;
+            const currentFloor = typeof (nodes[fromNode] as any).floor === 'number'
+              ? (nodes[fromNode] as any).floor
+              : getFloorFromMapId(nodes[fromNode].map);
+            const nextFloor = typeof (nodes[toNode] as any).floor === 'number'
+              ? (nodes[toNode] as any).floor
+              : getFloorFromMapId(nodes[toNode].map);
+            const floorStr = nextFloor === 0 ? 'G' : `F${nextFloor}`;
+            if (edge.type === 'stairs') {
+              instruction.message = `Take the stairs ${nextFloor > currentFloor ? 'up' : 'down'} to Floor ${floorStr}`;
+            } else if (edge.type === 'lift') {
+              instruction.message = `Take the lift ${nextFloor > currentFloor ? 'up' : 'down'} to Floor ${floorStr}`;
+            } else {
+              instruction.message = `Take the ramp to Floor ${floorStr}`;
+            }
+          }
+        }
+      }
+
+      if (!isSpecialTransition) {
+        const nearFrom = fromNode ? findNearbyRoomName(fromNode) : null;
+        const nearTo = toNode ? findNearbyRoomName(toNode) : null;
+
+        if (instruction.action === 'turn' && nearTo) {
+          instruction.message = `${DIRECTION_MAP[instruction.direction || ''] || 'Turn'} near ${nearTo}`;
+        } else if (instruction.action === 'continue' && nearFrom) {
+          instruction.message = `Continue past ${nearFrom}`;
+        } else {
+          const action = DIRECTION_MAP[instruction.direction || ''] || 'Continue';
+          instruction.message = action;
+        }
+      }
+
+      if (instruction.distanceInMeters && instruction.distanceInMeters > 0) {
+        instruction.distance = `${instruction.distanceInMeters}m`;
+      } else {
+        instruction.distance = '';
+      }
+
+      instruction.landmark = ''; // Keep landmark clean from roads/corridors
+    }
+
     return instruction;
   });
 }

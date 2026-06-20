@@ -1,4 +1,5 @@
 // src/components/ui/Badge.tsx
+import { memo } from 'react';
 import type { ReactNode } from 'react';
 
 export interface BadgeProps {
@@ -8,7 +9,7 @@ export interface BadgeProps {
 }
 
 /** A metadata badge component for displaying labeled statuses or values. */
-export default function Badge({
+function Badge({
   children,
   variant = 'default',
   className = '',
@@ -28,3 +29,6 @@ export default function Badge({
     </span>
   );
 }
+
+export default memo(Badge);
+
