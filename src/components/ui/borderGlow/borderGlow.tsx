@@ -122,6 +122,8 @@ const BorderGlow: React.FC<BorderGlowProps> = ({
         const edge = getEdgeProximity(card, x, y);
         const angle = getCursorAngle(card, x, y);
 
+        console.log('BorderGlow hover:', card.className, 'edge:', edge, 'angle:', angle);
+
         card.style.setProperty('--edge-proximity', `${(edge * 100).toFixed(3)}`);
         card.style.setProperty('--cursor-angle', `${angle.toFixed(3)}deg`);
     }, [getEdgeProximity, getCursorAngle]);

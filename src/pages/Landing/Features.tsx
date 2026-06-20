@@ -40,18 +40,18 @@ export default function Features() {
 
               {/* Card 1: Multi-Floor Routing with Floor Switcher / Step list mockup */}
               <BorderGlow
-                className="feature-grid-card h-[480px] w-full relative overflow-hidden group cursor-pointer"
+                className="feature-grid-card h-[480px] w-full relative overflow-visible group cursor-pointer"
                 borderRadius={32}
                 backgroundColor="rgba(10, 10, 10, 0.75)"
-                glowColor="15 100 60"
-                colors={['#ff602e', '#ff8054', '#ffa27e']}
+                glowColor="270 90 70"
+                colors={['#c084fc', '#f472b6', '#38bdf8']}
                 glowIntensity={1.2}
               >
                 <div className="p-8 flex flex-col justify-between h-full w-full">
                   {/* Top Area: Floor Selector & Step List */}
                   <div className="h-[240px] w-full flex items-center justify-center relative overflow-hidden">
                     <div className="absolute w-40 h-40 rounded-full bg-orange-500/10 blur-3xl pointer-events-none" />
-                    
+
                     {/* Visual: Floating Floor Cards in 3D perspective */}
                     <div className="relative w-[210px] h-[190px] flex gap-3 items-center justify-center select-none" style={{ perspective: '800px' }}>
                       {/* Floor switcher tabs */}
@@ -59,11 +59,10 @@ export default function Features() {
                         {['L3', 'L2', 'L1', 'GF'].map((floor) => (
                           <div
                             key={floor}
-                            className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black tracking-wider transition-all duration-300 ${
-                              floor === 'L2'
-                                ? 'bg-[#ff602e] text-white shadow-md shadow-[#ff602e]/30 scale-105'
-                                : 'text-neutral-400 hover:text-white'
-                            }`}
+                            className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black tracking-wider transition-all duration-300 ${floor === 'L2'
+                              ? 'bg-[#ff602e] text-white shadow-md shadow-[#ff602e]/30 scale-105'
+                              : 'text-neutral-400 hover:text-white'
+                              }`}
                           >
                             {floor}
                           </div>
@@ -105,18 +104,18 @@ export default function Features() {
 
               {/* Card 2: Room Finder with campus Search List mockup */}
               <BorderGlow
-                className="feature-grid-card h-[480px] w-full relative overflow-hidden group cursor-pointer"
+                className="feature-grid-card h-[480px] w-full relative overflow-visible group cursor-pointer"
                 borderRadius={32}
                 backgroundColor="rgba(10, 10, 10, 0.75)"
-                glowColor="190 100 50"
-                colors={['#06b6d4', '#22d3ee', '#67e8f9']}
+                glowColor="270 90 70"
+                colors={['#c084fc', '#f472b6', '#38bdf8']}
                 glowIntensity={1.2}
               >
                 <div className="p-8 flex flex-col justify-between h-full w-full">
                   {/* Top Area: Floating Campus Search list */}
                   <div className="h-[240px] w-full flex items-center justify-center relative overflow-hidden">
                     <div className="absolute w-40 h-40 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
-                    
+
                     <div className="w-[85%] bg-neutral-900/90 border border-white/10 rounded-2xl p-3 shadow-2xl rotate-[-4deg] translate-y-3 flex flex-col gap-2.5 text-left select-none">
                       {/* Search bar mockup */}
                       <div className="flex items-center gap-2 bg-neutral-950 border border-white/5 rounded-xl px-2.5 py-1.5">
@@ -157,18 +156,18 @@ export default function Features() {
 
               {/* Card 3: Accessibility-First with Step-Free toggle mockup */}
               <BorderGlow
-                className="feature-grid-card h-[480px] w-full relative overflow-hidden group cursor-pointer"
+                className="feature-grid-card h-[480px] w-full relative overflow-visible group cursor-pointer"
                 borderRadius={32}
                 backgroundColor="rgba(10, 10, 10, 0.75)"
-                glowColor="330 100 60"
-                colors={['#ec4899', '#f472b6', '#f472b6']}
+                glowColor="270 90 70"
+                colors={['#c084fc', '#f472b6', '#38bdf8']}
                 glowIntensity={1.2}
               >
                 <div className="p-8 flex flex-col justify-between h-full w-full">
                   {/* Top Area: Accessibility toggles */}
                   <div className="h-[240px] w-full flex items-center justify-center relative overflow-hidden">
                     <div className="absolute w-40 h-40 rounded-full bg-pink-500/10 blur-3xl pointer-events-none" />
-                    
+
                     <div className="w-[85%] bg-neutral-900/90 border border-white/10 rounded-2xl p-4 shadow-2xl rotate-[3deg] translate-y-3 flex flex-col gap-3 text-left select-none">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -212,18 +211,18 @@ export default function Features() {
 
               {/* Card 4: Live ETA HUD mockup */}
               <BorderGlow
-                className="feature-grid-card h-[480px] w-full relative overflow-hidden group cursor-pointer"
+                className="feature-grid-card h-[480px] w-full relative overflow-visible group cursor-pointer"
                 borderRadius={32}
                 backgroundColor="rgba(10, 10, 10, 0.75)"
-                glowColor="220 100 60"
-                colors={['#3b82f6', '#60a5fa', '#93c5fd']}
+                glowColor="270 90 70"
+                colors={['#c084fc', '#f472b6', '#38bdf8']}
                 glowIntensity={1.2}
               >
                 <div className="p-8 flex flex-col justify-between h-full w-full">
                   {/* Top Area: Live HUD card */}
                   <div className="h-[240px] w-full flex items-center justify-center relative overflow-hidden">
                     <div className="absolute w-40 h-40 rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
-                    
+
                     <div className="w-[85%] bg-neutral-900/90 border border-white/10 rounded-2xl p-4 shadow-2xl rotate-[-3deg] translate-y-3 flex flex-col gap-3 text-left select-none">
                       <div className="flex justify-between items-center text-neutral-400">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-500 flex items-center gap-1.5">

@@ -1,11 +1,12 @@
 import { Navbar, Footer } from '@/components/ui';
 import SupportForm from './SupportForm';
+import Developer from './Developer';
 import './Support.css';
 
 /**
  * SupportPage component.
  * Renders the Support Feedback page containing Navbar, SupportForm,
- * and Footer with a glowing dark background layout matching the design reference.
+ * Developer guidance section, and Footer with a glowing dark background layout matching the design reference.
  */
 export default function SupportPage() {
   return (
@@ -33,6 +34,9 @@ export default function SupportPage() {
 
         {/* Support Request Form */}
         <SupportForm />
+
+        {/* Developer / Academic Guidance Section */}
+        <Developer />
       </main>
 
       {/* Standard page Footer */}

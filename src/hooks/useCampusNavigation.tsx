@@ -177,7 +177,7 @@ export function CampusNavigationProvider({ children }: { children: React.ReactNo
     const buildingsById = Object.fromEntries(buildings.map((b) => [b.id, b]));
 
     return nodes
-      .filter((n) => n.type !== 'corridor' && n.type !== 'junction' && n.type !== 'intersection')
+      .filter((n) => (n.type as string) !== 'corridor' && (n.type as string) !== 'junction' && (n.type as string) !== 'intersection')
       .map((n) => {
         const parsed = parseRoomName(n.id);
         const mapMeta = n.map ? mapsById[n.map] : null;

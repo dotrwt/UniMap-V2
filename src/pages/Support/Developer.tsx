@@ -1,0 +1,141 @@
+// src/pages/Support/Developer.tsx
+import BorderGlow from '@/components/ui/borderGlow/borderGlow';
+import mentorSarah from '@/assets/mentor_sarah.png';
+import mentorDavid from '@/assets/mentor_david.png';
+import { Code2, GraduationCap, Mail, BriefcaseBusiness } from 'lucide-react';
+
+export default function Developer() {
+  const mentors = [
+    {
+      name: 'Dr. Sarah Jenkins',
+      role: 'Project Guide & Advisor',
+      dept: 'Department of Computer Science',
+      image: mentorSarah,
+      email: 's.jenkins@unimap.edu',
+      linkedin: 'https://linkedin.com'
+    },
+    {
+      name: 'Prof. David Miller',
+      role: 'Technical Mentor',
+      dept: 'Department of Information Technology',
+      image: mentorDavid,
+      email: 'd.miller@unimap.edu',
+      linkedin: 'https://linkedin.com'
+    }
+  ];
+
+  return (
+    <section className="w-full mt-24 text-left select-none relative z-10">
+      {/* Divider */}
+      <div className="w-full border-t border-dashed border-white/10 mb-16" />
+
+      {/* Heading */}
+      <div className="text-center mb-16">
+        <div className="inline-flex items-center gap-2 bg-[#ff602e]/10 border border-[#ff602e]/20 px-4 py-1.5 rounded-full mb-4 shadow-sm">
+          <GraduationCap className="w-3.5 h-3.5 text-[#ff602e]" />
+          <span className="text-[10px] tracking-wide font-extrabold uppercase text-[#ff602e]">
+            Project Guidance & Development
+          </span>
+        </div>
+        <h2 className="text-[32px] sm:text-[38px] font-extrabold text-white tracking-tight">
+          Meet the Creators
+        </h2>
+        <p className="text-neutral-450 text-sm mt-3 max-w-xl mx-auto">
+          UniMap V2 was built under expert academic guidance to bring a premium, high-fidelity mapping experience to our campus.
+        </p>
+      </div>
+
+      {/* Development & Guidance Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto px-2">
+
+        {/* Developer Card (dotrwt) */}
+        <BorderGlow
+          className="h-[380px] relative overflow-hidden group cursor-pointer"
+          borderRadius={24}
+          backgroundColor="rgba(15, 15, 15, 0.75)"
+          glowColor="15 100 60"
+          glowIntensity={1.2}
+        >
+          <div className="p-7 flex flex-col justify-between h-full w-full">
+            <div>
+              <div className="w-12 h-12 rounded-2xl bg-[#ff602e]/10 text-[#ff602e] flex items-center justify-center mb-6">
+                <Code2 className="w-6 h-6" />
+              </div>
+              <span className="text-[10px] uppercase font-bold tracking-wider text-[#ff602e] block mb-2">
+                Lead Development
+              </span>
+              <h3 className="text-xl font-bold text-white mb-2">developed by dotrwt</h3>
+              <p className="text-xs text-neutral-400 leading-relaxed">
+                Responsible for full-stack architecture, Dijkstra multi-floor routing graphs, and vector mapping interface integration.
+              </p>
+            </div>
+
+            <div className="flex gap-3 mt-4">
+              <a
+                href="https://dotrwt.in"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-semibold text-white bg-white/5 border border-white/10 hover:bg-[#ff602e] hover:border-[#ff602e] px-4 py-2 rounded-xl transition-all duration-300"
+              >
+                Visit Website
+              </a>
+            </div>
+          </div>
+        </BorderGlow>
+
+        {/* Mentor Cards */}
+        {mentors.map((mentor, index) => (
+          <BorderGlow
+            key={index}
+            className="h-[380px] relative overflow-hidden group cursor-pointer"
+            borderRadius={24}
+            backgroundColor="rgba(15, 15, 15, 0.75)"
+            glowColor="15 100 60"
+            glowIntensity={1.2}
+          >
+            <div className="p-7 flex flex-col justify-between h-full w-full">
+              <div>
+                {/* Photo / Avatar Placeholder */}
+                <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-white/10 mb-6 group-hover:border-[#ff602e]/50 transition-colors duration-300">
+                  <img
+                    src={mentor.image}
+                    alt={mentor.name}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                </div>
+
+                <span className="text-[10px] uppercase font-bold tracking-wider text-[#ff602e] block mb-2">
+                  {mentor.role}
+                </span>
+                <h3 className="text-xl font-bold text-white mb-1">{mentor.name}</h3>
+                <p className="text-[11px] text-neutral-400 mb-2">{mentor.dept}</p>
+              </div>
+
+              {/* Contact Icons */}
+              <div className="flex items-center gap-3 mt-4 border-t border-white/5 pt-4">
+                <a
+                  href={`mailto:${mentor.email}`}
+                  className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-neutral-400 hover:text-[#ff602e] hover:bg-[#ff602e]/10 hover:border-[#ff602e]/20 transition-all duration-300"
+                  title="Email"
+                >
+                  <Mail className="w-4 h-4" />
+                </a>
+                <a
+                  href={mentor.linkedin}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-neutral-400 hover:text-[#ff602e] hover:bg-[#ff602e]/10 hover:border-[#ff602e]/20 transition-all duration-300"
+                  title="LinkedIn"
+                >
+                  <BriefcaseBusiness className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
+          </BorderGlow>
+        ))}
+
+      </div>
+    </section>
+  );
+}
