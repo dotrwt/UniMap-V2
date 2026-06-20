@@ -1,7 +1,8 @@
 // src/components/ui/Navbar.tsx
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Compass } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
+import unimapLogo from '@/assets/Logo_navbar.png';
 
 /** A sticky top navigation bar component providing page links and theme settings. */
 export default function Navbar() {
@@ -19,12 +20,11 @@ export default function Navbar() {
 
   if (isLanding || isSupport || is404) {
     return (
-      <nav className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between w-[92%] max-w-2xl px-5 py-2.5 rounded-full shadow-xl shadow-black/10 ${
-        isSupport ? 'bg-[#121212] border border-white/10' : 'glass-capsule'
-      }`}>
+      <nav className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between w-[92%] max-w-2xl px-5 py-2.5 rounded-full shadow-xl shadow-black/10 ${isSupport ? 'bg-[#121212] border border-white/10' : 'glass-capsule'
+        }`}>
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-[#ff602e] flex items-center justify-center text-white">
-            <Compass size={18} className="animate-spin-slow" />
+          <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center bg-[#ff602e]">
+            <img src={unimapLogo} alt="UniMap Logo" className="w-full h-full object-contain rounded-full p-0.1" />
           </div>
           <span className="text-sm font-bold text-white tracking-wide">UniMap</span>
         </div>
@@ -51,7 +51,9 @@ export default function Navbar() {
       <div className="flex items-center justify-between w-full">
         {/* Left: Logo */}
         <Link to="/" className="flex items-center gap-2 group">
-          <span className="w-2 h-2 rounded-full bg-[var(--accent)]" />
+          <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center bg-[#ff602e]">
+            <img src={unimapLogo} alt="UniMap Logo" className="w-full h-full object-contain rounded-full p-0.5" />
+          </div>
           <span className="text-[17px] font-medium text-[var(--text-primary)]">UniMap</span>
         </Link>
 

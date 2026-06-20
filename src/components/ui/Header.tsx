@@ -2,7 +2,7 @@
 import { motion } from 'motion/react';
 import { User } from 'lucide-react';
 import Button from './Button';
-import logoWebp from '@/assets/UNIMAP.webp';
+import logoWebp from '@/assets/UNIMAP_LOGO.webp';
 import clgLogo from '@/assets/clg_logo.webp';
 
 interface HeaderProps {

@@ -17,6 +17,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     const buildings = await db.collection('buildings').find({}, { projection: { _id: 0 } }).toArray();
     res.status(200).json({ data: buildings });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch buildings' });
+    console.error('[API /api/buildings] Error:', error);
+    res.status(500).json({
+      error: 'Failed to fetch buildings',
+      message: error instanceof Error ? error.message : String(error),
+    });
   }
 }

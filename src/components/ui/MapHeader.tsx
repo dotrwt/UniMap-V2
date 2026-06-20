@@ -2,7 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Menu } from 'lucide-react';
-import logoWebp from '@/assets/UNIMAP.webp';
+import logoWebp from '@/assets/UNIMAP_LOGO.webp';
 import clgLogo from '@/assets/clg_logo.webp';
 import { useCampusNavigation } from '@/hooks/useCampusNavigation';
 
