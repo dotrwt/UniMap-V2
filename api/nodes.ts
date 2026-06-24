@@ -1,6 +1,6 @@
 // api/nodes.ts
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { getDb } from './_db';
+import { getDb } from './_db.js';
 
 /** GET /api/nodes handler. Fetches all nodes from the MongoDB collection. */
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {

@@ -1,6 +1,6 @@
 // api/edges.ts
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { getDb } from './_db';
+import { getDb } from './_db.js';
 
 /** GET /api/edges handler. Fetches all edges from the MongoDB collection. */
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
