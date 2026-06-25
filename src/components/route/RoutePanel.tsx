@@ -1,17 +1,17 @@
 // src/components/route/RoutePanel.tsx
 import React, { memo, useRef } from 'react';
-import { 
-  Navigation, 
-  CornerUpRight, 
-  CornerUpLeft, 
-  ArrowUp, 
-  ArrowDown, 
-  MapPin, 
-  School, 
-  BookOpen, 
-  Flame, 
-  Compass, 
-  ArrowRight, 
+import {
+  Navigation,
+  CornerUpRight,
+  CornerUpLeft,
+  ArrowUp,
+  ArrowDown,
+  MapPin,
+  School,
+  BookOpen,
+  Flame,
+  Compass,
+  ArrowRight,
   ArrowLeft,
   X,
   Accessibility
@@ -20,7 +20,7 @@ import { useCampusNavigation } from '@/hooks/useCampusNavigation';
 import { parseRoomName } from '@/lib/roomParser';
 import { formatTime, formatDistance } from '@/lib/routeBuilder';
 
-export interface RoutePanelProps {}
+export interface RoutePanelProps { }
 
 const POPULAR_SPOTS = [
   { id: 'room_J101', name: 'Colloquium', map: 'Main_FF', x: 341.3025, y: 489.9517, building: 'Main', floor: 1, category: 'Academic', desc: 'Conference Hall', color: 'bg-yellow-500/10 text-yellow-600', icon: BookOpen },
@@ -29,7 +29,7 @@ const POPULAR_SPOTS = [
   { id: 'Jubilee_Gate', name: 'Jubilee Gate', map: 'Campus_Map', x: 749.9669, y: 127.5277, building: 'Campus', floor: 0, category: 'Gate', desc: 'Main Campus Entrance', color: 'bg-blue-500/10 text-blue-600', icon: Compass }
 ];
 
-export const RoutePanel = memo(function RoutePanel({}: RoutePanelProps) {
+export const RoutePanel = memo(function RoutePanel({ }: RoutePanelProps) {
   const {
     isMobile,
     isBottomSheetExpanded,
@@ -193,9 +193,8 @@ export const RoutePanel = memo(function RoutePanel({}: RoutePanelProps) {
   if (isMobile) {
     return (
       <div
-        className={`fixed bottom-0 left-0 right-0 bg-white rounded-t-[32px] shadow-[0_-10px_30px_rgba(0,0,0,0.08)] border-t border-black/5 z-30 transition-transform duration-300 ease-out flex flex-col ${
-          isBottomSheetExpanded ? 'translate-y-0 h-[80vh]' : 'translate-y-[calc(80vh-140px)] h-[80vh]'
-        }`}
+        className={`fixed bottom-0 left-0 right-0 bg-white rounded-t-[32px] shadow-[0_-10px_30px_rgba(0,0,0,0.08)] border-t border-black/5 z-30 transition-transform duration-300 ease-out flex flex-col ${isBottomSheetExpanded ? 'translate-y-0 h-[80vh]' : 'translate-y-[calc(80vh-140px)] h-[80vh]'
+          }`}
       >
         {/* Drag Handle */}
         <div
@@ -286,11 +285,10 @@ export const RoutePanel = memo(function RoutePanel({}: RoutePanelProps) {
                 <button
                   type="button"
                   onClick={() => setIsSimulating(!isSimulating)}
-                  className={`w-full h-10 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer border ${
-                    isSimulating 
+                  className={`w-full h-10 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer border ${isSimulating
                       ? 'bg-emerald-50 border-emerald-200 text-emerald-700 shadow-sm shadow-emerald-500/10'
                       : 'bg-white border-neutral-200 text-neutral-700 hover:bg-neutral-50'
-                  }`}
+                    }`}
                 >
                   <Compass className={`w-4 h-4 ${isSimulating ? 'animate-spin' : ''}`} style={{ animationDuration: '3s' }} />
                   <span>{isSimulating ? 'Simulating Walk (Click to Pause)' : 'Simulate Walk / Turn-by-Turn'}</span>
@@ -309,14 +307,12 @@ export const RoutePanel = memo(function RoutePanel({}: RoutePanelProps) {
                   <button
                     type="button"
                     onClick={() => setAccessibleOnly(!accessibleOnly)}
-                    className={`w-11 h-6 rounded-full transition-colors relative focus:outline-none cursor-pointer ${
-                      accessibleOnly ? 'bg-blue-600' : 'bg-gray-200'
-                    }`}
+                    className={`w-11 h-6 rounded-full transition-colors relative focus:outline-none cursor-pointer ${accessibleOnly ? 'bg-blue-600' : 'bg-gray-200'
+                      }`}
                   >
                     <span
-                      className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${
-                        accessibleOnly ? 'translate-x-5' : 'translate-x-0'
-                      }`}
+                      className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${accessibleOnly ? 'translate-x-5' : 'translate-x-0'
+                        }`}
                     />
                   </button>
                 </div>
@@ -332,11 +328,10 @@ export const RoutePanel = memo(function RoutePanel({}: RoutePanelProps) {
                       <button
                         key={idx}
                         onClick={() => setActiveStepIndex(idx)}
-                        className={`px-4 py-2 rounded-2xl border flex-shrink-0 flex flex-col transition-all cursor-pointer ${
-                          isActive
+                        className={`px-4 py-2 rounded-2xl border flex-shrink-0 flex flex-col transition-all cursor-pointer ${isActive
                             ? 'bg-orange-50 border-orange-200 text-[#ff602e]'
                             : 'bg-[#fcfaf6] border-black/5 text-gray-700 hover:bg-gray-55'
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center justify-between gap-4">
                           <span className="text-[9px] font-black uppercase tracking-wider">{title}</span>
@@ -365,9 +360,8 @@ export const RoutePanel = memo(function RoutePanel({}: RoutePanelProps) {
                       return (
                         <div key={idx} className="relative flex flex-col gap-1">
                           {/* Step Icon */}
-                          <div className={`absolute -left-[32px] top-0.5 w-8 h-8 rounded-full flex items-center justify-center z-10 ${
-                            isLast ? 'bg-red-50 border border-red-100 text-red-500' : 'bg-blue-50 border border-blue-100 text-blue-600'
-                          }`}>
+                          <div className={`absolute -left-[32px] top-0.5 w-8 h-8 rounded-full flex items-center justify-center z-10 ${isLast ? 'bg-red-50 border border-red-100 text-red-500' : 'bg-blue-50 border border-blue-100 text-blue-600'
+                            }`}>
                             {isLast ? <MapPin className="w-4 h-4" /> : renderDirectionIcon(step.direction)}
                           </div>
                           <div>
@@ -452,14 +446,12 @@ export const RoutePanel = memo(function RoutePanel({}: RoutePanelProps) {
                 <button
                   type="button"
                   onClick={() => setAccessibleOnly(!accessibleOnly)}
-                  className={`w-11 h-6 rounded-full transition-colors relative focus:outline-none cursor-pointer ${
-                    accessibleOnly ? 'bg-blue-600' : 'bg-gray-200'
-                  }`}
+                  className={`w-11 h-6 rounded-full transition-colors relative focus:outline-none cursor-pointer ${accessibleOnly ? 'bg-blue-600' : 'bg-gray-200'
+                    }`}
                 >
                   <span
-                    className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${
-                      accessibleOnly ? 'translate-x-5' : 'translate-x-0'
-                    }`}
+                    className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${accessibleOnly ? 'translate-x-5' : 'translate-x-0'
+                      }`}
                   />
                 </button>
               </div>
@@ -598,7 +590,7 @@ export const RoutePanel = memo(function RoutePanel({}: RoutePanelProps) {
           {/* Walk Simulation HUD for Desktop */}
           <div className="flex items-center gap-3 p-3 bg-emerald-50/50 border border-emerald-100/50 rounded-2xl shadow-sm">
             <div className="w-10 h-10 rounded-xl bg-white border border-emerald-100 flex items-center justify-center shrink-0" title="Compass Heading">
-              <Compass 
+              <Compass
                 className="w-5.5 h-5.5 text-emerald-600 transition-transform duration-300 ease-out"
                 style={{ transform: `rotate(${compassHeading}deg)` }}
               />
@@ -631,16 +623,14 @@ export const RoutePanel = memo(function RoutePanel({}: RoutePanelProps) {
                   <button
                     key={idx}
                     onClick={() => setActiveStepIndex(idx)}
-                    className={`w-full text-left relative flex items-start gap-3 p-2.5 rounded-xl transition-all border ${
-                      isActive
+                    className={`w-full text-left relative flex items-start gap-3 p-2.5 rounded-xl transition-all border ${isActive
                         ? 'bg-orange-50/75 border-orange-200/80 shadow-sm'
                         : 'bg-transparent border-transparent hover:bg-gray-55'
-                    }`}
+                      }`}
                   >
                     {/* Timeline circle marker */}
-                    <div className={`absolute -left-[13px] top-3.5 w-2.5 h-2.5 rounded-full border-2 ${
-                      isActive ? 'bg-[#ff602e] border-white ring-2 ring-orange-200' : 'bg-gray-300 border-white'
-                    }`} />
+                    <div className={`absolute -left-[13px] top-3.5 w-2.5 h-2.5 rounded-full border-2 ${isActive ? 'bg-[#ff602e] border-white ring-2 ring-orange-200' : 'bg-gray-300 border-white'
+                      }`} />
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
