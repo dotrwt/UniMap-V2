@@ -2,15 +2,15 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Search, 
-  Navigation, 
-  ArrowRight, 
-  Menu, 
-  ArrowUpDown, 
-  School, 
-  ArrowLeft, 
-  X, 
+import {
+  Search,
+  Navigation,
+  ArrowRight,
+  Menu,
+  ArrowUpDown,
+  School,
+  ArrowLeft,
+  X,
   MapPin,
   CornerUpLeft,
   CornerUpRight,
@@ -25,9 +25,9 @@ import SearchCurrentLocation from '@/components/ui/SearchCurrentLocation';
 import { useCampusNavigation } from '@/hooks/useCampusNavigation';
 import { buildGlobalGraph } from '@/lib/multiMapNavigation';
 
-export interface SearchBarProps {}
+export interface SearchBarProps { }
 
-export function SearchBar({}: SearchBarProps) {
+export function SearchBar({ }: SearchBarProps) {
   const navigate = useNavigate();
   const {
     isMobile,
@@ -96,7 +96,7 @@ export function SearchBar({}: SearchBarProps) {
 
           {/* Compass Icon Container */}
           <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center shrink-0 border border-white/10" title="Device Compass">
-            <Compass 
+            <Compass
               className="w-5.5 h-5.5 text-white transition-transform duration-300 ease-out"
               style={{ transform: `rotate(${compassHeading}deg)` }}
             />
@@ -379,14 +379,12 @@ export function SearchBar({}: SearchBarProps) {
           <button
             type="button"
             onClick={() => setAccessibleOnly(!accessibleOnly)}
-            className={`w-11 h-6 rounded-full transition-colors relative focus:outline-none cursor-pointer ${
-              accessibleOnly ? 'bg-blue-600' : 'bg-gray-200'
-            }`}
+            className={`w-11 h-6 rounded-full transition-colors relative focus:outline-none cursor-pointer ${accessibleOnly ? 'bg-blue-600' : 'bg-gray-200'
+              }`}
           >
             <span
-              className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${
-                accessibleOnly ? 'translate-x-5' : 'translate-x-0'
-              }`}
+              className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${accessibleOnly ? 'translate-x-5' : 'translate-x-0'
+                }`}
             />
           </button>
         </div>

@@ -21,7 +21,7 @@ export default function Hero() {
     const headingOpacity = useTransform(scrollY, [0, 220], [1, 0]);
     const headingScale = useTransform(scrollY, [0, 220], [1, 0.88]);
     const headingY = useTransform(scrollY, [0, 220], ["-50%", "-120%"]);
-    
+
     // Dynamic layer index logic: Text in front (z-30) at first, then goes back (z-10) as we scroll down
     const headingZIndex = useTransform(scrollY, (y) => (y > 150 ? 10 : 30));
     const phoneZIndex = useTransform(scrollY, (y) => (y > 150 ? 30 : 10));
@@ -52,7 +52,7 @@ export default function Hero() {
         <div className="relative w-full h-[240vh] bg-[#faf7f2] dark:bg-neutral-950">
             {/* Pinned viewport screen */}
             <section className="sticky top-0 h-screen w-full overflow-hidden blueprint-grid text-neutral-900 dark:text-white">
-                
+
                 {/* Decorative top background gradient mist */}
                 <div className="absolute top-0 inset-x-0 h-[300px] bg-gradient-to-b from-[#ff602e]/5 to-transparent pointer-events-none z-0" />
 
@@ -74,7 +74,7 @@ export default function Hero() {
 
                 {/* Absolutely positioned Device & Cards wrapper visually centered in the viewport */}
                 <div className="absolute top-[47%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[260px] sm:w-[280px] h-[480px] sm:h-[530px] z-20">
-                    
+
                     {/* Soft Background Glow under the phone */}
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] h-[320px] rounded-full bg-[#ff602e]/12 blur-[65px] pointer-events-none z-0" />
 
@@ -184,7 +184,7 @@ export default function Hero() {
                                             </pattern>
                                         </defs>
                                         <rect width="100%" height="100%" fill="url(#mapGridHero)" />
-                                        
+
                                         {/* Campus Pathways */}
                                         <path d="M 60 160 L 260 160 M 160 160 L 160 480 M 60 360 L 260 360" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" className="text-neutral-300/60 dark:text-neutral-800/60" />
                                         <path d="M 160 480 L 160 560" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeDasharray="4 4" className="text-neutral-300/60 dark:text-neutral-800/60" />
@@ -192,11 +192,11 @@ export default function Hero() {
                                         {/* Main Building Block */}
                                         <rect x="50" y="380" width="220" height="90" rx="12" fill="currentColor" stroke="currentColor" strokeWidth="1.5" className="fill-orange-500/5 stroke-orange-500/20 dark:fill-orange-500/10" />
                                         <text x="160" y="430" textAnchor="middle" className="fill-neutral-500 dark:fill-neutral-400 font-black text-[11px] uppercase tracking-wider">Main Building</text>
-                                        
+
                                         {/* AI Building Block */}
                                         <rect x="30" y="70" width="110" height="70" rx="12" fill="currentColor" stroke="currentColor" strokeWidth="1.5" className="fill-blue-500/5 stroke-blue-500/20 dark:fill-blue-500/10" />
                                         <text x="85" y="110" textAnchor="middle" className="fill-neutral-500 dark:fill-neutral-400 font-black text-[10px] uppercase tracking-wider">AI Building</text>
-                                        
+
                                         {/* Library Block */}
                                         <rect x="180" y="75" width="110" height="65" rx="12" fill="currentColor" stroke="currentColor" strokeWidth="1.5" className="fill-yellow-500/5 stroke-yellow-500/20 dark:fill-yellow-500/10" />
                                         <text x="235" y="110" textAnchor="middle" className="fill-neutral-500 dark:fill-neutral-400 font-black text-[10px] uppercase tracking-wider">Library</text>
@@ -210,7 +210,7 @@ export default function Hero() {
                                             <circle r="6" className="fill-emerald-500" />
                                             <circle r="12" fill="none" className="stroke-emerald-500/50" strokeWidth="2" />
                                         </g>
-                                        
+
                                         {/* Destination Marker (Conclave Centre) */}
                                         <g transform="translate(120, 440)">
                                             <circle r="6" className="fill-[#ff602e]" />
@@ -225,7 +225,7 @@ export default function Hero() {
                                         <div className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg text-neutral-600 dark:text-neutral-300">
                                             <Navigation size={14} className="rotate-45" />
                                         </div>
-                                        
+
                                         {/* Inputs Stack */}
                                         <div className="flex-1 flex flex-col gap-1 relative py-0.5">
                                             <div className="flex items-center bg-neutral-100 dark:bg-neutral-800 rounded-lg px-2.5 py-1 text-left">
@@ -241,7 +241,7 @@ export default function Hero() {
                                                     Conclave Centre
                                                 </span>
                                             </div>
-                                            
+
                                             <div className="absolute left-[13px] top-[14px] bottom-[14px] w-[1px] bg-neutral-300 dark:bg-neutral-700 pointer-events-none" />
                                         </div>
 
@@ -255,7 +255,7 @@ export default function Hero() {
                                 {/* Bottom Sheet Card */}
                                 <div className="bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md rounded-t-3xl shadow-[0_-8px_24px_rgba(0,0,0,0.06)] border-t border-black/5 dark:border-white/5 p-3 relative z-10 text-left mt-auto">
                                     <div className="w-8 h-0.5 bg-neutral-350 dark:bg-neutral-700 rounded-full mx-auto mb-2" />
-                                    
+
                                     <div className="flex items-center justify-between mb-3 px-1">
                                         <div>
                                             <div className="flex items-baseline gap-1">
@@ -306,7 +306,7 @@ export default function Hero() {
                                     <span className="text-[9px] font-bold">Accessible Entrance</span>
                                 </div>
                             </div>
-                            
+
                             <div className="mt-4 pt-3 border-t border-black/5 dark:border-white/5">
                                 <Link to="/map">
                                     <button className="w-full bg-[#ff602e] hover:bg-[#ff7b52] text-white font-extrabold text-[10px] py-2 rounded-lg transition-colors flex items-center justify-center gap-1">
