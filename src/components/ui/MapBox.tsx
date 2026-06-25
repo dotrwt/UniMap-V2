@@ -756,24 +756,24 @@ export default function MapBox({
           </div>
         )}
 
-        {/* Floating Map Controls overlay (Bottom Right) */}
+        {/* Floating Map Controls overlay */}
         {mapId && (
-          <div className="absolute bottom-6 right-6 z-20 flex items-end gap-3 pointer-events-none select-none">
+          <div className="absolute left-4 top-[40%] -translate-y-1/2 z-20 flex flex-col items-start gap-3 md:bottom-6 md:right-6 md:top-auto md:translate-y-0 md:left-auto md:flex-row md:items-end pointer-events-none select-none">
             {/* Building & Floor Selector */}
-            <div className="flex items-center bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-black/[0.04] p-1.5 gap-1.5 pointer-events-auto relative">
+            <div className="flex flex-col items-center bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-black/[0.04] p-1.5 gap-1.5 pointer-events-auto relative md:flex-row">
               {/* Building Dropdown Trigger */}
               <div className="relative">
                 <button
                   onClick={() => setIsBuildingDropdownOpen(!isBuildingDropdownOpen)}
-                  className="px-3.5 h-10 rounded-xl flex items-center gap-2 text-xs font-bold text-gray-700 hover:bg-orange-50 hover:text-[#ff602e] transition-all duration-200"
+                  className="w-10 md:w-auto px-0 md:px-3.5 h-10 rounded-xl flex items-center justify-center md:justify-start gap-2 text-xs font-bold text-gray-700 hover:bg-orange-50 hover:text-[#ff602e] transition-all duration-200"
                 >
-                  <Building2 className="w-4 h-4 text-[#ff602e]" />
-                  <span>{activeBuildingName}</span>
-                  <ChevronUp className="w-3.5 h-3.5 text-gray-400" />
+                  <Building2 className="w-4 h-4 text-[#ff602e] shrink-0" />
+                  <span className="truncate max-w-[85px] md:max-w-none hidden md:inline">{activeBuildingName}</span>
+                  <ChevronUp className="w-3.5 h-3.5 text-gray-400 shrink-0 hidden md:inline" />
                 </button>
 
                 {isBuildingDropdownOpen && (
-                  <div className="absolute bottom-full mb-2 right-0 w-40 bg-white rounded-xl shadow-xl border border-black/[0.04] p-1.5 flex flex-col gap-0.5 z-30">
+                  <div className="absolute bottom-full mb-2 left-0 md:right-0 md:left-auto w-40 bg-white rounded-xl shadow-xl border border-black/[0.04] p-1.5 flex flex-col gap-0.5 z-30">
                     <button
                       onClick={() => handleSelectBuilding('campus')}
                       className={`w-full text-left px-3 py-2 text-xs font-bold rounded-lg transition-colors ${
@@ -801,11 +801,11 @@ export default function MapBox({
                 )}
               </div>
 
-              {/* Floor Buttons (Horizontal) */}
+              {/* Floor Buttons (Horizontal / Vertical) */}
               {buildingFloors.length > 0 && (
                 <>
-                  <div className="h-6 w-[1px] bg-gray-200" />
-                  <div className="flex items-center gap-1">
+                  <div className="h-[1px] w-6 bg-gray-200 md:h-6 md:w-[1px]" />
+                  <div className="flex flex-col md:flex-row items-center gap-1">
                     {buildingFloors.map((f) => {
                       const isActive = f.map === mapId;
                       const label = f.floor === 0 ? 'G' : `F${f.floor}`;

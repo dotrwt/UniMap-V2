@@ -1,5 +1,5 @@
 // src/components/route/RoutePanel.tsx
-import { memo } from 'react';
+import React, { memo, useRef } from 'react';
 import { 
   Navigation, 
   CornerUpRight, 
@@ -44,10 +44,9 @@ export const RoutePanel = memo(function RoutePanel({}: RoutePanelProps) {
     setActiveStepIndex,
     handleDestinationSelect,
     handleDestinationClear,
-    handleCurrentLocationSelect,
     handleResetNavigation,
     handleStartNavigation,
-    campusLocations,
+    handleExitNavigation,
     nodesMap,
     edges,
     floors,
@@ -57,7 +56,8 @@ export const RoutePanel = memo(function RoutePanel({}: RoutePanelProps) {
     setAccessibleOnly,
     isSimulating,
     setIsSimulating,
-    compassHeading
+    compassHeading,
+    setActiveSearchField
   } = useCampusNavigation();
 
   const isRouteActive = destination && currentLocation;
@@ -171,6 +171,25 @@ export const RoutePanel = memo(function RoutePanel({}: RoutePanelProps) {
     // Do not automatically set currentLocation to Jubilee Gate so the user sees the Place card first!
   };
 
+  const touchStartY = useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartY.current === null) return;
+    const currentY = e.changedTouches[0].clientY;
+    const diffY = currentY - touchStartY.current;
+    const threshold = 40;
+    if (diffY < -threshold) {
+      setIsBottomSheetExpanded(true);
+    } else if (diffY > threshold) {
+      setIsBottomSheetExpanded(false);
+    }
+    touchStartY.current = null;
+  };
+
   if (isMobile) {
     return (
       <div
@@ -181,6 +200,8 @@ export const RoutePanel = memo(function RoutePanel({}: RoutePanelProps) {
         {/* Drag Handle */}
         <div
           onClick={() => setIsBottomSheetExpanded(!isBottomSheetExpanded)}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
           className="w-full py-3 flex justify-center cursor-pointer select-none shrink-0"
         >
           <div className="w-10 h-1 bg-gray-300 rounded-full" />
@@ -252,6 +273,12 @@ export const RoutePanel = memo(function RoutePanel({}: RoutePanelProps) {
                     {accessibleOnly ? 'Step-free route via lifts & ramps' : 'Fastest route via indoor paths'}
                   </p>
                 </div>
+                <button
+                  onClick={handleExitNavigation}
+                  className="text-xs font-bold text-red-500 hover:text-red-600 bg-red-50 hover:bg-red-100/60 px-3 py-1.5 rounded-xl transition-all cursor-pointer border border-red-200/50 shadow-sm shrink-0"
+                >
+                  Exit Navigation
+                </button>
               </div>
 
               {/* Simulation walk control & Step-Free toggle inside active navigation */}
@@ -503,18 +530,7 @@ export const RoutePanel = memo(function RoutePanel({}: RoutePanelProps) {
             <div className="pt-3 border-t border-gray-100 flex items-center gap-3 shrink-0">
               <button
                 onClick={() => {
-                  const defaultStart = campusLocations.find(l => l.id === 'Jubilee_Gate') || {
-                    id: 'room_J001',
-                    name: 'Conclave',
-                    searchName: 'conclave',
-                    map: 'Main_GF',
-                    building: 'Main',
-                    floor: 0,
-                    category: 'Academic',
-                    x: 406.8033,
-                    y: 487.5583,
-                  };
-                  handleCurrentLocationSelect(defaultStart);
+                  setActiveSearchField('start');
                 }}
                 className="flex-1 h-12 rounded-2xl bg-[#ff602e] hover:bg-[#ff7b52] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 active:scale-[0.98] transition-all cursor-pointer"
               >

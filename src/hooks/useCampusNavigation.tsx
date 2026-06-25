@@ -49,6 +49,7 @@ export interface CampusNavigationContextType {
   handleResetNavigation: () => void;
   handleSwapLocations: () => void;
   handleStartNavigation: () => Promise<void>;
+  handleExitNavigation: () => void;
   setActiveStepIndex: React.Dispatch<React.SetStateAction<number>>;
   setSelectedMapId: React.Dispatch<React.SetStateAction<string | null>>;
   campusLocations: any[];
@@ -251,12 +252,16 @@ export function CampusNavigationProvider({ children }: { children: React.ReactNo
 
   const handleCurrentLocationClear = useCallback(() => {
     setCurrentLocation(null);
-    setDestination(null);
     setSelectedMapId(null);
     if (isNavigating || isComputingRoute) {
-      handleResetNavigation();
+      setIsNavigating(false);
+      setIsComputingRoute(false);
+      setPathPoints('');
+      setNavigationDirections([]);
+      setNavigationSteps([]);
+      setActiveStepIndex(0);
     }
-  }, [isNavigating, isComputingRoute, handleResetNavigation]);
+  }, [isNavigating, isComputingRoute]);
 
   const handleSwapLocations = useCallback(() => {
     const temp = currentLocation;
@@ -524,6 +529,15 @@ export function CampusNavigationProvider({ children }: { children: React.ReactNo
     setAutoFitNonce((n) => n + 1);
   }, [destination, currentLocation]);
 
+  const handleExitNavigation = useCallback(() => {
+    setIsNavigating(false);
+    setIsSimulating(false);
+    setSimulatedNodeId(null);
+    setActiveStepIndex(0);
+    setAutoFitNonce((n) => n + 1);
+    setSelectedMapId(null);
+  }, []);
+
   const filteredSuggestions = useMemo(() => {
     const q = mobileSearchQuery.trim().toLowerCase();
     if (!q) return campusLocations.slice(0, 10);
@@ -566,6 +580,7 @@ export function CampusNavigationProvider({ children }: { children: React.ReactNo
     handleResetNavigation,
     handleSwapLocations,
     handleStartNavigation,
+    handleExitNavigation,
     setActiveStepIndex,
     setSelectedMapId,
     campusLocations,
@@ -608,6 +623,7 @@ export function CampusNavigationProvider({ children }: { children: React.ReactNo
     handleResetNavigation,
     handleSwapLocations,
     handleStartNavigation,
+    handleExitNavigation,
     campusLocations,
     nodesMap,
     dynamicDistance,

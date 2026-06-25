@@ -46,9 +46,9 @@ export function SearchBar({}: SearchBarProps) {
     handleDestinationClear,
     handleCurrentLocationSelect,
     handleCurrentLocationClear,
-    handleResetNavigation,
     handleSwapLocations,
     handleStartNavigation,
+    handleExitNavigation,
     campusLocations,
     edges,
     navigationSteps,
@@ -79,7 +79,7 @@ export function SearchBar({}: SearchBarProps) {
   };
 
   if (isMobile) {
-    const isRouteActive = destination && currentLocation;
+    const showDualInput = !!destination;
 
     if (isNavigating) {
       const activeStep = navigationSteps[activeStepIndex] || null;
@@ -120,7 +120,7 @@ export function SearchBar({}: SearchBarProps) {
 
           {/* Exit Button */}
           <button
-            onClick={handleResetNavigation}
+            onClick={handleExitNavigation}
             className="p-2 hover:bg-white/10 rounded-xl text-emerald-50 transition-colors cursor-pointer shrink-0"
             title="Exit Navigation"
           >
@@ -134,8 +134,8 @@ export function SearchBar({}: SearchBarProps) {
       <>
         {/* Floating Search Bar / Capsule (Top) */}
         <div className="absolute top-4 left-4 right-4 z-20 flex flex-col gap-2">
-          {!isRouteActive ? (
-            /* Single Search Bar (When no route is active) */
+          {!showDualInput ? (
+            /* Single Search Bar (When no destination is active) */
             <div className="bg-white rounded-2xl shadow-lg border border-black/5 p-3.5 flex items-center gap-3">
               <div className="relative">
                 <button
@@ -181,42 +181,24 @@ export function SearchBar({}: SearchBarProps) {
                 onClick={() => setActiveSearchField('dest')}
                 className="flex-1 flex items-center gap-2 cursor-pointer min-w-0"
               >
-                {destination ? (
-                  <>
-                    <MapPin className="w-4 h-4 text-red-500 shrink-0" />
-                    <span className="text-xs font-bold text-gray-900 truncate">
-                      {destination.name}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <Search className="w-4 h-4 text-gray-400 shrink-0" />
-                    <span className="text-xs font-semibold text-gray-400 truncate">
-                      Search destination room, lab, washroom...
-                    </span>
-                  </>
-                )}
+                <Search className="w-4 h-4 text-gray-400 shrink-0" />
+                <span className="text-xs font-semibold text-gray-400 truncate">
+                  Search destination room, lab, washroom...
+                </span>
               </div>
-
-              {destination && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDestinationClear();
-                  }}
-                  className="p-1 hover:bg-gray-100 rounded-lg text-gray-400 cursor-pointer shrink-0"
-                  aria-label="Clear destination"
-                >
-                  <X className="w-4.5 h-4.5" />
-                </button>
-              )}
             </div>
           ) : (
-            /* Dual Stacked Capsule (When route is active) */
+            /* Dual Stacked Capsule (When destination is active) */
             <div className="bg-white rounded-2xl shadow-lg border border-black/5 p-3 flex items-center gap-3">
               <div className="relative shrink-0">
                 <button
-                  onClick={handleCurrentLocationClear}
+                  onClick={() => {
+                    if (currentLocation) {
+                      handleCurrentLocationClear();
+                    } else {
+                      handleDestinationClear();
+                    }
+                  }}
                   className="p-1.5 hover:bg-gray-100 rounded-xl text-gray-700 transition-colors cursor-pointer"
                   aria-label="Back"
                 >
@@ -247,9 +229,6 @@ export function SearchBar({}: SearchBarProps) {
                     {destination?.name || 'Choose destination...'}
                   </span>
                 </div>
-
-                {/* Connector Line */}
-                <div className="absolute left-[13px] top-[22px] bottom-[22px] w-[2px] bg-gray-300 pointer-events-none" />
               </div>
 
               {/* Swap Button */}
