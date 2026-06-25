@@ -763,24 +763,8 @@ export const RoutePanel = memo(function RoutePanel({ }: RoutePanelProps) {
                 </span>
               </div>
 
-              <div className="space-y-3.5 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
-                {navigationDirections.map((step, index) => (
-                  <div key={index} className="flex items-start gap-3">
-                    <div className="flex items-center justify-center w-7 h-7 bg-white border border-black/5 rounded-lg shrink-0 text-[#ff602e]">
-                      {renderDirectionIcon(step.direction)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-gray-800 leading-snug">{step.instruction}</p>
-                      {step.distance && (
-                        <p className="text-[10px] text-gray-400 font-bold mt-0.5">{step.distance}</p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
               {/* Prev / Next buttons */}
-              <div className="flex items-center gap-2 pt-1.5">
+              <div className="flex items-center gap-2 pt-0.5">
                 <button
                   disabled={activeStepIndex === 0}
                   onClick={() => setActiveStepIndex(p => Math.max(0, p - 1))}
@@ -795,6 +779,22 @@ export const RoutePanel = memo(function RoutePanel({ }: RoutePanelProps) {
                 >
                   Next Step
                 </button>
+              </div>
+
+              <div className="space-y-3.5 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
+                {navigationDirections.map((step, index) => (
+                  <div key={index} className="flex items-start gap-3">
+                    <div className="flex items-center justify-center w-7 h-7 bg-white border border-black/5 rounded-lg shrink-0 text-[#ff602e]">
+                      {renderDirectionIcon(step.direction)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-gray-800 leading-snug">{step.instruction}</p>
+                      {step.distance && (
+                        <p className="text-[10px] text-gray-400 font-bold mt-0.5">{step.distance}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}

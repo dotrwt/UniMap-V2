@@ -450,7 +450,7 @@ export function CampusNavigationProvider({ children }: { children: React.ReactNo
           const nextNode = nodesMap[fullRoutePath[nextIdx + 1]];
           if (currNode && nextNode) {
             const dx = nextNode.x - currNode.x;
-            const dy = nextNode.y - currNode.y;
+            const dy = currNode.y - nextNode.y; // Invert SVG y-axis to match cartesian y-up
             const angleRad = Math.atan2(dx, dy);
             const angleDeg = ((angleRad * 180) / Math.PI + 360) % 360;
             setCompassHeading(Math.round(angleDeg));
