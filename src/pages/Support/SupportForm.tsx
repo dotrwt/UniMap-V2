@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { sendEmail } from '@/lib/emailjs';
+import { useSearchParams } from 'react-router-dom';
 
 /**
  * SupportForm component.
@@ -8,9 +9,41 @@ import { sendEmail } from '@/lib/emailjs';
  * as a premium dark-themed card container matching the design layout.
  */
 export default function SupportForm() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [searchParams] = useSearchParams();
+
+  // Retrieve initial name and email from URL search parameters or fallback to localStorage
+  const getInitialName = () => {
+    return (
+      searchParams.get('name') ||
+      searchParams.get('userName') ||
+      localStorage.getItem('name') ||
+      localStorage.getItem('userName') ||
+      ''
+    );
+  };
+
+  const getInitialEmail = () => {
+    return (
+      searchParams.get('email') ||
+      searchParams.get('userEmail') ||
+      localStorage.getItem('email') ||
+      localStorage.getItem('userEmail') ||
+      ''
+    );
+  };
+
+  const [name, setName] = useState(getInitialName);
+  const [email, setEmail] = useState(getInitialEmail);
   const [useCase, setUseCase] = useState('');
+
+  // Sync state if URL query parameters change
+  useEffect(() => {
+    const urlName = searchParams.get('name') || searchParams.get('userName');
+    const urlEmail = searchParams.get('email') || searchParams.get('userEmail');
+    if (urlName) setName(urlName);
+    if (urlEmail) setEmail(urlEmail);
+  }, [searchParams]);
+
   const [status, setStatus] = useState<{
     loading: boolean;
     success: boolean;
@@ -34,11 +67,18 @@ export default function SupportForm() {
       from_name: name,
       from_email: email,
       reply_to: email,
+      name: name,
+      email: email,
       message: useCase,
     });
 
     if (result.success) {
       setStatus({ loading: false, success: true, error: null });
+      
+      // Save name and email to localStorage for future support requests
+      localStorage.setItem('name', name);
+      localStorage.setItem('email', email);
+
       setName('');
       setEmail('');
       setUseCase('');
