@@ -4,12 +4,15 @@ import Hero from './Hero';
 import Features from './Features';
 import About from './About';
 import { Navbar, Footer } from '@/components/ui';
+import { usePageMeta } from '@/hooks/usePageMeta';
 
 /** 
  * Redesigned Landing Page component for UniMap.
  * Renders Hero sections, feature grids, and project details matching reference visual styles.
  */
 export default function LandingPage() {
+  usePageMeta('Campus Navigation', 'Find any room...');
+
   return (
     <div className="w-full flex flex-col min-h-screen bg-[#fcfaf6] dark:bg-[#050505]">
       {/* Top Navbar */}
