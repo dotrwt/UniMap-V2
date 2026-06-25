@@ -22,12 +22,12 @@ export default function Navbar() {
     return (
       <nav className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between w-[92%] max-w-2xl px-5 py-2.5 rounded-full shadow-xl shadow-black/10 ${isSupport ? 'bg-[#121212] border border-white/10' : 'glass-capsule'
         }`}>
-        <div className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2 cursor-pointer hover:opacity-85 transition-opacity group">
           <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center bg-[#ff602e]">
             <img src={unimapLogo} alt="UniMap Logo" className="w-full h-full object-contain rounded-full p-0.1" />
           </div>
           <span className="text-sm font-bold text-white tracking-wide">UniMap</span>
-        </div>
+        </Link>
 
         <div className="flex items-center gap-6 text-xs font-semibold text-neutral-400">
           <Link to="/" className={`hover:text-white transition-colors ${isLanding ? 'text-white' : ''}`}>Home</Link>

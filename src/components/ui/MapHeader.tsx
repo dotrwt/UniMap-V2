@@ -16,7 +16,11 @@ export function MapHeader({}: MapHeaderProps) {
 
   return (
     <div className="absolute top-6 right-6 z-10 flex items-center gap-4 bg-white/95 backdrop-blur-md px-5 py-2.5 rounded-full shadow-lg border border-black/[0.04]">
-      <div className="flex items-center gap-2">
+      <div
+        onClick={() => navigate('/')}
+        className="flex items-center gap-2 cursor-pointer hover:opacity-85 transition-opacity"
+        title="Go to Home"
+      >
         <img src={clgLogo} alt="College Logo" className="h-8 w-auto" decoding="async" />
         <span className="text-gray-300 text-sm">×</span>
         <img src={logoWebp} alt="UniMap Logo" className="h-8 w-auto" decoding="async" />
