@@ -193,6 +193,7 @@ export const RoutePanel = memo(function RoutePanel({ }: RoutePanelProps) {
   if (isMobile) {
     return (
       <div
+        data-lenis-prevent
         className={`fixed bottom-0 left-0 right-0 bg-white rounded-t-[32px] shadow-[0_-10px_30px_rgba(0,0,0,0.08)] border-t border-black/5 z-30 transition-transform duration-300 ease-out flex flex-col ${isBottomSheetExpanded ? 'translate-y-0 h-[80vh]' : 'translate-y-[calc(80vh-140px)] h-[80vh]'
           }`}
       >
@@ -210,7 +211,10 @@ export const RoutePanel = memo(function RoutePanel({ }: RoutePanelProps) {
           // Navigation Mode (Active)
           !isBottomSheetExpanded ? (
             // Collapsed Active Navigation Dashboard
-            <div className="flex items-center justify-between px-6 py-2.5 w-full shrink-0">
+            <div
+              onClick={() => setIsBottomSheetExpanded(true)}
+              className="flex items-center justify-between px-6 py-2.5 w-full shrink-0 cursor-pointer"
+            >
               <div className="flex flex-col min-w-0">
                 <div className="flex items-baseline gap-1">
                   <span className="text-lg font-black text-emerald-600">
@@ -230,7 +234,10 @@ export const RoutePanel = memo(function RoutePanel({ }: RoutePanelProps) {
               <div className="flex items-center gap-2">
                 <button
                   disabled={activeStepIndex === 0}
-                  onClick={() => setActiveStepIndex((p) => Math.max(0, p - 1))}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveStepIndex((p) => Math.max(0, p - 1));
+                  }}
                   className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center transition-all disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
                   title="Previous Step"
                 >
@@ -238,7 +245,8 @@ export const RoutePanel = memo(function RoutePanel({ }: RoutePanelProps) {
                 </button>
 
                 <button
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     if (activeStepIndex === navigationSteps.length - 1) {
                       handleResetNavigation();
                     } else {
@@ -411,130 +419,222 @@ export const RoutePanel = memo(function RoutePanel({ }: RoutePanelProps) {
           )
         ) : isRouteActive ? (
           // Route Planning / Preview Mode
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Route Summary */}
-            <div className="px-6 pb-4 flex items-center justify-between shrink-0">
-              <div className="flex-1">
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-xl font-black text-gray-900">
+          !isBottomSheetExpanded ? (
+            // Collapsed Route Planning Summary Card
+            <div
+              onClick={() => setIsBottomSheetExpanded(true)}
+              className="flex items-center justify-between px-6 py-3 w-full shrink-0 cursor-pointer"
+            >
+              <div className="flex flex-col min-w-0">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-lg font-black text-gray-900">
                     {isComputingRoute ? 'Computing...' : formatTime(routeDuration)}
                   </span>
                   {!isComputingRoute && (
-                    <span className="text-sm font-bold text-gray-400">
+                    <span className="text-xs text-gray-400 font-bold">
                       ({formatDistance(routeDistance)})
                     </span>
                   )}
                 </div>
-                <p className="text-xs font-bold text-emerald-600 mt-0.5">
-                  {accessibleOnly ? 'Step-free route via lifts & ramps' : 'Fastest route via indoor paths'}
-                </p>
+                <span className="text-[10px] text-emerald-600 font-semibold block mt-0.5 truncate">
+                  {accessibleOnly ? 'Step-free route' : 'Fastest route'}
+                </span>
               </div>
-            </div>
 
-            {/* Step-Free Toggle Option */}
-            <div className="px-6 pb-4 shrink-0">
-              <div className="flex items-center justify-between bg-[#fcfaf6] border border-black/[0.03] rounded-2xl p-4 shadow-sm select-none">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                    <Accessibility className="w-4.5 h-4.5" />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-xs font-black text-gray-800">Step-Free Routes Only</span>
-                    <span className="text-[10px] text-gray-400 font-bold">Avoid stairs & use lifts</span>
-                  </div>
-                </div>
+              <div className="flex items-center gap-2">
                 <button
-                  type="button"
-                  onClick={() => setAccessibleOnly(!accessibleOnly)}
-                  className={`w-11 h-6 rounded-full transition-colors relative focus:outline-none cursor-pointer ${accessibleOnly ? 'bg-blue-600' : 'bg-gray-200'
-                    }`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleStartNavigation();
+                  }}
+                  className="h-10 px-4 rounded-xl bg-[#2f55d4] hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-md shadow-blue-500/10 active:scale-95 cursor-pointer"
                 >
-                  <span
-                    className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${accessibleOnly ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                  />
+                  <Navigation className="w-3.5 h-3.5 fill-white" />
+                  <span>Start</span>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleResetNavigation();
+                  }}
+                  className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 text-red-500 flex items-center justify-center transition-colors active:scale-95 cursor-pointer"
+                  title="Cancel Route"
+                >
+                  <X className="w-4.5 h-4.5" />
                 </button>
               </div>
             </div>
+          ) : (
+            // Expanded Route Planning Mode
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {/* Route Summary */}
+              <div className="px-6 pb-4 flex items-center justify-between shrink-0">
+                <div className="flex-1">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-xl font-black text-gray-900">
+                      {isComputingRoute ? 'Computing...' : formatTime(routeDuration)}
+                    </span>
+                    {!isComputingRoute && (
+                      <span className="text-sm font-bold text-gray-400">
+                        ({formatDistance(routeDistance)})
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs font-bold text-emerald-600 mt-0.5">
+                    {accessibleOnly ? 'Step-free route via lifts & ramps' : 'Fastest route via indoor paths'}
+                  </p>
+                </div>
+              </div>
 
-            {/* Action Buttons Footer */}
-            <div className="p-4 bg-white border-t border-gray-100 flex items-center gap-3 mt-auto shrink-0">
-              <button
-                onClick={handleStartNavigation}
-                className="flex-1 h-12 rounded-2xl bg-[#2f55d4] hover:bg-blue-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all cursor-pointer"
-              >
-                <Navigation className="w-4 h-4 fill-white" />
-                Start Navigation
-              </button>
-              <button
-                onClick={handleResetNavigation}
-                className="w-12 h-12 rounded-2xl bg-gray-100 hover:bg-gray-200 text-red-500 flex items-center justify-center transition-colors active:scale-95 cursor-pointer"
-                title="Cancel Route"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              {/* Step-Free Toggle Option */}
+              <div className="px-6 pb-4 shrink-0">
+                <div className="flex items-center justify-between bg-[#fcfaf6] border border-black/[0.03] rounded-2xl p-4 shadow-sm select-none">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                      <Accessibility className="w-4.5 h-4.5" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-black text-gray-800">Step-Free Routes Only</span>
+                      <span className="text-[10px] text-gray-400 font-bold">Avoid stairs & use lifts</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setAccessibleOnly(!accessibleOnly)}
+                    className={`w-11 h-6 rounded-full transition-colors relative focus:outline-none cursor-pointer ${accessibleOnly ? 'bg-blue-600' : 'bg-gray-200'
+                      }`}
+                  >
+                    <span
+                      className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${accessibleOnly ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                    />
+                  </button>
+                </div>
+              </div>
+
+              {/* Action Buttons Footer */}
+              <div className="p-4 bg-white border-t border-gray-100 flex items-center gap-3 mt-auto shrink-0">
+                <button
+                  onClick={handleStartNavigation}
+                  className="flex-1 h-12 rounded-2xl bg-[#2f55d4] hover:bg-blue-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all cursor-pointer"
+                >
+                  <Navigation className="w-4 h-4 fill-white" />
+                  Start Navigation
+                </button>
+                <button
+                  onClick={handleResetNavigation}
+                  className="w-12 h-12 rounded-2xl bg-gray-100 hover:bg-gray-200 text-red-500 flex items-center justify-center transition-colors active:scale-95 cursor-pointer"
+                  title="Cancel Route"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
-          </div>
+          )
         ) : destination ? (
-          // Place Details Card (Destination only, no start)
-          <div className="flex-1 flex flex-col overflow-hidden px-6 pb-4">
-            <div className="flex items-start justify-between pb-3 border-b border-gray-100 shrink-0">
-              <div className="min-w-0">
-                <span className="text-[9px] font-black uppercase tracking-wider text-[#ff602e] bg-orange-50 px-2.5 py-1 rounded-md">
+          !isBottomSheetExpanded ? (
+            // Collapsed Place Details Card
+            <div
+              onClick={() => setIsBottomSheetExpanded(true)}
+              className="flex items-center justify-between px-6 py-3 w-full shrink-0 cursor-pointer"
+            >
+              <div className="min-w-0 flex-1 mr-2">
+                <span className="text-[9px] font-black uppercase tracking-wider text-[#ff602e] bg-orange-50 px-2 py-0.5 rounded-md">
                   {destination.category}
                 </span>
-                <h3 className="text-lg font-black text-gray-900 mt-2 truncate">{destination.name}</h3>
-                <p className="text-xs font-bold text-gray-400 mt-1">
+                <h3 className="text-sm font-black text-gray-900 mt-1 truncate">{destination.name}</h3>
+                <p className="text-[10px] font-bold text-gray-400 mt-0.5">
                   {destination.building} • Floor {destination.floor === 0 ? 'G' : `F${destination.floor}`}
                 </p>
               </div>
-              <button
-                onClick={handleDestinationClear}
-                className="p-1.5 hover:bg-gray-100 rounded-xl text-gray-400 cursor-pointer shrink-0"
-                aria-label="Clear destination"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
-            <div className="flex-1 overflow-y-auto py-4 space-y-3">
-              <div className="bg-[#fcfaf6] border border-black/[0.03] rounded-2xl p-4 flex items-start gap-3.5">
-                <School className="w-5 h-5 text-[#ff602e] shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="text-xs font-bold text-gray-900">Location Details</h4>
-                  <p className="text-[10px] text-gray-500 mt-1 leading-relaxed">
-                    This {destination.category.toLowerCase()} is located in the {destination.building} on Floor {destination.floor === 0 ? 'Ground' : destination.floor}.
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveSearchField('start');
+                  }}
+                  className="h-10 px-4 rounded-xl bg-[#ff602e] hover:bg-[#ff7b52] text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-md shadow-orange-500/10 active:scale-95 cursor-pointer"
+                >
+                  <Navigation className="w-3.5 h-3.5 fill-white" />
+                  <span>Directions</span>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDestinationClear();
+                  }}
+                  className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center transition-colors active:scale-95 cursor-pointer"
+                  aria-label="Clear destination"
+                >
+                  <X className="w-4.5 h-4.5" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            // Expanded Place Details Card
+            <div className="flex-1 flex flex-col overflow-hidden px-6 pb-4">
+              <div className="flex items-start justify-between pb-3 border-b border-gray-100 shrink-0">
+                <div className="min-w-0">
+                  <span className="text-[9px] font-black uppercase tracking-wider text-[#ff602e] bg-orange-50 px-2.5 py-1 rounded-md">
+                    {destination.category}
+                  </span>
+                  <h3 className="text-lg font-black text-gray-900 mt-2 truncate">{destination.name}</h3>
+                  <p className="text-xs font-bold text-gray-400 mt-1">
+                    {destination.building} • Floor {destination.floor === 0 ? 'G' : `F${destination.floor}`}
                   </p>
+                </div>
+                <button
+                  onClick={handleDestinationClear}
+                  className="p-1.5 hover:bg-gray-100 rounded-xl text-gray-400 cursor-pointer shrink-0"
+                  aria-label="Clear destination"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto py-4 space-y-3">
+                <div className="bg-[#fcfaf6] border border-black/[0.03] rounded-2xl p-4 flex items-start gap-3.5">
+                  <School className="w-5 h-5 text-[#ff602e] shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="text-xs font-bold text-gray-900">Location Details</h4>
+                    <p className="text-[10px] text-gray-500 mt-1 leading-relaxed">
+                      This {destination.category.toLowerCase()} is located in the {destination.building} on Floor {destination.floor === 0 ? 'Ground' : destination.floor}.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-[#fcfaf6] border border-black/[0.03] rounded-2xl p-4 flex items-start gap-3.5">
+                  <Compass className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="text-xs font-bold text-gray-900">Entrance Route</h4>
+                    <p className="text-[10px] text-gray-500 mt-1 leading-relaxed">
+                      Accessible via campus pathways and stairs/lift connections.
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              <div className="bg-[#fcfaf6] border border-black/[0.03] rounded-2xl p-4 flex items-start gap-3.5">
-                <Compass className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="text-xs font-bold text-gray-900">Entrance Route</h4>
-                  <p className="text-[10px] text-gray-500 mt-1 leading-relaxed">
-                    Accessible via campus pathways and stairs/lift connections.
-                  </p>
-                </div>
+              <div className="pt-3 border-t border-gray-100 flex items-center gap-3 shrink-0">
+                <button
+                  onClick={() => {
+                    setActiveSearchField('start');
+                  }}
+                  className="flex-1 h-12 rounded-2xl bg-[#ff602e] hover:bg-[#ff7b52] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 active:scale-[0.98] transition-all cursor-pointer"
+                >
+                  <Navigation className="w-4 h-4 fill-white" />
+                  Directions
+                </button>
               </div>
             </div>
-
-            <div className="pt-3 border-t border-gray-100 flex items-center gap-3 shrink-0">
-              <button
-                onClick={() => {
-                  setActiveSearchField('start');
-                }}
-                className="flex-1 h-12 rounded-2xl bg-[#ff602e] hover:bg-[#ff7b52] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 active:scale-[0.98] transition-all cursor-pointer"
-              >
-                <Navigation className="w-4 h-4 fill-white" />
-                Directions
-              </button>
-            </div>
-          </div>
+          )
         ) : (
           // Empty State (popular spots list)
           <div className="flex-1 flex flex-col overflow-hidden px-6">
-            <div className="pb-3 select-none shrink-0">
+            <div
+              onClick={() => setIsBottomSheetExpanded(true)}
+              className="pb-3 select-none shrink-0 cursor-pointer"
+            >
               <h3 className="text-base font-black text-gray-900 uppercase tracking-wider">Explore Campus</h3>
               <p className="text-[11px] font-bold text-gray-400 mt-0.5">Select a destination to plan your route</p>
             </div>

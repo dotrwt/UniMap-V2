@@ -77,7 +77,7 @@ export function CampusNavigationProvider({ children }: { children: React.ReactNo
   const [loading, setLoading] = useState(true);
 
   // Mobile UI States
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
   const [isBottomSheetExpanded, setIsBottomSheetExpanded] = useState(false);
   const [activeSearchField, setActiveSearchField] = useState<'start' | 'dest' | null>(null);
   const [mobileSearchQuery, setMobileSearchQuery] = useState('');

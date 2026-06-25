@@ -283,7 +283,7 @@ export function SearchBar({ }: SearchBarProps) {
               </div>
 
               {/* Suggestions List */}
-              <div className="flex-1 overflow-y-auto space-y-2">
+              <div className="flex-1 overflow-y-auto space-y-2" data-lenis-prevent>
                 {filteredSuggestions.length > 0 ? (
                   filteredSuggestions.map((location) => {
                     return (

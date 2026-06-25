@@ -1,14 +1,14 @@
 import React from 'react';
 import { useCampusNavigation } from '@/hooks/useCampusNavigation';
-import { SearchBar } from '@/components/search/SearchBar';
-import { MapCanvas } from '@/components/map/MapCanvas';
-import { MapHeader } from '@/components/ui/MapHeader';
 
 export interface MapLayoutProps {
-  children: React.ReactNode;
+  header?: React.ReactNode;
+  searchBar?: React.ReactNode;
+  mapCanvas?: React.ReactNode;
+  routePanel?: React.ReactNode;
 }
 
-export function MapLayout({ children }: MapLayoutProps) {
+export function MapLayout({ header, searchBar, mapCanvas, routePanel }: MapLayoutProps) {
   const { isMobile, loading } = useCampusNavigation();
 
   if (loading) {
@@ -21,12 +21,6 @@ export function MapLayout({ children }: MapLayoutProps) {
       </div>
     );
   }
-
-  const childrenArray = React.Children.toArray(children);
-  const header = childrenArray.find(c => React.isValidElement(c) && (c.type === MapHeader || (c.type as any)?.name === 'MapHeader'));
-  const searchBar = childrenArray.find(c => React.isValidElement(c) && (c.type === SearchBar || (c.type as any)?.name === 'SearchBar'));
-  const mapCanvas = childrenArray.find(c => React.isValidElement(c) && (c.type === MapCanvas || (c.type as any)?.name === 'MapCanvas'));
-  const routePanel = childrenArray.find(c => React.isValidElement(c) && ((c.type as any)?.name === 'RoutePanel'));
 
   if (isMobile) {
     return (
@@ -58,7 +52,7 @@ export function MapLayout({ children }: MapLayoutProps) {
         </div>
 
         {/* Scrollable Contents */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-5 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-5 space-y-5 custom-scrollbar" data-lenis-prevent>
           {searchBar}
           {routePanel}
         </div>
