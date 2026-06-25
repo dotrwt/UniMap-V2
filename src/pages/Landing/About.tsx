@@ -1,5 +1,5 @@
 // src/pages/Landing/About.tsx
-import { Info, GitFork, Cpu, Database, LayoutTemplate, Sparkles } from 'lucide-react';
+import { Info, Compass, HelpCircle, Users, RefreshCw } from 'lucide-react';
 
 export default function About() {
   return (
@@ -11,70 +11,62 @@ export default function About() {
         {/* Section Header */}
         <div className="inline-flex items-center gap-2 bg-[#ff602e]/10 border border-[#ff602e]/20 px-3 py-1 rounded-full mb-6">
           <Info size={12} className="text-[#ff602e]" />
-          <span className="text-[10px] uppercase tracking-wider font-extrabold text-[#ff602e]">Project Specs</span>
+          <span className="text-[10px] uppercase tracking-wider font-extrabold text-[#ff602e]">Our Mission</span>
         </div>
 
         <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-neutral-900 dark:text-white mb-6 text-center">
           About UniMap Project
         </h2>
         <p className="text-sm md:text-base text-neutral-600 dark:text-neutral-400 max-w-2xl text-center leading-relaxed mb-16">
-          UniMap is an open-source high-precision indoor mapping project. It bridges the gap between campus architecture maps and client pathfinding calculations.
+          We believe campus navigation should be effortless. UniMap brings precision indoor mapping to academic spaces, making complex layouts simple to explore.
         </p>
 
-        {/* Tech Stack Panels */}
+        {/* Human-focused Panels */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mb-16">
-          {/* Card 1: Frontend */}
+          {/* Card 1: Why UniMap Exists */}
           <div className="bg-white dark:bg-[#0a0a0a] border border-neutral-200/50 dark:border-white/5 rounded-[24px] p-6 text-left shadow-sm">
             <h3 className="text-base font-bold text-neutral-900 dark:text-white mb-4 flex items-center gap-2.5">
-              <LayoutTemplate size={18} className="text-[#ff602e]" />
-              Modular Frontend Stack
+              <Compass size={18} className="text-[#ff602e]" />
+              Why UniMap Exists
             </h3>
             <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
-              React 18 structured with TypeScript compilation safety, customized Tailwind CSS variables supporting dark mode toggles, and Lucide vector icons.
+              Universities are complex ecosystems of halls, labs, and classrooms. UniMap was created to bring clarity to campus layouts, helping you navigate large academic spaces with confidence and ease.
             </p>
           </div>
 
-          {/* Card 2: Pathfinding */}
+          {/* Card 2: The Problem We Solve */}
           <div className="bg-white dark:bg-[#0a0a0a] border border-neutral-200/50 dark:border-white/5 rounded-[24px] p-6 text-left shadow-sm">
             <h3 className="text-base font-bold text-neutral-900 dark:text-white mb-4 flex items-center gap-2.5">
-              <Cpu size={18} className="text-cyan-500" />
-              Client Pathfinding Engine
+              <HelpCircle size={18} className="text-cyan-500" />
+              The Problem We Solve
             </h3>
             <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
-              Zustand 4 manages client navigation coordinates and route states. Algorithms run client-side to minimize network delays and compute instant routes.
+              Standard maps stop at the entrance. Finding a specific classroom, lab, or seminar hall inside a building is often frustrating. UniMap maps every indoor path to get you exactly where you need to be.
             </p>
           </div>
 
-          {/* Card 3: Backend */}
+          {/* Card 3: Built for Everyone */}
           <div className="bg-white dark:bg-[#0a0a0a] border border-neutral-200/50 dark:border-white/5 rounded-[24px] p-6 text-left shadow-sm">
             <h3 className="text-base font-bold text-neutral-900 dark:text-white mb-4 flex items-center gap-2.5">
-              <Database size={18} className="text-[#ff602e]" />
-              MongoDB Database Layer
+              <Users size={18} className="text-[#ff602e]" />
+              Students, Visitors & Faculty
             </h3>
             <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
-              Vercel Serverless Functions connect to MongoDB Atlas cluster datasets to load verified campus buildings, floors, nodes, and walkable edges.
+              Whether you're a student rushing to your next lecture, a visitor attending a seminar, or a faculty member locating a department office, UniMap makes campus navigation seamless for everyone.
             </p>
           </div>
 
-          {/* Card 4: Assets */}
+          {/* Card 4: Always Improving */}
           <div className="bg-white dark:bg-[#0a0a0a] border border-neutral-200/50 dark:border-white/5 rounded-[24px] p-6 text-left shadow-sm">
             <h3 className="text-base font-bold text-neutral-900 dark:text-white mb-4 flex items-center gap-2.5">
-              <Sparkles size={18} className="text-cyan-500" />
-              Cloudinary SVG Maps
+              <RefreshCw size={18} className="text-cyan-500" />
+              Continuously Improving
             </h3>
             <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
-              Campus floor layout plans are stored as vector SVGs. Tapping pins and paths scale perfectly across all screens, from mobile to desktop.
+              As campuses grow, so do we. UniMap is built as an open, community-driven map that continuously refines route accuracy, updates layout plans, and expands coverage to map every corner.
             </p>
           </div>
         </div>
-
-        {/* GitHub CTA Button */}
-        <a href="https://github.com/dotrwt" target="_blank" rel="noopener noreferrer" className="inline-block">
-          <button className="flex items-center gap-2 bg-[#ff602e] hover:bg-[#ff7b52] text-white font-bold text-xs px-6 py-3.5 rounded-full transition-all duration-200 active:scale-95 shadow-md hover:shadow-[#ff602e]/20">
-            <GitFork size={16} />
-            GitHub Repository
-          </button>
-        </a>
       </div>
     </section>
   );

@@ -1,6 +1,5 @@
-// src/App.tsx
-import React, { Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { Suspense, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import useSmoothScroll from '@/hooks/smoothscroll';
 import './styles/globals.css';
 
@@ -21,11 +20,27 @@ function CampusMapWrapper() {
   return <MapPage />;
 }
 
+// Automatically scrolls the viewport and smooth scroll engine back to top on route change
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    const lenis = (window as any).lenis;
+    if (lenis) {
+      lenis.scrollTo(0, { immediate: true });
+    }
+  }, [pathname]);
+
+  return null;
+}
+
 /** Root App component setting up global routing, theme, and code-split pages. */
 export default function App() {
   useSmoothScroll();
   return (
     <Router>
+      <ScrollToTop />
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
           <Route path="/" element={<LandingPage />} />
