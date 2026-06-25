@@ -26,12 +26,12 @@ export default function MapPage({}: MapPageProps) {
 
   return (
     <CampusNavigationProvider>
-      <MapLayout>
-        <MapHeader />
-        <SearchBar />
-        <MapCanvas />
-        <RoutePanel />
-      </MapLayout>
+      <MapLayout
+        header={<MapHeader />}
+        searchBar={<SearchBar />}
+        mapCanvas={<MapCanvas />}
+        routePanel={<RoutePanel />}
+      />
     </CampusNavigationProvider>
   );
 }
