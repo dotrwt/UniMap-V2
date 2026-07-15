@@ -18,7 +18,7 @@ export default function About() {
           About UniMap Project
         </h2>
         <p className="text-sm md:text-base text-neutral-600 dark:text-neutral-400 max-w-2xl text-center leading-relaxed mb-16">
-          We believe campus navigation should be effortless. UniMap brings precision indoor mapping to academic spaces, making complex layouts simple to explore.
+          We believe campus navigation should be effortless. UniMap brings precision indoor mapping to <strong>Madhav Institute of Technology and Science (MITS) Gwalior</strong>, making the campus map layout simple and intuitive to explore.
         </p>
 
         {/* Human-focused Panels */}
@@ -30,7 +30,7 @@ export default function About() {
               Why UniMap Exists
             </h3>
             <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
-              Universities are complex ecosystems of halls, labs, and classrooms. UniMap was created to bring clarity to campus layouts, helping you navigate large academic spaces with confidence and ease.
+              The MITS campus is a large, complex ecosystem of halls, labs, and departments. UniMap was created to bring clarity to the campus layout, helping students and visitors navigate the Map of MITS with confidence.
             </p>
           </div>
 
@@ -41,7 +41,7 @@ export default function About() {
               The Problem We Solve
             </h3>
             <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
-              Standard maps stop at the entrance. Finding a specific classroom, lab, or seminar hall inside a building is often frustrating. UniMap maps every indoor path to get you exactly where you need to be.
+              Standard navigation apps stop at the entrance. Finding a specific classroom, laboratory, or seminar hall inside the academic blocks can be challenging. UniMap provides the official campus map level of detail to guide you indoors.
             </p>
           </div>
 

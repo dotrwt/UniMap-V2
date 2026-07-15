@@ -11,7 +11,10 @@ import { usePageMeta } from '@/hooks/usePageMeta';
  * Renders Hero sections, feature grids, and project details matching reference visual styles.
  */
 export default function LandingPage() {
-  usePageMeta('Campus Navigation', 'Find any room...');
+  usePageMeta(
+    'MITS Map — Official Campus Map of MITS Gwalior',
+    'Navigate the Madhav Institute of Technology and Science (MITS) Gwalior campus. Find classrooms, labs, departments, blocks, and hostels instantly with UniMap.'
+  );
 
   return (
     <div className="w-full flex flex-col min-h-screen bg-[#fcfaf6] dark:bg-[#050505]">
