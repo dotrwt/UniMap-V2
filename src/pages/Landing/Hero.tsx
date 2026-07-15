@@ -395,7 +395,7 @@ export default function Hero() {
                     className="absolute bottom-1.5 sm:bottom-4 left-1/2 w-full max-w-xs sm:max-w-md flex flex-col items-center select-none z-30 pb-1"
                 >
                     <p className="text-[11px] sm:text-sm text-neutral-500 dark:text-neutral-400 text-center leading-relaxed mb-1.5 sm:mb-2 px-4">
-                        From lecture halls to labs — explore every corner of your university with indoor navigation.
+                        From classrooms to labs — navigate every corner of <strong>Madhav Institute of Technology and Science (MITS) Gwalior</strong> with our official campus map.
                     </p>
 
                     {/* Action Button */}

@@ -2,6 +2,7 @@ import { Navbar, Footer } from '@/components/ui';
 import { HelpCircle } from 'lucide-react';
 import SupportForm from './SupportForm';
 import Developer from './Developer';
+import { usePageMeta } from '@/hooks/usePageMeta';
 import './Support.css';
 
 /**
@@ -10,6 +11,10 @@ import './Support.css';
  * Developer guidance section, and Footer with a glowing dark background layout matching the design reference.
  */
 export default function SupportPage() {
+  usePageMeta(
+    'Support & Feedback — MITS Map',
+    'Contact support or share your feedback to help improve the MITS Gwalior campus map on UniMap.'
+  );
   return (
     <div className="support-bg flex flex-col w-full min-h-screen">
       {/* Capsule top navbar */}

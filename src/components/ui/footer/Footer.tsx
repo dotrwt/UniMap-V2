@@ -133,12 +133,17 @@ export default function Footer() {
 
           {/* Bottom links and details */}
           <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
-            {/* Left Column: Vertically stacked site links */}
-            <div className="flex flex-col gap-3 text-sm font-normal text-neutral-300">
-              <Link to="/" className="hover:text-white transition-colors w-fit">Home</Link>
-              <Link to="/map" className="hover:text-white transition-colors w-fit">Map</Link>
-              <Link to="/support" className="hover:text-white transition-colors w-fit">Support</Link>
-              <Link to="/404" className="hover:text-white transition-colors w-fit">404</Link>
+            {/* Left Column: Vertically stacked site links & description */}
+            <div className="flex flex-col gap-6">
+              <div className="flex flex-col gap-3 text-sm font-normal text-neutral-300">
+                <Link to="/" className="hover:text-white transition-colors w-fit">Home</Link>
+                <Link to="/map" className="hover:text-white transition-colors w-fit">Map</Link>
+                <Link to="/support" className="hover:text-white transition-colors w-fit">Support</Link>
+                <Link to="/404" className="hover:text-white transition-colors w-fit">404</Link>
+              </div>
+              <p className="text-xs text-neutral-400 max-w-sm leading-relaxed">
+                UniMap is the official campus map of Madhav Institute of Technology and Science (MITS) Gwalior. Built to provide students, faculty, and visitors with precise indoor navigation across all academic blocks.
+              </p>
             </div>
 
             {/* Right Column: stay in touch, socials, dev info */}

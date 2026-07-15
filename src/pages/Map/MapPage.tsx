@@ -11,7 +11,7 @@ const RoutePanelLazy = React.lazy(() =>
   import('@/components/route/RoutePanel').then((m) => ({ default: m.RoutePanel }))
 );
 
-export function RoutePanel(props: any) {
+export function RoutePanel(props: Record<string, unknown>) {
   return (
     <Suspense fallback={null}>
       <RoutePanelLazy {...props} />
@@ -19,10 +19,11 @@ export function RoutePanel(props: any) {
   );
 }
 
-export interface MapPageProps {}
-
-export default function MapPage({}: MapPageProps) {
-  usePageMeta('Map', 'Navigate MITS Gwalior campus');
+export default function MapPage() {
+  usePageMeta(
+    'Interactive MITS Map — Campus Navigation',
+    'Navigate Madhav Institute of Technology and Science (MITS) Gwalior campus. Plan routes to classrooms, departments, laboratories, and blocks with ease.'
+  );
 
   return (
     <CampusNavigationProvider>
