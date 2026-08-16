@@ -187,7 +187,8 @@ export default function MapBox({
 
   useGesture(
     {
-      onDrag: ({ active, offset: [dx, dy], velocity: [vx, vy], direction: [dirX, dirY] }) => {
+      onDrag: ({ active, offset: [dx, dy], velocity: [vx, vy], direction: [dirX, dirY], pinching, touches }) => {
+        if (pinching || touches > 1) return;
         if (active) {
           springApi.start({ x: dx, y: dy, immediate: true });
         } else {
@@ -212,24 +213,35 @@ export default function MapBox({
           }
         }
       },
-      onPinch: ({ active, offset: [dScale], origin: [ox, oy] }) => {
+      onPinch: ({ active, offset: [dScale], origin: [ox, oy], first, memo }) => {
         const el = containerRef.current;
-        if (!el) return;
+        if (!el) return memo;
         const rect = el.getBoundingClientRect();
-        const cx = ox - rect.left;
-        const cy = oy - rect.top;
 
-        const currentZ = zoom.get();
-        const currentX = x.get();
-        const currentY = y.get();
+        if (first) {
+          return {
+            origin: [ox, oy],
+            pan: [x.get(), y.get()],
+            zoom: zoom.get(),
+          };
+        }
+
+        const initialOriginX = memo?.origin?.[0] ?? ox;
+        const initialOriginY = memo?.origin?.[1] ?? oy;
+        const initialPanX = memo?.pan?.[0] ?? x.get();
+        const initialPanY = memo?.pan?.[1] ?? y.get();
+        const initialZoom = memo?.zoom ?? zoom.get();
 
         const nextZoom = Math.max(0.5, Math.min(5, dScale));
 
-        const mx = (cx - currentX) / currentZ;
-        const my = (cy - currentY) / currentZ;
+        const px = initialOriginX - rect.left;
+        const py = initialOriginY - rect.top;
 
-        const nextX = currentX - mx * (nextZoom - currentZ);
-        const nextY = currentY - my * (nextZoom - currentZ);
+        const deltaOx = ox - initialOriginX;
+        const deltaOy = oy - initialOriginY;
+
+        const nextX = initialPanX + deltaOx - (px - initialPanX) * (nextZoom / Math.max(0.001, initialZoom) - 1);
+        const nextY = initialPanY + deltaOy - (py - initialPanY) * (nextZoom / Math.max(0.001, initialZoom) - 1);
 
         springApi.start({
           x: nextX,
@@ -238,6 +250,8 @@ export default function MapBox({
           immediate: active,
           config: { tension: 180, friction: 26 }
         });
+
+        return memo;
       },
       onWheel: ({ event, delta: [, dy] }) => {
         if (event.ctrlKey || event.metaKey) {
@@ -276,6 +290,7 @@ export default function MapBox({
       eventOptions: { passive: false },
       drag: {
         from: () => [x.get(), y.get()],
+        filterTaps: true,
       },
       pinch: {
         from: () => [zoom.get(), 0],

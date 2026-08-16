@@ -78,7 +78,8 @@ export default function Map() {
   // Set up useGesture hooks for drag, pinch, and wheel
   useGesture(
     {
-      onDrag: ({ active, movement: [mx, my], first, memo }) => {
+      onDrag: ({ active, movement: [mx, my], first, memo, pinching, touches }) => {
+        if (pinching || touches > 1) return memo;
         if (first) {
           wasDraggingRef.current = false;
           setPanningCursor(true);
@@ -110,6 +111,7 @@ export default function Map() {
         if (first) {
           setShapeRendering('optimizeSpeed');
           return {
+            origin: [copX, copY],
             x: x.get(),
             y: y.get(),
             scale: scale.get(),
@@ -119,14 +121,21 @@ export default function Map() {
         const rect = containerRef.current?.getBoundingClientRect();
         if (!rect) return memo;
 
-        const px = copX - rect.left;
-        const py = copY - rect.top;
+        const initialOriginX = memo?.origin?.[0] ?? copX;
+        const initialOriginY = memo?.origin?.[1] ?? copY;
+        const initialPanX = memo?.x ?? x.get();
+        const initialPanY = memo?.y ?? y.get();
+        const initialZoom = memo?.scale ?? scale.get();
 
-        const s_prev = memo.scale;
         const s_new = clamp(s, MIN_SCALE, MAX_SCALE);
+        const px = initialOriginX - rect.left;
+        const py = initialOriginY - rect.top;
 
-        const newX = px - (px - memo.x) * (s_new / s_prev);
-        const newY = py - (py - memo.y) * (s_new / s_prev);
+        const deltaOx = copX - initialOriginX;
+        const deltaOy = copY - initialOriginY;
+
+        const newX = initialPanX + deltaOx - (px - initialPanX) * (s_new / Math.max(0.001, initialZoom) - 1);
+        const newY = initialPanY + deltaOy - (py - initialPanY) * (s_new / Math.max(0.001, initialZoom) - 1);
 
         api.start({
           scale: s_new,
@@ -177,6 +186,9 @@ export default function Map() {
     {
       target: containerRef,
       eventOptions: { passive: false },
+      drag: {
+        filterTaps: true,
+      },
       pinch: {
         from: () => [scale.get(), 0],
       },

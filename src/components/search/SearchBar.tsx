@@ -1,5 +1,4 @@
-// src/components/search/SearchBar.tsx
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect, startTransition } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -59,6 +58,19 @@ export function SearchBar({ }: SearchBarProps) {
     compassHeading,
     isSimulating
   } = useCampusNavigation();
+
+  const [localSearchQuery, setLocalSearchQuery] = useState(mobileSearchQuery);
+
+  useEffect(() => {
+    setLocalSearchQuery(mobileSearchQuery);
+  }, [mobileSearchQuery]);
+
+  const handleMobileQueryChange = (val: string) => {
+    setLocalSearchQuery(val);
+    startTransition(() => {
+      setMobileSearchQuery(val);
+    });
+  };
 
   const graph = useMemo(() => buildGlobalGraph(edges, { accessibleOnly }), [edges, accessibleOnly]);
 
@@ -268,13 +280,13 @@ export function SearchBar({ }: SearchBarProps) {
                   autoFocus
                   type="text"
                   placeholder={activeSearchField === 'start' ? "Search starting point..." : "Search destination..."}
-                  value={mobileSearchQuery}
-                  onChange={(e) => setMobileSearchQuery(e.target.value)}
+                  value={localSearchQuery}
+                  onChange={(e) => handleMobileQueryChange(e.target.value)}
                   className="flex-1 bg-transparent border-0 outline-none text-sm font-semibold text-gray-800 py-1"
                 />
-                {mobileSearchQuery && (
+                {localSearchQuery && (
                   <button
-                    onClick={() => setMobileSearchQuery('')}
+                    onClick={() => handleMobileQueryChange('')}
                     className="p-2 hover:bg-gray-100 rounded-xl text-gray-400 cursor-pointer"
                   >
                     <X className="w-4 h-4" />
