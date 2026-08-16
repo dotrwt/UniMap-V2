@@ -9,10 +9,14 @@ import apple from '@/assets/safari.webp';
 
 export default function Hero() {
     const { scrollY } = useScroll();
-    const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1024);
+    const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 768);
+    const [isShortScreen, setIsShortScreen] = useState(window.innerHeight < 780);
 
     useEffect(() => {
-        const handleResize = () => setIsLargeScreen(window.innerWidth >= 1024);
+        const handleResize = () => {
+            setIsLargeScreen(window.innerWidth >= 768);
+            setIsShortScreen(window.innerHeight < 780);
+        };
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
@@ -29,7 +33,12 @@ export default function Hero() {
     // 2. Phone transitions: Opacity increases, scale increases, rotation becomes upright
     const phoneOpacity = useTransform(scrollY, [0, 250], [0.15, 1.0]);
     const phoneScale = useTransform(scrollY, [0, 420], [0.85, 1.0]);
-    const phoneY = useTransform(scrollY, [0, 420], ["0px", "0px"]); // Keeps the phone perfectly centered vertically
+    // Dynamically shift the phone up as the footer fades in to make room at the bottom, keeping its original full size.
+    const phoneY = useTransform(
+        scrollY,
+        [0, 420, 480, 680],
+        ["0px", "0px", "0px", isShortScreen ? (isLargeScreen ? "-95px" : "-115px") : (isLargeScreen ? "-45px" : "-65px")]
+    );
     const phoneRotateX = useTransform(scrollY, [0, 420], [16, 0]);
 
     // 3. Side location cards fanning out: Slides out and fades in. Dims to 0.25 when details card pops out (480px to 680px)
@@ -43,8 +52,9 @@ export default function Hero() {
     const footerY = useTransform(scrollY, [480, 680], [40, 0]);
 
     // 5. Destination card pop-out: Slides out on the right between scroll 480px and 750px
+    // On mobile viewports, keep cardY offset small so it overlays neatly on the phone instead of sliding deep into the footer.
     const cardX = useTransform(scrollY, [480, 750], [0, isLargeScreen ? 230 : 0]);
-    const cardY = useTransform(scrollY, [480, 750], [0, isLargeScreen ? -40 : 190]);
+    const cardY = useTransform(scrollY, [480, 750], [0, isLargeScreen ? -40 : 45]);
     const cardOpacity = useTransform(scrollY, [520, 700], [0, 1]);
     const cardScale = useTransform(scrollY, [480, 750], [0.7, 1]);
 
@@ -382,27 +392,27 @@ export default function Hero() {
                         y: footerY,
                         x: "-50%",
                     }}
-                    className="absolute bottom-2 sm:bottom-4 left-1/2 w-full max-w-sm sm:max-w-md flex flex-col items-center select-none z-30 pb-1"
+                    className="absolute bottom-1.5 sm:bottom-4 left-1/2 w-full max-w-xs sm:max-w-md flex flex-col items-center select-none z-30 pb-1"
                 >
-                    <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 text-center leading-relaxed mb-2 px-4">
-                        From lecture halls to labs — explore every corner of your university with indoor navigation.
+                    <p className="text-[11px] sm:text-sm text-neutral-500 dark:text-neutral-400 text-center leading-relaxed mb-1.5 sm:mb-2 px-4">
+                        From classrooms to labs — navigate every corner of <strong>Madhav Institute of Technology and Science (MITS) Gwalior</strong> with our official campus map.
                     </p>
 
                     {/* Action Button */}
-                    <Link to="/map" className="mb-4 shrink-0">
-                        <button className="bg-[#ff602e] hover:bg-[#ff7b52] text-white font-extrabold text-xs px-8 py-3.5 rounded-full transition-all duration-200 active:scale-95 shadow-lg shadow-[#ff602e]/25">
+                    <Link to="/map" className="mb-2 sm:mb-4 shrink-0">
+                        <button className="bg-[#ff602e] hover:bg-[#ff7b52] text-white font-extrabold text-[11px] sm:text-xs px-8 py-2.5 sm:py-3.5 rounded-full transition-all duration-200 active:scale-95 shadow-lg shadow-[#ff602e]/25">
                             Start Navigating
                         </button>
                     </Link>
 
                     {/* Browser Availability Badges */}
-                    <div className="flex flex-col items-center gap-3 shrink-0">
-                        <div className="flex items-center justify-center gap-4">
-                            <img src={chrome} alt="Chrome" className="w-6 h-6 grayscale hover:grayscale-0 transition-all duration-200" />
-                            <img src={firefox} alt="Firefox" className="w-5 h-5 grayscale hover:grayscale-0 transition-all duration-200" />
-                            <img src={apple} alt="Safari" className="w-5 h-5 grayscale hover:grayscale-0 transition-all duration-200" />
+                    <div className="flex flex-col items-center gap-2 sm:gap-3 shrink-0">
+                        <div className="flex items-center justify-center gap-3 sm:gap-4">
+                            <img src={chrome} alt="Chrome" className="w-5 h-5 sm:w-6 sm:h-6 grayscale hover:grayscale-0 transition-all duration-200" />
+                            <img src={firefox} alt="Firefox" className="w-4 h-4 sm:w-5 sm:h-5 grayscale hover:grayscale-0 transition-all duration-200" />
+                            <img src={apple} alt="Safari" className="w-4 h-4 sm:w-5 sm:h-5 grayscale hover:grayscale-0 transition-all duration-200" />
                         </div>
-                        <span className="text-[9px] text-neutral-400 font-bold uppercase tracking-wider">Also available in browsers</span>
+                        <span className="text-[8px] sm:text-[9px] text-neutral-400 font-bold uppercase tracking-wider">Also available in browsers</span>
                     </div>
                 </motion.div>
             </section>

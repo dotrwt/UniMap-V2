@@ -1,6 +1,7 @@
-// src/pages/404.jsx
+// src/pages/404.tsx
 import { Link } from 'react-router-dom';
 import { Navbar, Footer } from '@/components/ui';
+import { usePageMeta } from '@/hooks/usePageMeta';
 import './Landing/landing.css';
 
 /**
@@ -9,6 +10,10 @@ import './Landing/landing.css';
  * custom navbar, and footer.
  */
 export default function NotFoundPage() {
+  usePageMeta(
+    'Page Not Found — MITS Map',
+    'The requested page could not be found on UniMap - MITS Gwalior Campus Map.'
+  );
   return (
     <div className="w-full flex flex-col min-h-screen blueprint-grid text-[var(--text-primary)]">
       {/* Global navbar */}

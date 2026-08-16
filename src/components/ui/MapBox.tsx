@@ -187,7 +187,8 @@ export default function MapBox({
 
   useGesture(
     {
-      onDrag: ({ active, offset: [dx, dy], velocity: [vx, vy], direction: [dirX, dirY] }) => {
+      onDrag: ({ active, offset: [dx, dy], velocity: [vx, vy], direction: [dirX, dirY], pinching, touches }) => {
+        if (pinching || touches > 1) return;
         if (active) {
           springApi.start({ x: dx, y: dy, immediate: true });
         } else {
@@ -212,24 +213,35 @@ export default function MapBox({
           }
         }
       },
-      onPinch: ({ active, offset: [dScale], origin: [ox, oy] }) => {
+      onPinch: ({ active, offset: [dScale], origin: [ox, oy], first, memo }) => {
         const el = containerRef.current;
-        if (!el) return;
+        if (!el) return memo;
         const rect = el.getBoundingClientRect();
-        const cx = ox - rect.left;
-        const cy = oy - rect.top;
 
-        const currentZ = zoom.get();
-        const currentX = x.get();
-        const currentY = y.get();
+        if (first) {
+          return {
+            origin: [ox, oy],
+            pan: [x.get(), y.get()],
+            zoom: zoom.get(),
+          };
+        }
+
+        const initialOriginX = memo?.origin?.[0] ?? ox;
+        const initialOriginY = memo?.origin?.[1] ?? oy;
+        const initialPanX = memo?.pan?.[0] ?? x.get();
+        const initialPanY = memo?.pan?.[1] ?? y.get();
+        const initialZoom = memo?.zoom ?? zoom.get();
 
         const nextZoom = Math.max(0.5, Math.min(5, dScale));
 
-        const mx = (cx - currentX) / currentZ;
-        const my = (cy - currentY) / currentZ;
+        const px = initialOriginX - rect.left;
+        const py = initialOriginY - rect.top;
 
-        const nextX = currentX - mx * (nextZoom - currentZ);
-        const nextY = currentY - my * (nextZoom - currentZ);
+        const deltaOx = ox - initialOriginX;
+        const deltaOy = oy - initialOriginY;
+
+        const nextX = initialPanX + deltaOx - (px - initialPanX) * (nextZoom / Math.max(0.001, initialZoom) - 1);
+        const nextY = initialPanY + deltaOy - (py - initialPanY) * (nextZoom / Math.max(0.001, initialZoom) - 1);
 
         springApi.start({
           x: nextX,
@@ -238,6 +250,8 @@ export default function MapBox({
           immediate: active,
           config: { tension: 180, friction: 26 }
         });
+
+        return memo;
       },
       onWheel: ({ event, delta: [, dy] }) => {
         if (event.ctrlKey || event.metaKey) {
@@ -276,6 +290,7 @@ export default function MapBox({
       eventOptions: { passive: false },
       drag: {
         from: () => [x.get(), y.get()],
+        filterTaps: true,
       },
       pinch: {
         from: () => [zoom.get(), 0],
@@ -553,27 +568,23 @@ export default function MapBox({
                 {shouldShowDestination && destination.x !== undefined && destination.y !== undefined && (
                   <animated.g
                     style={{
-                      transform: to([zoom, destSpring.scale], (z, s) => `scale(${s / z})`),
-                      transformOrigin: `${destination.x}px ${destination.y - 10}px`
+                      transform: to([zoom, destSpring.scale], (z, s) => `translate(${destination.x}px, ${destination.y}px) scale(${s / z})`),
                     }}
                   >
                     <circle
-                      cx={destination.x}
-                      cy={destination.y}
+                      cx="0"
+                      cy="0"
                       r="8"
                       fill="#ff602e"
                       opacity="0.3"
                     />
                     {!prefersReducedMotion ? (
                       <motion.circle
-                        cx={destination.x}
-                        cy={destination.y}
+                        cx="0"
+                        cy="0"
                         r="8"
                         fill="#ff602e"
                         opacity="0.3"
-                        style={{
-                          transformOrigin: `${destination.x}px ${destination.y}px`
-                        }}
                         animate={{
                           scale: [1, 2, 1],
                           opacity: [0.3, 0, 0.3]
@@ -585,14 +596,14 @@ export default function MapBox({
                       />
                     ) : null}
                     <circle
-                      cx={destination.x}
-                      cy={destination.y}
+                      cx="0"
+                      cy="0"
                       r="3"
                       fill="#ff602e"
                     />
                     <text
-                      x={destination.x}
-                      y={destination.y - 25}
+                      x="0"
+                      y="-18"
                       textAnchor="middle"
                       fontSize="10"
                       fill="#7c2d12"
@@ -607,27 +618,23 @@ export default function MapBox({
                 {shouldShowCurrentLocation && currentLocation.x !== undefined && currentLocation.y !== undefined && (
                   <animated.g
                     style={{
-                      transform: to([zoom, currentLocSpring.scale], (z, s) => `scale(${s / z})`),
-                      transformOrigin: `${currentLocation.x}px ${currentLocation.y - 10}px`
+                      transform: to([zoom, currentLocSpring.scale], (z, s) => `translate(${currentLocation.x}px, ${currentLocation.y}px) scale(${s / z})`),
                     }}
                   >
                     <circle
-                      cx={currentLocation.x}
-                      cy={currentLocation.y}
+                      cx="0"
+                      cy="0"
                       r="8"
                       fill="#10b981"
                       opacity="0.3"
                     />
                     {!prefersReducedMotion ? (
                       <motion.circle
-                        cx={currentLocation.x}
-                        cy={currentLocation.y}
+                        cx="0"
+                        cy="0"
                         r="8"
                         fill="#10b981"
                         opacity="0.3"
-                        style={{
-                          transformOrigin: `${currentLocation.x}px ${currentLocation.y}px`
-                        }}
                         animate={{
                           scale: [1, 2, 1],
                           opacity: [0.3, 0, 0.3]
@@ -639,14 +646,14 @@ export default function MapBox({
                       />
                     ) : null}
                     <circle
-                      cx={currentLocation.x}
-                      cy={currentLocation.y}
+                      cx="0"
+                      cy="0"
                       r="3"
                       fill="#10b981"
                     />
                     <text
-                      x={currentLocation.x}
-                      y={currentLocation.y - 25}
+                      x="0"
+                      y="-18"
                       textAnchor="middle"
                       fontSize="10"
                       fill="#059669"
@@ -661,27 +668,23 @@ export default function MapBox({
                 {isSimulating && simulatedNode && simulatedNode.map === mapId && (
                   <animated.g
                     style={{
-                      transform: to([zoom], (z) => `scale(${1 / z})`),
-                      transformOrigin: `${simulatedNode.x}px ${simulatedNode.y}px`
+                      transform: to([zoom], (z) => `translate(${simulatedNode.x}px, ${simulatedNode.y}px) scale(${1 / z})`),
                     }}
                   >
                     <circle
-                      cx={simulatedNode.x}
-                      cy={simulatedNode.y}
+                      cx="0"
+                      cy="0"
                       r="10"
                       fill="#3b82f6"
                       opacity="0.3"
                     />
                     {!prefersReducedMotion ? (
                       <motion.circle
-                        cx={simulatedNode.x}
-                        cy={simulatedNode.y}
+                        cx="0"
+                        cy="0"
                         r="15"
                         fill="#3b82f6"
                         opacity="0.2"
-                        style={{
-                          transformOrigin: `${simulatedNode.x}px ${simulatedNode.y}px`
-                        }}
                         animate={{
                           scale: [0.8, 1.6, 0.8],
                           opacity: [0.3, 0.05, 0.3]
@@ -693,7 +696,7 @@ export default function MapBox({
                       />
                     ) : null}
                     <g
-                      transform={`translate(${simulatedNode.x}, ${simulatedNode.y}) rotate(${compassHeading})`}
+                      transform={`rotate(${compassHeading})`}
                     >
                       <polygon
                         points="0,-8 6,6 0,2 -6,6"
@@ -703,8 +706,8 @@ export default function MapBox({
                       />
                     </g>
                     <text
-                      x={simulatedNode.x}
-                      y={simulatedNode.y - 25}
+                      x="0"
+                      y="-22"
                       textAnchor="middle"
                       fontSize="10"
                       fill="#1d4ed8"
@@ -773,7 +776,7 @@ export default function MapBox({
                 </button>
 
                 {isBuildingDropdownOpen && (
-                  <div className="absolute bottom-full mb-2 left-0 md:right-0 md:left-auto w-40 bg-white rounded-xl shadow-xl border border-black/[0.04] p-1.5 flex flex-col gap-0.5 z-30">
+                  <div className="absolute left-full top-0 ml-2 bottom-auto mb-0 md:bottom-full md:mb-2 md:left-auto md:right-0 md:top-auto md:ml-0 w-40 bg-white rounded-xl shadow-xl border border-black/[0.04] p-1.5 flex flex-col gap-0.5 z-30">
                     <button
                       onClick={() => handleSelectBuilding('campus')}
                       className={`w-full text-left px-3 py-2 text-xs font-bold rounded-lg transition-colors ${

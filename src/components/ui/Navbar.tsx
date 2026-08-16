@@ -20,23 +20,26 @@ export default function Navbar() {
 
   if (isLanding || isSupport || is404) {
     return (
-      <nav className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between w-[92%] max-w-2xl px-5 py-2.5 rounded-full shadow-xl shadow-black/10 ${isSupport ? 'bg-[#121212] border border-white/10' : 'glass-capsule'
+      <nav className={`fixed top-4 sm:top-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between w-[94%] max-w-2xl px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-full shadow-xl shadow-black/20 ${isSupport ? 'bg-[#121212] border border-white/10' : 'glass-capsule'
         }`}>
-        <Link to="/" className="flex items-center gap-2 cursor-pointer hover:opacity-85 transition-opacity group">
-          <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center bg-[#ff602e]">
+        <Link to="/" className="flex items-center gap-2 cursor-pointer hover:opacity-85 transition-opacity group flex-shrink-0">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden flex items-center justify-center bg-[#ff602e] flex-shrink-0">
             <img src={unimapLogo} alt="UniMap Logo" className="w-full h-full object-contain rounded-full p-0.1" />
           </div>
-          <span className="text-sm font-bold text-white tracking-wide">UniMap</span>
+          <span className="text-xs sm:text-sm font-bold text-white tracking-wide">UniMap</span>
         </Link>
 
-        <div className="flex items-center gap-6 text-xs font-semibold text-neutral-400">
+        <div className="hidden md:flex items-center gap-6 text-xs font-semibold text-neutral-400">
           <Link to="/" className={`hover:text-white transition-colors ${isLanding ? 'text-white' : ''}`}>Home</Link>
           <Link to="/support" className={`hover:text-white transition-colors ${isSupport ? 'text-white' : ''}`}>Support</Link>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          <Link to="/map">
-            <button className="bg-[#ff602e] hover:bg-[#ff7b52] text-white text-[11px] font-bold px-4 py-2 rounded-full transition-all duration-200 shadow-md">
+        <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+          <Link to="/support" className={`md:hidden text-xs font-semibold text-neutral-300 hover:text-white transition-colors px-1 ${isSupport ? 'text-white' : ''}`}>
+            Support
+          </Link>
+          <Link to="/map" className="flex-shrink-0">
+            <button className="bg-[#ff602e] hover:bg-[#ff7b52] text-white text-[11px] sm:text-xs font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full transition-all duration-200 shadow-md whitespace-nowrap">
               Start Navigating
             </button>
           </Link>
