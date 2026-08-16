@@ -38,8 +38,8 @@ export function searchNodes(graph: CampusGraph, query: string): MapNode[] {
   }
   return graph.nodes.filter(node => {
     const type = node.type.toLowerCase();
-    // Only search rooms, gates, and building entries
-    if (type !== 'room' && type !== 'gate' && type !== 'entry') {
+    // Only search rooms, gates, building entries, entrances, and exits
+    if (type !== 'room' && type !== 'gate' && type !== 'entry' && type !== 'entrance' && type !== 'exit') {
       return false;
     }
 

@@ -5,7 +5,7 @@ import { getDb } from './_db.js';
 /** GET /api/edges handler. Fetches all edges from the MongoDB collection. */
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
 
   if (req.method !== 'GET') {
     res.status(405).json({ error: 'Method Not Allowed' });
