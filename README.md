@@ -1,73 +1,120 @@
-# React + TypeScript + Vite
+# 🗺️ UniMap — Smart Campus Mapping & Navigation
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+UniMap is a high-performance, interactive multi-floor campus navigation and spatial pathfinding web application. Designed for complex multi-building environments, UniMap features non-blocking graph pathfinding, interactive SVG floor maps, turn-by-turn navigation instructions, and accessible (step-free) routing options.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## ✨ Features
 
-## React Compiler
+- **🗺️ Interactive Vector Maps**: Render detailed SVG floor plans with dynamic node markers and route overlays.
+- **⚡ Non-Blocking Pathfinding**: Async Dijkstra algorithm powered by a MinHeap priority queue and main thread yielding to preserve UI responsiveness.
+- **🏢 Multi-Building & Multi-Floor Navigation**: Seamless route calculation across floor boundaries and outdoor campus paths.
+- **♿ Accessible Routing**: Optional step-free navigation mode filtering out staircases in favor of elevators and ramps.
+- **📱 Responsive Modern UI**: Built with React 19, Tailwind CSS, Zustand, and smooth micro-animations.
+- **⚡ Serverless Backend & MongoDB**: Quick data access via MongoDB collections (`nodes`, `edges`, `buildings`, `floors`) hosted on Vercel Serverless endpoints and a lightweight local dev server.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## 🛠️ Tech Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Frontend**: [React 19](https://react.dev/), [TypeScript 6](https://www.typescriptlang.org/), [Vite 8](https://vitejs.dev/), [React Router v7](https://reactrouter.com/), [Zustand](https://zustand-demo.pmnd.rs/), [Tailwind CSS](https://tailwindcss.com/), [Lucide React](https://lucide.dev/), [Motion](https://motion.dev/)
+- **Backend / API**: Node.js HTTP dev server (`dev-api-server.js`), Vercel Serverless Functions (`api/`), MongoDB Driver
+- **Database**: MongoDB (`nodes`, `edges`, `buildings`, `floors` collections)
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+---
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## 🚀 Getting Started
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Prerequisites
+
+- **Node.js**: v18.0.0 or higher
+- **npm**: v9.0.0 or higher
+- **MongoDB**: A running MongoDB instance or MongoDB Atlas cluster connection string
+
+### Installation
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/dotrwt/UniMap-V2.git
+   cd UniMap-V2
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Configure Environment Variables**:
+   Create a `.env` file in the root directory:
+   ```env
+   MONGO_URL=mongodb+srv://<username>:<password>@<cluster>.mongodb.net
+   VITE_API_BASE_URL=http://localhost:3000
+   ```
+
+### Running Locally
+
+1. **Start the Development API Server** (connects to MongoDB):
+   ```bash
+   node dev-api-server.js
+   ```
+   *The dev server will start on `http://localhost:3000`.*
+
+2. **Start the Vite Frontend**:
+   ```bash
+   npm run dev
+   ```
+   *Open `http://localhost:5173` in your browser.*
+
+---
+
+## 📜 Available Scripts
+
+| Command | Action |
+|---|---|
+| `npm run dev` | Starts Vite development server with Hot Module Replacement (HMR). |
+| `node dev-api-server.js` | Runs local Node.js API server for MongoDB queries. |
+| `npm run build` | Runs TypeScript compilation check and builds production bundle. |
+| `npm run lint` | Runs ESLint analysis across TypeScript & React files. |
+| `npm run preview` | Previews the production build locally. |
+
+---
+
+## 📁 Project Structure
+
+```text
+UniMap-V2/
+├── api/                   # Vercel Serverless API functions (nodes, edges, buildings, floors)
+├── dev-api-server.js      # Local Express/HTTP API server for development
+├── docs/                  # Architecture, Navigation, Mapping & Data Structure docs
+├── public/                # Static assets, icons, and SVG floor plans
+├── src/
+│   ├── components/        # UI & Map components (MapCanvas, FloorSwitcher, RouteOverlay)
+│   ├── hooks/             # Custom React hooks (smooth scroll, etc.)
+│   ├── lib/               # Core navigation engine (dijkstra, multiMapNavigation, graphUtils)
+│   ├── pages/             # Application pages (Landing, Map, Support, 404)
+│   ├── store/             # Zustand state management (mapStore)
+│   ├── styles/            # Global CSS styles and Tailwind configurations
+│   ├── types/             # TypeScript type definitions (graph, route, map)
+│   ├── App.tsx            # Main application router
+│   └── main.tsx           # Application entry point
+├── README.md
+├── CONTRIBUTING.md
+├── AGENTS.md
+└── SKILLS.md
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## 🤝 Contributing
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+We welcome contributions from developers, designers, and campus mappers! Please review:
+- [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines, branching rules, and PR workflows.
+- [AGENTS.md](AGENTS.md) for guidelines aimed at AI coding agents working on the codebase.
+- [SKILLS.md](SKILLS.md) to explore the technical domain skills required across UniMap modules.
+- [Documentation](docs/architecture.md) for deep dives into navigation algorithms and data schemas.
+
+---
+
+## 📄 License
+
+Distributed under the MIT License. See [LICENSE](LICENSE) for details.
