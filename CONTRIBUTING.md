@@ -20,13 +20,23 @@ Please read through these guidelines to get started.
    ```
 
 3. **Configure Environment Variables**:
-   Copy or create `.env` in the root directory:
-   ```env
-   MONGO_URL=your_mongodb_connection_string
-   VITE_API_BASE_URL=http://localhost:3000
+   Copy `.env.example` to create your local `.env` file:
+   ```bash
+   cp .env.example .env
    ```
+   *Set `MONGO_URL` to point to your local MongoDB instance (e.g. `mongodb://localhost:27017/UniMap`). Never commit credentials or `.env` files to git.*
 
-4. **Verify Development Environment**:
+4. **Initialize Local Database Seed Data**:
+   Populate your local MongoDB collections (`buildings`, `floors`, `nodes`, `edges`) using the static JSON seed files in `init-data/`:
+   ```bash
+   mongoimport --uri="mongodb://localhost:27017/UniMap" --collection=buildings --file=init-data/buildings.json --jsonArray
+   mongoimport --uri="mongodb://localhost:27017/UniMap" --collection=floors --file=init-data/floors.json --jsonArray
+   mongoimport --uri="mongodb://localhost:27017/UniMap" --collection=nodes --file=init-data/nodes.json --jsonArray
+   mongoimport --uri="mongodb://localhost:27017/UniMap" --collection=edges --file=init-data/edges.json --jsonArray
+   ```
+   *(See [init-data/README.md](init-data/README.md) for MongoDB Compass / GUI setup).*
+
+5. **Verify Development Environment**:
    Run both dev servers in separate terminals:
    - Backend API: `node dev-api-server.js`
    - Frontend: `npm run dev`
