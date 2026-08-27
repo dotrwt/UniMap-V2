@@ -123,6 +123,7 @@ UniMap-V2/
 
 We welcome contributions from developers, designers, and campus mappers! Please review:
 - [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines, branching rules, and PR workflows.
+- [Map Designer Guide](docs/map-design-guide.md) for visual architecture, SVG floor plan guidelines, and map aesthetic standards.
 - [AGENTS.md](AGENTS.md) for guidelines aimed at AI coding agents working on the codebase.
 - [SKILLS.md](SKILLS.md) to explore the technical domain skills required across UniMap modules.
 - [Documentation](docs/architecture.md) for deep dives into navigation algorithms and data schemas.

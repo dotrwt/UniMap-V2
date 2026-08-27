@@ -2,6 +2,9 @@
 
 This document explains how vector floor plans, spatial node coordinates, and SVG elements are mapped and visualized within **UniMap**.
 
+> [!TIP]
+> **Looking for a non-technical visual guide?** Check out the [Map Designer & Visual Architecture Guide](map-design-guide.md) for a conceptual overview of map themes, SVG layering standards, and visual aesthetics.
+
 ---
 
 ## 🎨 Map Visual Rendering Engine
