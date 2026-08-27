@@ -1,10 +1,10 @@
-# 🏗️ UniMap Architecture Documentation
+# UniMap Architecture Documentation
 
 This document provides a comprehensive high-level architecture overview of the **UniMap** application structure, module breakdown, data flow, and system design.
 
 ---
 
-## 📐 System Architecture Overview
+## System Architecture Overview
 
 UniMap follows a modular decoupled architecture:
 - **Presentation Layer**: React 19 single-page app compiled with Vite.
@@ -39,7 +39,7 @@ graph TD
 
 ---
 
-## 🧩 Core Architecture Layers
+## Core Architecture Layers
 
 ### 1. Frontend Layer (`src/`)
 - **Pages** (`src/pages/`): `LandingPage`, `MapPage`, `SupportPage`, `404`.

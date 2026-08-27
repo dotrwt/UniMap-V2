@@ -1,13 +1,12 @@
-# 🗺️ UniMap Mapping & Vector SVG Documentation
+# UniMap Mapping & Vector SVG Documentation
 
 This document explains how vector floor plans, spatial node coordinates, and SVG elements are mapped and visualized within **UniMap**.
 
-> [!TIP]
-> **Looking for a non-technical visual guide?** Check out the [Map Designer & Visual Architecture Guide](map-design-guide.md) for a conceptual overview of map themes, SVG layering standards, and visual aesthetics.
+For a non-technical visual guide, refer to the [Map Designer & Visual Architecture Guide](map-design-guide.md) for an overview of map themes, SVG layering standards, and visual aesthetics.
 
 ---
 
-## 🎨 Map Visual Rendering Engine
+## Map Visual Rendering Engine
 
 UniMap renders campus floor plans using vector SVG assets rendered inside `MapCanvas.tsx` (`src/components/map/MapCanvas.tsx`).
 
@@ -20,7 +19,7 @@ UniMap renders campus floor plans using vector SVG assets rendered inside `MapCa
 
 ---
 
-## 🔗 Binding SVG Elements (`svgElementId`)
+## Binding SVG Elements (`svgElementId`)
 
 Nodes in the database can optionally link directly to vector shapes in the floor plan SVG via `svgElementId`:
 
@@ -43,7 +42,7 @@ Nodes in the database can optionally link directly to vector shapes in the floor
 
 ---
 
-## 📐 Coordinate Alignment Standard
+## Coordinate Alignment Standard
 
 UniMap uses a normalized $X, Y$ coordinate grid aligned with the viewBox dimensions of the base SVG map file:
 
@@ -53,7 +52,7 @@ UniMap uses a normalized $X, Y$ coordinate grid aligned with the viewBox dimensi
 
 ---
 
-## ➕ Adding a New Floor Map or Building
+## Adding a New Floor Map or Building
 
 To add a new building or floor map to UniMap:
 

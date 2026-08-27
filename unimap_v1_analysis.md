@@ -6,7 +6,7 @@ This document provides a comprehensive analysis of the architecture, data design
 
 ---
 
-## 🗺️ Architectural Overview
+## Architectural Overview
 
 UniMap-V1 is built as a single-page React application powered by Vite, utilizing modular utility functions and styled with Tailwind CSS v4. The system is designed to compute routes locally on a pre-compiled campus graph, splitting paths across multiple maps (floors) dynamically.
 
@@ -46,7 +46,7 @@ graph TD
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 The application relies on a modern frontend stack optimized for smooth vector graphics rendering and fluid animations:
 
@@ -62,7 +62,7 @@ The application relies on a modern frontend stack optimized for smooth vector gr
 
 ---
 
-## 💾 Graph Data Model & Conversion
+## Graph Data Model & Conversion
 
 UniMap does not treat maps as simple images, but as mathematical networks consisting of **Nodes** (positions) and **Edges** (walkways).
 
@@ -99,7 +99,7 @@ export const navigationEdges = Object.values(mapDatasets).flatMap(dataset => dat
 
 ---
 
-## 🧠 Core Traversal & Pathfinding Logic
+## Core Traversal & Pathfinding Logic
 
 The pathfinding system utilizes a custom implementation of **Dijkstra's Algorithm**.
 
@@ -133,7 +133,7 @@ For finding resources (like the nearest restroom), running a standard Dijkstra t
 
 ---
 
-## 🧭 Multi-Map Route Segmentation & Rendering
+## Multi-Map Route Segmentation & Rendering
 
 Because paths can cross building thresholds and floor changes, the pathfinder splits a single route into sequential segments.
 
@@ -169,11 +169,11 @@ Turn directions are calculated using vector mathematics between three consecutiv
 
 ---
 
-## 🎨 Interactive Map Rendering (`MapBox.jsx`)
+## Interactive Map Rendering (`MapBox.jsx`)
 
 The core map view handles fluid SVG layouts and complex user interactions.
 
-```
+```text
 +-------------------------------------------------------------+
 |  MapBox Container (Interactive zoom & pan gestures)         |
 |  +-------------------------------------------------------+  |
@@ -220,7 +220,7 @@ The interactive panel supports double-finger pinch zoom and single-finger pannin
 
 ---
 
-## ⚡ Engineering Highlights & Optimizations
+## Engineering Highlights & Optimizations
 
 *   **Cancelable Computations**: To prevent slower devices from processing outdated path computations when typing rapidly or clicking destinations, the hooks use `AbortController` signals to cancel asynchronous loops immediately.
 *   **Least Recently Used (LRU) Distance Caching**: The `useNearestWashroom` hook caches calculated distances from a starting node to avoid running Dijkstra repeatedly. The cache size is bounded to 4 to prevent memory leaks:

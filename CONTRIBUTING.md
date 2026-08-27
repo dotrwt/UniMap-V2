@@ -1,12 +1,12 @@
-# 🤝 Contributing to UniMap
+# Contributing to UniMap
 
-Thank you for your interest in contributing to **UniMap**! We welcome bug fixes, UI/UX improvements, navigation algorithm optimizations, map data updates, and documentation enhancements.
+Thank you for your interest in contributing to **UniMap**. Contributions including bug fixes, UI/UX improvements, navigation algorithm optimizations, map data updates, and documentation enhancements are welcome.
 
 Please read through these guidelines to get started.
 
 ---
 
-## 🛠️ Local Setup
+## Local Setup
 
 1. **Fork and Clone**:
    ```bash
@@ -24,7 +24,7 @@ Please read through these guidelines to get started.
    ```bash
    cp .env.example .env
    ```
-   *Set `MONGO_URL` to point to your local MongoDB instance (e.g. `mongodb://localhost:27017/UniMap`). Never commit credentials or `.env` files to git.*
+   *Set `MONGO_URL` to point to your local MongoDB instance (e.g. `mongodb://localhost:27017/UniMap`). Do not commit credentials or `.env` files to version control.*
 
 4. **Initialize Local Database Seed Data**:
    Populate your local MongoDB collections (`buildings`, `floors`, `nodes`, `edges`) using the static JSON seed files in `init-data/`:
@@ -43,7 +43,7 @@ Please read through these guidelines to get started.
 
 ---
 
-## 🌿 Branching Strategy
+## Branching Strategy
 
 Always create a descriptive feature branch off the `main` branch:
 
@@ -54,9 +54,9 @@ Always create a descriptive feature branch off the `main` branch:
 
 ---
 
-## 📝 Commit Guidelines
+## Commit Guidelines
 
-We enforce clean commit histories following the **Conventional Commits** specification:
+Clean commit histories following the **Conventional Commits** specification are required:
 
 ```text
 <type>: <short description in present tense>
@@ -73,7 +73,7 @@ Allowed types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chor
 
 ---
 
-## 💻 Coding Standards & Conventions
+## Coding Standards & Conventions
 
 1. **Strict TypeScript**: Avoid `any` types wherever possible. Use existing types from `@/types` (`MapNode`, `MapEdge`, `Building`, `FloorMap`, `Route`).
 2. **State Management**: Use Zustand store (`src/store/mapStore.ts`) for global application state. Avoid passing props deep through multiple levels unnecessarily.
@@ -90,7 +90,7 @@ Allowed types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chor
 
 ---
 
-## 🚀 Submitting a Pull Request (PR)
+## Submitting a Pull Request (PR)
 
 1. Ensure your branch is up to date with `main`:
    ```bash
@@ -104,5 +104,3 @@ Allowed types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chor
 3. Open a Pull Request on GitHub.
 4. Fill out the provided [Pull Request Template](.github/pull_request_template.md).
 5. Ensure all automated linting and build checks pass.
-
-Thank you for helping make UniMap better for everyone! 🚀

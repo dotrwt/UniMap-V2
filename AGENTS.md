@@ -1,10 +1,10 @@
-# 🤖 AGENTS.md — Guidelines for AI Coding Agents
+# AGENTS.md — Guidelines for AI Coding Agents
 
 This document defines core guidelines, architecture boundaries, and critical rules for AI coding agents (such as Antigravity, GitHub Copilot, Claude, Codex, Cursor, etc.) working on the **UniMap** codebase.
 
 ---
 
-## 📌 Project Overview & System Boundaries
+## Project Overview & System Boundaries
 
 UniMap is an interactive campus navigation system built with React 19, Vite, TypeScript, Zustand, and MongoDB. It renders vector SVG maps and computes multi-floor routes across campus nodes and edges using a custom non-blocking Dijkstra pathfinding engine.
 
@@ -17,7 +17,7 @@ UniMap is an interactive campus navigation system built with React 19, Vite, Typ
 
 ---
 
-## 🚫 Things AI Agents MUST NOT Change Unnecessarily
+## Critical Rules: Changes AI Agents Must Avoid
 
 1. **Do NOT Modify Core Graph Interfaces Without Updating All References**:
    - `MapNode`, `MapEdge`, `Building`, `FloorMap` in `src/types/graph.ts` and `src/types/map.ts` are shared across the database, serverless APIs, Zustand store, and UI canvas.
@@ -40,7 +40,7 @@ UniMap is an interactive campus navigation system built with React 19, Vite, Typ
 
 ---
 
-## 📐 Coding Rules for AI Agents
+## Coding Rules for AI Agents
 
 - **Strict TypeScript Compliance**: Always generate fully typed code. Avoid using `any` or `@ts-ignore` unless interfacing with an un-typed legacy module.
 - **Zustand State Access**: Prefer selecting explicit store slices (e.g., `useMapStore(state => state.selectedFrom)`) over consuming the entire state object to minimize unnecessary re-renders.
@@ -50,7 +50,7 @@ UniMap is an interactive campus navigation system built with React 19, Vite, Typ
 
 ---
 
-## 🔍 Codebase Quick Reference
+## Codebase Quick Reference
 
 | Module | Location | Role |
 |---|---|---|

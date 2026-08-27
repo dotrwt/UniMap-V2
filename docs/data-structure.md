@@ -1,10 +1,10 @@
-# 📊 UniMap Data Structures & Schemas
+# UniMap Data Structures & Schemas
 
 This document provides a detailed reference of the TypeScript interfaces, enums, graph models, and MongoDB collection schemas used across **UniMap**.
 
 ---
 
-## 📐 TypeScript Core Interfaces (`src/types/`)
+## TypeScript Core Interfaces (`src/types/`)
 
 ### 1. `MapNode` (`src/types/graph.ts`)
 Represents a single point, room, junction, or landmark on the campus map graph.
@@ -108,7 +108,7 @@ export interface Route {
 
 ---
 
-## 🗄️ MongoDB Database Collection Schemas
+## MongoDB Database Collection Schemas
 
 UniMap interacts with a MongoDB database named `UniMap`. Below are the document schemas for each collection:
 

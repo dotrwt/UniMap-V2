@@ -1,10 +1,10 @@
-# 📦 UniMap MongoDB Seed Data (`init-data/`)
+# UniMap MongoDB Seed Data (`init-data/`)
 
 This directory contains static seed data for initializing a local or private **UniMap** database in MongoDB. Contributors can import these JSON datasets into their own database without requiring access to production credentials.
 
 ---
 
-## 📁 Included Datasets
+## Included Datasets
 
 | File | MongoDB Collection | Description | Record Count |
 |---|---|---|---|
@@ -15,7 +15,7 @@ This directory contains static seed data for initializing a local or private **U
 
 ---
 
-## 🚀 How to Import Data into MongoDB
+## How to Import Data into MongoDB
 
 ### Option 1: Using `mongoimport` (CLI)
 
@@ -41,7 +41,7 @@ mongoimport --uri="mongodb+srv://<username>:<password>@<cluster>.mongodb.net/Uni
 
 ---
 
-### Option 2: Using MongoDB Compass (GUI)
+## Option 2: Using MongoDB Compass (GUI)
 
 1. Open **MongoDB Compass** and connect to your database instance.
 2. Create or select a database named `UniMap`.
@@ -54,7 +54,7 @@ mongoimport --uri="mongodb+srv://<username>:<password>@<cluster>.mongodb.net/Uni
 
 ---
 
-## ⚙️ Connecting UniMap to Your Database
+## Connecting UniMap to Your Database
 
 After importing the seed data:
 

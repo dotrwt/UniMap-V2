@@ -1,15 +1,15 @@
-# 🔒 Security Policy
+# Security Policy
 
 ## Supported Versions
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 2.x (Latest) | :white_check_mark: |
-| < 2.0   | :x:                |
+| Version | Supported |
+| ------- | --------- |
+| 2.x (Latest) | Yes |
+| < 2.0   | No |
 
 ---
 
-## 🛡️ Secret & API Key Management Guidelines
+## Secret & API Key Management Guidelines
 
 UniMap requires environment variables to connect to database services and external tools. Follow these strict security rules when contributing:
 
@@ -27,7 +27,7 @@ UniMap requires environment variables to connect to database services and extern
 
 ---
 
-## 🐛 Reporting a Vulnerability
+## Reporting a Vulnerability
 
 If you discover a potential security vulnerability within UniMap:
 

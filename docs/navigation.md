@@ -1,10 +1,10 @@
-# 🧭 UniMap Navigation Engine Documentation
+# UniMap Navigation Engine Documentation
 
 This document explains the internal mechanics, graph algorithms, multi-map segmentation, and pathfinding logic powering **UniMap**.
 
 ---
 
-## ⚡ Navigation Flow Overview
+## Navigation Flow Overview
 
 When a user selects a starting location (`selectedFrom`) and a destination location (`selectedTo`), UniMap executes the following multi-stage pipeline:
 
@@ -29,7 +29,7 @@ sequenceDiagram
 
 ---
 
-## 🔬 Core Components
+## Core Components
 
 ### 1. Global Graph Assembly (`buildGlobalGraph`)
 Located in `src/lib/multiMapNavigation.ts`.

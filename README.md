@@ -4,7 +4,7 @@ UniMap is a high-performance, interactive multi-floor campus navigation and spat
 
 ---
 
-##  Features
+## Features
 
 - **Interactive Vector Maps**: Render detailed SVG floor plans with dynamic node markers and route overlays.
 - **Non-Blocking Pathfinding**: Async Dijkstra algorithm powered by a MinHeap priority queue and main thread yielding to preserve UI responsiveness.
@@ -15,7 +15,7 @@ UniMap is a high-performance, interactive multi-floor campus navigation and spat
 
 ---
 
-##  Tech Stack
+## Tech Stack
 
 - **Frontend**: [React 19](https://react.dev/), [TypeScript 6](https://www.typescriptlang.org/), [Vite 8](https://vitejs.dev/), [React Router v7](https://reactrouter.com/), [Zustand](https://zustand-demo.pmnd.rs/), [Tailwind CSS](https://tailwindcss.com/), [Lucide React](https://lucide.dev/), [Motion](https://motion.dev/)
 - **Backend / API**: Node.js HTTP dev server (`dev-api-server.js`), Vercel Serverless Functions (`api/`), MongoDB Driver
@@ -23,7 +23,7 @@ UniMap is a high-performance, interactive multi-floor campus navigation and spat
 
 ---
 
-##  Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -80,7 +80,7 @@ UniMap is a high-performance, interactive multi-floor campus navigation and spat
 
 ---
 
-##  Available Scripts
+## Available Scripts
 
 | Command | Action |
 |---|---|
@@ -92,7 +92,7 @@ UniMap is a high-performance, interactive multi-floor campus navigation and spat
 
 ---
 
-##  Project Structure
+## Project Structure
 
 ```text
 UniMap-V2/
@@ -121,7 +121,7 @@ UniMap-V2/
 
 ## Contributing
 
-We welcome contributions from developers, designers, and campus mappers! Please review:
+Contributions from developers, designers, and campus mappers are welcome. Please review:
 - [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines, branching rules, and PR workflows.
 - [Map Designer Guide](docs/map-design-guide.md) for visual architecture, SVG floor plan guidelines, and map aesthetic standards.
 - [AGENTS.md](AGENTS.md) for guidelines aimed at AI coding agents working on the codebase.

@@ -1,10 +1,10 @@
-# 🧰 SKILLS.md — Contributor Skill Catalog
+# SKILLS.md — Contributor Skill Catalog
 
-This document outlines the core technical domains, skills, and areas of expertise relevant to contributing to the **UniMap** project. Whether you are a frontend developer, spatial graph engineer, cartographer, UI designer, or technical writer, there is a place for your contributions!
+This document outlines the core technical domains, skills, and areas of expertise relevant to contributing to the **UniMap** project. Whether you are a frontend developer, spatial graph engineer, cartographer, UI designer, or technical writer, there is a place for your contributions.
 
 ---
 
-## 💻 1. Frontend Web Development
+## 1. Frontend Web Development
 
 - **Technologies**: React 19, TypeScript 6, Vite 8, React Router v7, Zustand, Tailwind CSS.
 - **Key Tasks**:
@@ -15,7 +15,7 @@ This document outlines the core technical domains, skills, and areas of expertis
 
 ---
 
-## 🧭 2. Graph & Navigation Engineering
+## 2. Graph & Navigation Engineering
 
 - **Technologies**: Spatial Graph Theory, Dijkstra Pathfinding, Priority Queue Data Structures (MinHeap), Async JavaScript.
 - **Key Tasks**:
@@ -26,7 +26,7 @@ This document outlines the core technical domains, skills, and areas of expertis
 
 ---
 
-## 🗺️ 3. Cartography & SVG Map Authoring
+## 3. Cartography & SVG Map Authoring
 
 - **Technologies**: Vector Graphics (SVG), Inkscape / Figma / Illustrator, GIS coordinate systems.
 - **Key Tasks**:
@@ -37,7 +37,7 @@ This document outlines the core technical domains, skills, and areas of expertis
 
 ---
 
-## 🎨 4. UI / UX & Accessibility Design
+## 4. UI / UX & Accessibility Design
 
 - **Technologies**: Modern UI Design Systems, Dark Mode aesthetics, Glassmorphism, Web Content Accessibility Guidelines (WCAG).
 - **Key Tasks**:
@@ -47,7 +47,7 @@ This document outlines the core technical domains, skills, and areas of expertis
 
 ---
 
-## 🗄️ 5. Backend & Database Systems
+## 5. Backend & Database Systems
 
 - **Technologies**: Node.js, MongoDB, Vercel Serverless API Functions.
 - **Key Tasks**:
@@ -58,7 +58,7 @@ This document outlines the core technical domains, skills, and areas of expertis
 
 ---
 
-## 🧪 6. Testing & Quality Assurance
+## 6. Testing & Quality Assurance
 
 - **Technologies**: Node graph validation scripts, ESLint, manual path verification.
 - **Key Tasks**:
@@ -68,7 +68,7 @@ This document outlines the core technical domains, skills, and areas of expertis
 
 ---
 
-## 📚 7. Technical Documentation
+## 7. Technical Documentation
 
 - **Technologies**: Markdown, Mermaid Diagrams, Technical Writing.
 - **Key Tasks**:
