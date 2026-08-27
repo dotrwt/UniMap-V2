@@ -6,12 +6,12 @@ UniMap is a high-performance, interactive multi-floor campus navigation and spat
 
 ##  Features
 
-- ** Interactive Vector Maps**: Render detailed SVG floor plans with dynamic node markers and route overlays.
-- ** Non-Blocking Pathfinding**: Async Dijkstra algorithm powered by a MinHeap priority queue and main thread yielding to preserve UI responsiveness.
-- ** Multi-Building & Multi-Floor Navigation**: Seamless route calculation across floor boundaries and outdoor campus paths.
-- ** Accessible Routing**: Optional step-free navigation mode filtering out staircases in favor of elevators and ramps.
-- ** Responsive Modern UI**: Built with React 19, Tailwind CSS, Zustand, and smooth micro-animations.
-- ** Serverless Backend & MongoDB**: Quick data access via MongoDB collections (`nodes`, `edges`, `buildings`, `floors`) hosted on Vercel Serverless endpoints and a lightweight local dev server.
+- **Interactive Vector Maps**: Render detailed SVG floor plans with dynamic node markers and route overlays.
+- **Non-Blocking Pathfinding**: Async Dijkstra algorithm powered by a MinHeap priority queue and main thread yielding to preserve UI responsiveness.
+- **Multi-Building & Multi-Floor Navigation**: Seamless route calculation across floor boundaries and outdoor campus paths.
+- **Accessible Routing**: Optional step-free navigation mode filtering out staircases in favor of elevators and ramps.
+- **Responsive Modern UI**: Built with React 19, Tailwind CSS, Zustand, and smooth micro-animations.
+- **Serverless Backend & MongoDB**: Quick data access via MongoDB collections (`nodes`, `edges`, `buildings`, `floors`) hosted on Vercel Serverless endpoints and a lightweight local dev server.
 
 ---
 
